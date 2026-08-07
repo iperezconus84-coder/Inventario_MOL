@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WMS Inventario Pro - Definitivo</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; font-size: 1.5em; }
+        label { font-weight: bold; margin-top: 10px; display: block; }
+        select, input { width: 100%; padding: 10px; margin: 5px 0 15px 0; box-sizing: border-box; font-size: 1em; }
+        .progress { font-size: 1.8em; font-weight: bold; text-align: center; margin: 15px 0; color: #007bff; background: #e9ecef; padding: 10px; border-radius: 5px; }
+        button { width: 100%; padding: 15px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; margin-top: 10px; }
+        button.secondary { background-color: #007bff; }
+        button.demo { background-color: #ffc107; color: #000; font-weight: bold; }
+        .file-section { background: #fff3cd; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ffeeba; }
+        .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background-color: white; margin: 15% auto; padding: 20px; width: 80%; max-width: 400px; border-radius: 8px; text-align: center; }
+        .modal-content button { margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WMS Inventario Pro</h1>
+        
+        <div class="file-section">
+            <label>Cargar Archivo Excel CSV (stock_tmt1.csv):</label>
+            <input type="file" id="fileStock" accept=".csv">
+            
+            <label>Cargar Archivo Excel CSV (plano_tmt1.csv):</label>
+            <input type="file" id="filePlano" accept=".csv">
+
+            <button class="demo" onclick="cargarDatosPrueba()">⚡ Cargar Datos de Prueba Automáticos</button>
+        </div>
+
+        <label>Bodega:</label>
+        <select id="bodegaSelect" onchange="actualizarCalles()">
+            <option value="">Seleccione Bodega...</option>
+        </select>
+
+        <label>Calle:</label>
+        <select id="calleSelect" onchange="configurarCalle()">
+            <option value="">Seleccione Calle...</option>
+        </select>
+
+        <label>Meta de Lotes (Editable):</label>
+        <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
+
+        <div class="progress" id="displayProgress">0 / 300</div>
+
+        <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus>
+        
+        <button onclick="cerrarCalle()">Cerrar Calle y Guardar</button>
+        <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
+    </div>
+
+    <!-- Modal para Alertas -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Atención</h3>
+            <p id="modalMessage">Mensaje de alerta</p>
+            <button id="modalBtnAceptar" onclick="resolverModal(true)" style="background-color: #28a745;">Aceptar / Continuar</button>
+            <button id="modalBtnCancelar" onclick="resolverModal(false)" style="background-color: #dc3545;">Cancelar</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script>
+        let datosPlano = [];
+        let datosStock = [];
+        let capturasGlobales = [];
+        let capturasCalleActual = [];
+        let contadorActual = 0;
+        let callbackModal = null;
+
+        const parseConfig = {
+            header: true,
+            skipEmptyLines: true,
+            dynamicTyping: true,
+            delimiter: "", 
+            encoding: "ISO-8859-1"
+        };
+
+        document.getElementById('filePlano').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if(!file) return;
+            Papa.parse(file, {
+                ...parseConfig,
+                complete: function(results) { 
+                    datosPlano = results.data; 
+                    cargarBodegas(); 
+                    alert('Archivo plano cargado correctamente'); 
+                }
+            });
+        });
+
+        document.getElementById('fileStock').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if(!file) return;
+            Papa.parse(file, {
+                ...parseConfig,
+                complete: function(results) { 
+                    datosStock = results.data; 
+                    alert('Archivo de stock cargado correctamente'); 
+                }
+            });
+        });
+
+        // Botón mágico para probar sin necesidad de subir archivos físicos
+        function cargarDatosPrueba() {
+            datosPlano = [
+                { bodega: "Bodega_Norte", calle: "Calle_A1", cantidad_lotes: 3 },
+                { bodega: "Bodega_Norte", calle: "Calle_A2", cantidad_lotes: 2 },
+                { bodega: "Bodega_Sur", calle: "Calle_B1", cantidad_lotes: 2 }
+            ];
+
+            datosStock = [
+                { lote: "LOTE-101", SKU: "SKU-ALPHA", descripción: "Producto A - Tornillos", piezas: 100, volumen: 1.2 },
+                { lote: "LOTE-102", SKU: "SKU-ALPHA", descripción: "Producto A - Tornillos", piezas: 150, volumen: 1.5 },
+                { lote: "LOTE-103", SKU: "SKU-BETA", descripción: "Producto B - Tuercas", piezas: 200, volumen: 0.8 },
+                { lote: "LOTE-104", SKU: "SKU-BETA", descripción: "Producto B - Tuercas", piezas: 120, volumen: 0.5 },
+                { lote: "LOTE-105", SKU: "SKU-GAMMA", descripción: "Producto C - Arandelas", piezas: 300, volumen: 0.3 },
+                { lote: "LOTE-106", SKU: "SKU-GAMMA", descripción: "Producto C - Arandelas", piezas: 250, volumen: 0.2 },
+                { lote: "LOTE-107", SKU: "SKU-DELTA", descripción: "Producto D - Pernos", piezas: 80, volumen: 2.1 }
+            ];
+
+            cargarBodegas();
+            alert("¡Datos de prueba cargados con éxito! Ya puedes seleccionar Bodega y Calle.");
+        }
+
+        function cargarBodegas() {
+            const bodegaSelect = document.getElementById('bodegaSelect');
+            bodegaSelect.innerHTML = '<option value="">Seleccione Bodega...</option>';
+            const bodegas = [...new Set(datosPlano.map(row => row.bodega || row.Bodega || row.BODEGA))];
+            bodegas.forEach(b => { if (b) bodegaSelect.innerHTML += `<option value="${b}">${b}</option>`; });
+        }
+
+        function actualizarCalles() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const calleSelect = document.getElementById('calleSelect');
+            calleSelect.innerHTML = '<option value="">Seleccione Calle...</option>';
+            if (!bodega) return;
+            const calles = datosPlano.filter(row => (row.bodega || row.Bodega || row.BODEGA) == bodega);
+            calles.forEach(c => {
+                let nombreCalle = c.calle || c.Calle || c.CALLE;
+                if (nombreCalle) calleSelect.innerHTML += `<option value="${nombreCalle}">${nombreCalle}</option>`;
+            });
+        }
+
+        function configurarCalle() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const calleSelect = document.getElementById('calleSelect').value;
+            contadorActual = 0;
+            capturasCalleActual = [];
+
+            if (bodega && calleSelect) {
+                let registroPlano = datosPlano.find(row => 
+                    (row.bodega || row.Bodega || row.BODEGA) == bodega && 
+                    (row.calle || row.Calle || row.CALLE) == calleSelect
+                );
+                if (registroPlano) {
+                    let cantidadPlano = registroPlano.cantidad_lotes || registroPlano.Cantidad_Lotes || registroPlano.CANTIDAD_LOTES || 300;
+                    document.getElementById('metaLotes').value = cantidadPlano;
+                }
+            }
+            actualizarProgresoVisual();
+        }
+
+        function actualizarProgresoVisual() {
+            let meta = document.getElementById('metaLotes').value;
+            document.getElementById('displayProgress').innerText = `${contadorActual} / ${meta}`;
+        }
+
+        document.getElementById('scannerInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                let bodega = document.getElementById('bodegaSelect').value;
+                let calle = document.getElementById('calleSelect').value;
+                let lote = String(this.value).trim();
+                this.value = '';
+
+                if (!bodega || !calle) {
+                    alert('Seleccione Bodega y Calle primero.');
+                    return;
+                }
+                if (lote === '') return;
+
+                procesarLoteEscaneado(bodega, calle, lote);
+            }
+        });
+
+        function procesarLoteEscaneado(bodega, calle, lote) {
+            let yaCapturado = capturasCalleActual.find(c => c.lote == lote);
+            if (yaCapturado) {
+                mostrarModal("Lote Duplicado", `El lote ${lote} ya fue escaneado en esta calle. ¿Confirma que desea registrarlo nuevamente?`, function(confirmado) {
+                    if (confirmado) registrarCaptura(bodega, calle, lote, "DUPLICADO_CONFIRMADO");
+                });
+                return;
+            }
+
+            let infoStock = datosStock.find(row => String(row.lote || row.Lote || row.LOTE) == lote);
+            if (!infoStock && datosStock.length > 0) {
+                mostrarModal("Lote No Encontrado (Sobrante)", `El lote ${lote} no está en el stock lógico. Se agregará como sobrante/manual.`, function(confirmado) {
+                    if (confirmado) registrarCaptura(bodega, calle, lote, "MANUAL_SOBRANTE", {});
+                });
+                return;
+            }
+
+            let datosExtra = infoStock ? {
+                sku: infoStock.sku || infoStock.SKU || '',
+                descripcion: infoStock.descripción || infoStock.Descripción || infoStock.DESCRIPCION || '',
+                piezas: infoStock.piezas || infoStock.Piezas || infoStock.PIEZAS || '',
+                volumen: infoStock.volumen || infoStock.Volumen || infoStock.VOLUMEN || ''
+            } : {};
+
+            registrarCaptura(bodega, calle, lote, "NORMAL", datosExtra);
+        }
+
+        function registrarCaptura(bodega, calle, lote, estado, extra = {}) {
+            contadorActual++;
+            capturasCalleActual.push({
+                bodega: bodega,
+                calle: calle,
+                lote: lote,
+                sku: extra.sku || '',
+                descripcion: extra.descripcion || '',
+                piezas: extra.piezas || '',
+                volumen: extra.volumen || '',
+                estado_captura: estado,
+                timestamp: new Date().toISOString()
+            });
+            actualizarProgresoVisual();
+        }
+
+        function mostrarModal(titulo, mensaje, callback) {
+            document.getElementById('modalTitle').innerText = titulo;
+            document.getElementById('modalMessage').innerText = mensaje;
+            document.getElementById('alertModal').style.display = 'block';
+            callbackModal = callback;
+        }
+
+        function resolverModal(confirmado) {
+            document.getElementById('alertModal').style.display = 'none';
+            if (callbackModal) {
+                callbackModal(confirmado);
+                callbackModal = null;
+            }
+        }
+
+        function cerrarCalle() {
+            let calle = document.getElementById('calleSelect').value;
+            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
+
+            if (!calle) { 
+                alert('No hay calle seleccionada.'); 
+                return; 
+            }
+
+            if (contadorActual !== meta) {
+                alert(`No se puede cerrar la calle. La cantidad de capturas (${contadorActual}) no coincide con la cantidad teórica esperada (${meta}).`);
+                return;
+            }
+
+            capturasGlobales = capturasGlobales.concat(capturasCalleActual);
+            alert(`Calle ${calle} cerrada correctamente con ${contadorActual} lotes.`);
+            document.getElementById('calleSelect').value = '';
+            configurarCalle();
+        }
+
+        function descargarCSVGlobal() {
+            if (capturasGlobales.length === 0) { alert('Sin capturas.'); return; }
+            let csv = Papa.unparse(capturasGlobales);
+            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement("a");
+            link.setAttribute("href", URL.createObjectURL(blob));
+            link.setAttribute("download", "captura_tmt1_final.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
