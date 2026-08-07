@@ -9,7 +9,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
             padding: 20px; 
             background-color: #000000; 
-            color: #dc143c; 
+            color: #00ff66; 
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -22,15 +22,15 @@
             background: #000000; 
             padding: 20px; 
             border-radius: 8px; 
-            border: 1px solid #dc143c;
-            box-shadow: 0 4px 10px rgba(220, 20, 60, 0.2);
+            border: 1px solid #00ff66;
+            box-shadow: 0 4px 10px rgba(0, 255, 102, 0.2);
             flex: 1;
             box-sizing: border-box;
             width: 100%;
         }
         h1 { 
             text-align: center; 
-            color: #dc143c; 
+            color: #00ff66; 
             font-size: 1.5em; 
             margin-top: 0;
             text-transform: uppercase;
@@ -40,7 +40,7 @@
             font-weight: bold; 
             margin-top: 15px; 
             display: block; 
-            color: #dc143c; 
+            color: #00ff66; 
         }
         select, input { 
             width: 100%; 
@@ -50,30 +50,30 @@
             font-size: 1em; 
             background-color: #ffffff;
             color: #000000;
-            border: 1px solid #dc143c;
+            border: 1px solid #00ff66;
             border-radius: 4px;
         }
         select:focus, input:focus {
             outline: none;
-            box-shadow: 0 0 5px #dc143c;
+            box-shadow: 0 0 5px #00ff66;
         }
         .progress { 
             font-size: 1.8em; 
             font-weight: bold; 
             text-align: center; 
             margin: 15px 0; 
-            color: #dc143c; 
-            background: #1a0005; 
-            border: 1px solid #dc143c;
+            color: #00ff66; 
+            background: #001a0a; 
+            border: 1px solid #00ff66;
             padding: 12px; 
             border-radius: 4px; 
         }
         button { 
             width: 100%; 
             padding: 15px; 
-            background-color: rgba(220, 20, 60, 0.4); 
+            background-color: rgba(0, 255, 102, 0.3); 
             color: #ffffff; 
-            border: 1px solid #dc143c; 
+            border: 1px solid #00ff66; 
             border-radius: 4px; 
             font-size: 1em; 
             font-weight: bold;
@@ -82,17 +82,17 @@
             transition: background-color 0.2s;
         }
         button:hover {
-            background-color: rgba(220, 20, 60, 0.7);
+            background-color: rgba(0, 255, 102, 0.6);
         }
         button.secondary { 
             background-color: rgba(0, 0, 0, 0.5); 
-            border: 1px solid #dc143c;
+            border: 1px solid #00ff66;
         }
         button.secondary:hover {
-            background-color: rgba(220, 20, 60, 0.3);
+            background-color: rgba(0, 255, 102, 0.2);
         }
         button.demo { 
-            background-color: rgba(150, 10, 40, 0.5); 
+            background-color: rgba(0, 150, 60, 0.4); 
         }
         button.warning {
             background-color: rgba(180, 100, 0, 0.4);
@@ -103,11 +103,11 @@
             background-color: rgba(180, 100, 0, 0.7);
         }
         .file-section { 
-            background: #0a0002; 
+            background: #000d05; 
             padding: 15px; 
             border-radius: 4px; 
             margin-bottom: 20px; 
-            border: 1px solid #dc143c; 
+            border: 1px solid #00ff66; 
         }
         .modal { 
             display: none; 
@@ -128,7 +128,7 @@
             max-width: 400px; 
             border-radius: 8px; 
             text-align: center; 
-            border: 2px solid #dc143c;
+            border: 2px solid #00ff66;
         }
         .modal-content button { 
             margin-top: 15px; 
@@ -138,10 +138,10 @@
             text-align: center;
             margin-top: 20px;
             font-size: 0.9em;
-            color: #dc143c;
+            color: #00ff66;
             letter-spacing: 0.5px;
             text-transform: uppercase;
-            border-top: 1px solid #1a0005;
+            border-top: 1px solid #001a0a;
             padding-top: 15px;
         }
     </style>
@@ -151,10 +151,10 @@
         <h1>WMS Inventario Pro</h1>
         
         <div class="file-section">
-            <label>Cargar Stock lógico Excel CSV (stock_tmt1.csv):</label>
+            <label>Cargar Archivo Excel CSV (stock_tmt1.csv):</label>
             <input type="file" id="fileStock" accept=".csv">
             
-            <label>Cargar Plano CSV (plano_tmt1.csv):</label>
+            <label>Cargar Archivo Excel CSV (plano_tmt1.csv):</label>
             <input type="file" id="filePlano" accept=".csv">
 
             <button class="demo" onclick="cargarDatosPrueba()">Cargar Datos de Prueba Automaticos</button>
@@ -170,7 +170,7 @@
             <option value="">Seleccione Calle...</option>
         </select>
 
-        <label>Ctd. lotes:</label>
+        <label>Meta de Lotes (Editable):</label>
         <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
 
         <div class="progress" id="displayProgress">0 / 300</div>
@@ -191,8 +191,8 @@
         <div class="modal-content">
             <h3 id="modalTitle">Atencion</h3>
             <p id="modalMessage">Mensaje de alerta</p>
-            <button id="modalBtnAceptar" onclick="resolverModal(true)" style="background-color: rgba(40, 167, 69, 0.9);">Aceptar / Continuar</button>
-            <button id="modalBtnCancelar" onclick="resolverModal(false)" style="background-color: rgba(220, 53, 69, 0.9);">Cancelar</button>
+            <button id="modalBtnAceptar" onclick="resolverModal(true)" style="background-color: rgba(0, 200, 100, 0.9);">Aceptar / Continuar</button>
+            <button id="modalBtnCancelar" onclick="resolverModal(false)" style="background-color: rgba(200, 50, 50, 0.9);">Cancelar</button>
         </div>
     </div>
 
@@ -206,7 +206,6 @@
         let callbackModal = null;
         let calleCerradaGuardada = false;
 
-        // Generador de pitido corto mediante Web Audio API
         function emitirPitido() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -214,16 +213,16 @@
                 const gainNode = audioCtx.createGain();
                 
                 oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Frecuencia del tono
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
                 gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
                 
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
                 
                 oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.1); // Duración de 100ms
+                oscillator.stop(audioCtx.currentTime + 0.1);
             } catch (e) {
-                // Navegador bloquea audio si no hay interacción previa, se ignora silenciosamente
+                // Se ignora silenciosamente
             }
         }
 
@@ -306,7 +305,6 @@
             const bodega = document.getElementById('bodegaSelect').value;
             const calleSelect = document.getElementById('calleSelect').value;
             
-            // Si la calle ya fue cerrada y guardada en el consolidado, recuperamos sus elementos previos para permitir edición
             let capturasPrevias = capturasGlobales.filter(c => c.bodega == bodega && c.calle == calleSelect);
             if (capturasPrevias.length > 0) {
                 capturasCalleActual = [...capturasPrevias];
@@ -373,7 +371,6 @@
         });
 
         function procesarLoteEscaneado(bodega, calle, lote) {
-            // 1. Validar si ya fue capturado en la calle actual
             let yaCapturadoCalle = capturasCalleActual.find(c => c.lote == lote);
             if (yaCapturadoCalle) {
                 mostrarModal("Lote Duplicado (Calle Actual)", `El lote ${lote} ya fue escaneado en esta misma calle. Desea registrarlo nuevamente?`, function(confirmado) {
@@ -382,7 +379,6 @@
                 return;
             }
 
-            // 2. Validar si el lote ya fue capturado en OTRA calle diferente de la misma sesión global
             let yaCapturadoOtraCalle = capturasGlobales.find(c => c.lote == lote && c.calle != calle);
             if (yaCapturadoOtraCalle) {
                 mostrarModal("Lote Duplicado (Otra Calle)", `El lote ${lote} ya fue registrado previamente en la calle ${yaCapturadoOtraCalle.calle}. Desea registrarlo aqui de todas formas?`, function(confirmado) {
@@ -416,10 +412,9 @@
         }
 
         function registrarCaptura(bodega, calle, lote, estado, extra = {}) {
-            emitirPitido(); // Emitir señal sonora corta en cada captura exitosa
+            emitirPitido();
             contadorActual++;
             
-            // Si la info extra no viene dada (ej. duplicados confirmados sin reevaluar stock), intentamos buscarla en datosStock
             if (!extra.sku) {
                 let infoStock = datosStock.find(row => String(row.lote || row.Lote || row.LOTE) == lote);
                 if (infoStock) {
@@ -475,11 +470,9 @@
                 return;
             }
 
-            // Remover registros anteriores de esta calle en el consolidado global para evitar duplicaciones al re-cerrar
             let bodega = document.getElementById('bodegaSelect').value;
             capturasGlobales = capturasGlobales.filter(c => !(c.bodega == bodega && c.calle == calle));
             
-            // Agregar los actuales
             capturasGlobales = capturasGlobales.concat(capturasCalleActual);
             calleCerradaGuardada = true;
             actualizarBotonesAccion();
