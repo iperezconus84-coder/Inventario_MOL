@@ -94,6 +94,14 @@
         button.demo { 
             background-color: rgba(150, 10, 40, 0.5); 
         }
+        button.warning {
+            background-color: rgba(180, 100, 0, 0.4);
+            border: 1px solid #ffaa00;
+            color: #ffaa00;
+        }
+        button.warning:hover {
+            background-color: rgba(180, 100, 0, 0.7);
+        }
         .file-section { 
             background: #0a0002; 
             padding: 15px; 
@@ -169,7 +177,8 @@
 
         <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus>
         
-        <button onclick="cerrarCalle()">Cerrar Calle y Guardar</button>
+        <button id="btnCerrarCalle" onclick="cerrarCalle()">Cerrar Calle y Guardar</button>
+        <button id="btnReabrirCalle" class="warning" onclick="reabrirCalle()" style="display:none;">Reabrir Calle Actual</button>
         <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
     </div>
 
@@ -195,6 +204,28 @@
         let capturasCalleActual = [];
         let contadorActual = 0;
         let callbackModal = null;
+        let calleCerradaGuardada = false;
+
+        // Generador de pitido corto mediante Web Audio API
+        function emitirPitido() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime); // Frecuencia del tono
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.1); // Duración de 100ms
+            } catch (e) {
+                // Navegador bloquea audio si no hay interacción previa, se ignora silenciosamente
+            }
+        }
 
         const parseConfig = {
             header: true,
@@ -267,13 +298,25 @@
                 let nombreCalle = c.calle || c.Calle || c.CALLE;
                 if (nombreCalle) calleSelect.innerHTML += `<option value="${nombreCalle}">${nombreCalle}</option>`;
             });
+            calleCerradaGuardada = false;
+            actualizarBotonesAccion();
         }
 
         function configurarCalle() {
             const bodega = document.getElementById('bodegaSelect').value;
             const calleSelect = document.getElementById('calleSelect').value;
-            contadorActual = 0;
-            capturasCalleActual = [];
+            
+            // Si la calle ya fue cerrada y guardada en el consolidado, recuperamos sus elementos previos para permitir edición
+            let capturasPrevias = capturasGlobales.filter(c => c.bodega == bodega && c.calle == calleSelect);
+            if (capturasPrevias.length > 0) {
+                capturasCalleActual = [...capturasPrevias];
+                contadorActual = capturasCalleActual.length;
+                calleCerradaGuardada = true;
+            } else {
+                contadorActual = 0;
+                capturasCalleActual = [];
+                calleCerradaGuardada = false;
+            }
 
             if (bodega && calleSelect) {
                 let registroPlano = datosPlano.find(row => 
@@ -286,11 +329,30 @@
                 }
             }
             actualizarProgresoVisual();
+            actualizarBotonesAccion();
         }
 
         function actualizarProgresoVisual() {
             let meta = document.getElementById('metaLotes').value;
             document.getElementById('displayProgress').innerText = `${contadorActual} / ${meta}`;
+        }
+
+        function actualizarBotonesAccion() {
+            let btnCerrar = document.getElementById('btnCerrarCalle');
+            let btnReabrir = document.getElementById('btnReabrirCalle');
+            let inputScanner = document.getElementById('scannerInput');
+
+            if (calleCerradaGuardada) {
+                btnCerrar.style.display = 'none';
+                btnReabrir.style.display = 'block';
+                inputScanner.disabled = true;
+                inputScanner.placeholder = "Calle cerrada. Pulse Reabrir para modificar.";
+            } else {
+                btnCerrar.style.display = 'block';
+                btnReabrir.style.display = 'none';
+                inputScanner.disabled = false;
+                inputScanner.placeholder = "Escanear Lote...";
+            }
         }
 
         document.getElementById('scannerInput').addEventListener('keypress', function (e) {
@@ -311,18 +373,34 @@
         });
 
         function procesarLoteEscaneado(bodega, calle, lote) {
-            let yaCapturado = capturasCalleActual.find(c => c.lote == lote);
-            if (yaCapturado) {
-                mostrarModal("Lote Duplicado", `El lote ${lote} ya fue escaneado en esta calle. Desea registrarlo nuevamente?`, function(confirmado) {
-                    if (confirmado) registrarCaptura(bodega, calle, lote, "DUPLICADO_CONFIRMADO");
+            // 1. Validar si ya fue capturado en la calle actual
+            let yaCapturadoCalle = capturasCalleActual.find(c => c.lote == lote);
+            if (yaCapturadoCalle) {
+                mostrarModal("Lote Duplicado (Calle Actual)", `El lote ${lote} ya fue escaneado en esta misma calle. Desea registrarlo nuevamente?`, function(confirmado) {
+                    if (confirmado) registrarCaptura(bodega, calle, lote, "DUPLICADO_CALLE_CONFIRMADO");
                 });
                 return;
             }
 
+            // 2. Validar si el lote ya fue capturado en OTRA calle diferente de la misma sesión global
+            let yaCapturadoOtraCalle = capturasGlobales.find(c => c.lote == lote && c.calle != calle);
+            if (yaCapturadoOtraCalle) {
+                mostrarModal("Lote Duplicado (Otra Calle)", `El lote ${lote} ya fue registrado previamente en la calle ${yaCapturadoOtraCalle.calle}. Desea registrarlo aqui de todas formas?`, function(confirmado) {
+                    if (confirmado) {
+                        verificarStockYLuegoRegistrar(bodega, calle, lote, "DUPLICADO_OTRA_CALLE_CONFIRMADO");
+                    }
+                });
+                return;
+            }
+
+            verificarStockYLuegoRegistrar(bodega, calle, lote, "NORMAL");
+        }
+
+        function verificarStockYLuegoRegistrar(bodega, calle, lote, estadoInicial) {
             let infoStock = datosStock.find(row => String(row.lote || row.Lote || row.LOTE) == lote);
             if (!infoStock && datosStock.length > 0) {
                 mostrarModal("Lote No Encontrado (Sobrante)", `El lote ${lote} no esta en el stock logico. Se agregara como sobrante/manual.`, function(confirmado) {
-                    if (confirmado) registrarCaptura(bodega, calle, lote, "MANUAL_SOBRANTE", {});
+                    if (confirmado) registrarCaptura(bodega, calle, lote, estadoInicial === "NORMAL" ? "MANUAL_SOBRANTE" : estadoInicial, {});
                 });
                 return;
             }
@@ -334,11 +412,26 @@
                 volumen: infoStock.volumen || infoStock.Volumen || infoStock.VOLUMEN || ''
             } : {};
 
-            registrarCaptura(bodega, calle, lote, "NORMAL", datosExtra);
+            registrarCaptura(bodega, calle, lote, estadoInicial, datosExtra);
         }
 
         function registrarCaptura(bodega, calle, lote, estado, extra = {}) {
+            emitirPitido(); // Emitir señal sonora corta en cada captura exitosa
             contadorActual++;
+            
+            // Si la info extra no viene dada (ej. duplicados confirmados sin reevaluar stock), intentamos buscarla en datosStock
+            if (!extra.sku) {
+                let infoStock = datosStock.find(row => String(row.lote || row.Lote || row.LOTE) == lote);
+                if (infoStock) {
+                    extra = {
+                        sku: infoStock.sku || infoStock.SKU || '',
+                        descripcion: infoStock.descripción || infoStock.Descripción || infoStock.DESCRIPCION || '',
+                        piezas: infoStock.piezas || infoStock.Piezas || infoStock.PIEZAS || '',
+                        volumen: infoStock.volumen || infoStock.Volumen || infoStock.VOLUMEN || ''
+                    };
+                }
+            }
+
             capturasCalleActual.push({
                 bodega: bodega,
                 calle: calle,
@@ -382,14 +475,29 @@
                 return;
             }
 
+            // Remover registros anteriores de esta calle en el consolidado global para evitar duplicaciones al re-cerrar
+            let bodega = document.getElementById('bodegaSelect').value;
+            capturasGlobales = capturasGlobales.filter(c => !(c.bodega == bodega && c.calle == calle));
+            
+            // Agregar los actuales
             capturasGlobales = capturasGlobales.concat(capturasCalleActual);
-            alert(`Calle ${calle} cerrada correctamente con ${contadorActual} lotes.`);
-            document.getElementById('calleSelect').value = '';
-            configurarCalle();
+            calleCerradaGuardada = true;
+            actualizarBotonesAccion();
+            
+            alert(`Calle ${calle} cerrada y guardada correctamente con ${contadorActual} lotes.`);
+        }
+
+        function reabrirCalle() {
+            let calle = document.getElementById('calleSelect').value;
+            if (!calle) return;
+
+            calleCerradaGuardada = false;
+            actualizarBotonesAccion();
+            alert(`Calle ${calle} reabierta para modificaciones de captura.`);
         }
 
         function descargarCSVGlobal() {
-            if (capturasGlobales.length === 0) { alert('Sin capturas.'); return; }
+            if (capturasGlobales.length === 0) { alert('Sin capturas guardadas.'); return; }
             let csv = Papa.unparse(capturasGlobales);
             let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             let link = document.createElement("a");
