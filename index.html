@@ -6,8 +6,8 @@
     <title>INVENTARIO DE PROCESOS</title>
     <style>
         body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            padding: 20px; 
+            font-family: "Consolas", "Courier New", Courier, monospace; 
+            padding: 15px; 
             background-color: #000000; 
             color: #00ff66; 
             margin: 0;
@@ -15,15 +15,16 @@
             flex-direction: column;
             min-height: 100vh;
             box-sizing: border-box;
+            letter-spacing: 0.5px;
         }
         .container { 
             max-width: 600px; 
             margin: auto; 
             background: #000000; 
             padding: 20px; 
-            border-radius: 8px; 
-            border: 1px solid #00ff66;
-            box-shadow: 0 4px 10px rgba(0, 255, 102, 0.2);
+            border-radius: 0px; 
+            border: 2px solid #00ff66;
+            box-shadow: none;
             flex: 1;
             box-sizing: border-box;
             width: 100%;
@@ -31,83 +32,98 @@
         h1 { 
             text-align: center; 
             color: #00ff66; 
-            font-size: 1.5em; 
+            font-size: 1.4em; 
             margin-top: 0;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            border-bottom: 1px dashed #00ff66;
+            padding-bottom: 10px;
         }
         label { 
             font-weight: bold; 
             margin-top: 15px; 
             display: block; 
             color: #00ff66; 
+            font-size: 0.9em;
+            text-transform: uppercase;
         }
         select, input { 
             width: 100%; 
             padding: 12px; 
             margin: 5px 0 15px 0; 
             box-sizing: border-box; 
-            font-size: 1em; 
-            background-color: #ffffff;
-            color: #000000;
+            font-size: 1.1em; 
+            font-family: "Consolas", "Courier New", Courier, monospace;
+            background-color: #050505;
+            color: #00ff66;
             border: 1px solid #00ff66;
-            border-radius: 4px;
+            border-radius: 0px;
         }
         select:focus, input:focus {
             outline: none;
-            box-shadow: 0 0 5px #00ff66;
+            background-color: #000000;
+            border: 2px solid #00ff66;
         }
         .progress { 
-            font-size: 1.8em; 
+            font-size: 2em; 
             font-weight: bold; 
             text-align: center; 
             margin: 15px 0; 
             color: #00ff66; 
-            background: #001a0a; 
-            border: 1px solid #00ff66;
+            background: #000a03; 
+            border: 2px dashed #00ff66;
             padding: 12px; 
-            border-radius: 4px; 
+            border-radius: 0px; 
+            letter-spacing: 2px;
         }
         button { 
             width: 100%; 
             padding: 15px; 
-            background-color: rgba(0, 255, 102, 0.3); 
-            color: #ffffff; 
+            background-color: rgba(0, 255, 102, 0.2); 
+            color: #00ff66; 
             border: 1px solid #00ff66; 
-            border-radius: 4px; 
+            border-radius: 0px; 
             font-size: 1em; 
+            font-family: "Consolas", "Courier New", Courier, monospace;
             font-weight: bold;
+            text-transform: uppercase;
             cursor: pointer; 
             margin-top: 10px; 
-            transition: background-color 0.2s;
+            transition: background-color 0.1s;
         }
         button:hover {
-            background-color: rgba(0, 255, 102, 0.6);
+            background-color: rgba(0, 255, 102, 0.4);
+            color: #ffffff;
         }
         button.secondary { 
-            background-color: rgba(0, 0, 0, 0.5); 
+            background-color: #000000; 
             border: 1px solid #00ff66;
+            color: #00ff66;
         }
         button.secondary:hover {
             background-color: rgba(0, 255, 102, 0.2);
         }
-        button.demo { 
-            background-color: rgba(0, 150, 60, 0.4); 
-        }
         button.warning {
-            background-color: rgba(180, 100, 0, 0.4);
+            background-color: rgba(180, 100, 0, 0.3);
             border: 1px solid #ffaa00;
             color: #ffaa00;
         }
         button.warning:hover {
-            background-color: rgba(180, 100, 0, 0.7);
+            background-color: rgba(180, 100, 0, 0.6);
+            color: #ffffff;
         }
         .file-section { 
-            background: #000d05; 
+            background: #030805; 
             padding: 15px; 
-            border-radius: 4px; 
+            border-radius: 0px; 
             margin-bottom: 20px; 
             border: 1px solid #00ff66; 
+        }
+        .file-section input[type="file"] {
+            background-color: #000000;
+            color: #00ff66;
+            border: 1px dashed #00ff66;
+            padding: 8px;
         }
         .modal { 
             display: none; 
@@ -117,32 +133,36 @@
             top: 0; 
             width: 100%; 
             height: 100%; 
-            background-color: rgba(0,0,0,0.8); 
+            background-color: rgba(0,0,0,0.9); 
         }
         .modal-content { 
-            background-color: #ffffff; 
-            color: #000000;
+            background-color: #050505; 
+            color: #00ff66;
             margin: 15% auto; 
             padding: 25px; 
             width: 80%; 
             max-width: 400px; 
-            border-radius: 8px; 
+            border-radius: 0px; 
             text-align: center; 
             border: 2px solid #00ff66;
+            font-family: "Consolas", "Courier New", Courier, monospace;
         }
         .modal-content button { 
             margin-top: 15px; 
-            color: #ffffff;
+            color: #00ff66;
+            background-color: #000000;
+            border: 1px solid #00ff66;
         }
         footer {
             text-align: center;
             margin-top: 20px;
-            font-size: 0.9em;
+            font-size: 0.8em;
             color: #00ff66;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
             text-transform: uppercase;
-            border-top: 1px solid #001a0a;
+            border-top: 1px dashed #00ff66;
             padding-top: 15px;
+            opacity: 0.8;
         }
     </style>
 </head>
@@ -151,13 +171,11 @@
         <h1>WMS Inventario Pro</h1>
         
         <div class="file-section">
-            <label>Stock loógico(stock_tmt1.csv):</label>
+            <label>Cargar Archivo Excel CSV (stock_tmt1.csv):</label>
             <input type="file" id="fileStock" accept=".csv">
             
-            <label>Cargar Plano Bodega (plano_tmt1.csv):</label>
+            <label>Cargar Archivo Excel CSV (plano_tmt1.csv):</label>
             <input type="file" id="filePlano" accept=".csv">
-
-            <button class="demo" onclick="cargarDatosPrueba()">Cargar Datos de Prueba Automaticos</button>
         </div>
 
         <label>Bodega:</label>
@@ -179,7 +197,7 @@
         
         <button id="btnCerrarCalle" onclick="cerrarCalle()">Cerrar Calle y Guardar</button>
         <button id="btnReabrirCalle" class="warning" onclick="reabrirCalle()" style="display:none;">Reabrir Calle Actual</button>
-        <button class="secondary" onclick="descargarCSVGlobal()">Descargar inventario</button>
+        <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
     </div>
 
     <footer>
@@ -191,8 +209,8 @@
         <div class="modal-content">
             <h3 id="modalTitle">Atencion</h3>
             <p id="modalMessage">Mensaje de alerta</p>
-            <button id="modalBtnAceptar" onclick="resolverModal(true)" style="background-color: rgba(0, 200, 100, 0.9);">Aceptar / Continuar</button>
-            <button id="modalBtnCancelar" onclick="resolverModal(false)" style="background-color: rgba(200, 50, 50, 0.9);">Cancelar</button>
+            <button id="modalBtnAceptar" onclick="resolverModal(true)">Aceptar / Continuar</button>
+            <button id="modalBtnCancelar" onclick="resolverModal(false)">Cancelar</button>
         </div>
     </div>
 
@@ -258,27 +276,6 @@
                 }
             });
         });
-
-        function cargarDatosPrueba() {
-            datosPlano = [
-                { bodega: "Bodega_Norte", calle: "Calle_A1", cantidad_lotes: 3 },
-                { bodega: "Bodega_Norte", calle: "Calle_A2", cantidad_lotes: 2 },
-                { bodega: "Bodega_Sur", calle: "Calle_B1", cantidad_lotes: 2 }
-            ];
-
-            datosStock = [
-                { lote: "LOTE-101", SKU: "SKU-ALPHA", descripción: "Producto A - Tornillos", piezas: 100, volumen: 1.2 },
-                { lote: "LOTE-102", SKU: "SKU-ALPHA", descripción: "Producto A - Tornillos", piezas: 150, volumen: 1.5 },
-                { lote: "LOTE-103", SKU: "SKU-BETA", descripción: "Producto B - Tuercas", piezas: 200, volumen: 0.8 },
-                { lote: "LOTE-104", SKU: "SKU-BETA", descripción: "Producto B - Tuercas", piezas: 120, volumen: 0.5 },
-                { lote: "LOTE-105", SKU: "SKU-GAMMA", descripción: "Producto C - Arandelas", piezas: 300, volumen: 0.3 },
-                { lote: "LOTE-106", SKU: "SKU-GAMMA", descripción: "Producto C - Arandelas", piezas: 250, volumen: 0.2 },
-                { lote: "LOTE-107", SKU: "SKU-DELTA", descripción: "Producto D - Pernos", piezas: 80, volumen: 2.1 }
-            ];
-
-            cargarBodegas();
-            alert("Datos de prueba cargados con exito. Seleccione Bodega y Calle.");
-        }
 
         function cargarBodegas() {
             const bodegaSelect = document.getElementById('bodegaSelect');
