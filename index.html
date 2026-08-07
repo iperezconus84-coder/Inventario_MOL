@@ -3,21 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WMS Inventario Pro - Definitivo</title>
+    <title>WMS Inventario Pro</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f9; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: #333; font-size: 1.5em; }
-        label { font-weight: bold; margin-top: 10px; display: block; }
-        select, input { width: 100%; padding: 10px; margin: 5px 0 15px 0; box-sizing: border-box; font-size: 1em; }
-        .progress { font-size: 1.8em; font-weight: bold; text-align: center; margin: 15px 0; color: #007bff; background: #e9ecef; padding: 10px; border-radius: 5px; }
-        button { width: 100%; padding: 15px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; margin-top: 10px; }
-        button.secondary { background-color: #007bff; }
-        button.demo { background-color: #ffc107; color: #000; font-weight: bold; }
-        .file-section { background: #fff3cd; padding: 10px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ffeeba; }
-        .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
-        .modal-content { background-color: white; margin: 15% auto; padding: 20px; width: 80%; max-width: 400px; border-radius: 8px; text-align: center; }
-        .modal-content button { margin-top: 10px; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            padding: 20px; 
+            background-color: #000000; 
+            color: #dc143c; 
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: auto; 
+            background: #000000; 
+            padding: 20px; 
+            border-radius: 8px; 
+            border: 1px solid #dc143c;
+            box-shadow: 0 4px 10px rgba(220, 20, 60, 0.2);
+            flex: 1;
+            box-sizing: border-box;
+            width: 100%;
+        }
+        h1 { 
+            text-align: center; 
+            color: #dc143c; 
+            font-size: 1.5em; 
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        label { 
+            font-weight: bold; 
+            margin-top: 15px; 
+            display: block; 
+            color: #dc143c; 
+        }
+        select, input { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 5px 0 15px 0; 
+            box-sizing: border-box; 
+            font-size: 1em; 
+            background-color: #ffffff;
+            color: #000000;
+            border: 1px solid #dc143c;
+            border-radius: 4px;
+        }
+        select:focus, input:focus {
+            outline: none;
+            box-shadow: 0 0 5px #dc143c;
+        }
+        .progress { 
+            font-size: 1.8em; 
+            font-weight: bold; 
+            text-align: center; 
+            margin: 15px 0; 
+            color: #dc143c; 
+            background: #1a0005; 
+            border: 1px solid #dc143c;
+            padding: 12px; 
+            border-radius: 4px; 
+        }
+        button { 
+            width: 100%; 
+            padding: 15px; 
+            background-color: rgba(220, 20, 60, 0.4); 
+            color: #ffffff; 
+            border: 1px solid #dc143c; 
+            border-radius: 4px; 
+            font-size: 1em; 
+            font-weight: bold;
+            cursor: pointer; 
+            margin-top: 10px; 
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: rgba(220, 20, 60, 0.7);
+        }
+        button.secondary { 
+            background-color: rgba(0, 0, 0, 0.5); 
+            border: 1px solid #dc143c;
+        }
+        button.secondary:hover {
+            background-color: rgba(220, 20, 60, 0.3);
+        }
+        button.demo { 
+            background-color: rgba(150, 10, 40, 0.5); 
+        }
+        .file-section { 
+            background: #0a0002; 
+            padding: 15px; 
+            border-radius: 4px; 
+            margin-bottom: 20px; 
+            border: 1px solid #dc143c; 
+        }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 10; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0,0,0,0.8); 
+        }
+        .modal-content { 
+            background-color: #ffffff; 
+            color: #000000;
+            margin: 15% auto; 
+            padding: 25px; 
+            width: 80%; 
+            max-width: 400px; 
+            border-radius: 8px; 
+            text-align: center; 
+            border: 2px solid #dc143c;
+        }
+        .modal-content button { 
+            margin-top: 15px; 
+            color: #ffffff;
+        }
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #dc143c;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            border-top: 1px solid #1a0005;
+            padding-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -31,7 +149,7 @@
             <label>Cargar Archivo Excel CSV (plano_tmt1.csv):</label>
             <input type="file" id="filePlano" accept=".csv">
 
-            <button class="demo" onclick="cargarDatosPrueba()">⚡ Cargar Datos de Prueba Automáticos</button>
+            <button class="demo" onclick="cargarDatosPrueba()">Cargar Datos de Prueba Automaticos</button>
         </div>
 
         <label>Bodega:</label>
@@ -55,13 +173,17 @@
         <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
     </div>
 
+    <footer>
+        Renovables para una vida mejor
+    </footer>
+
     <!-- Modal para Alertas -->
     <div id="alertModal" class="modal">
         <div class="modal-content">
-            <h3 id="modalTitle">Atención</h3>
+            <h3 id="modalTitle">Atencion</h3>
             <p id="modalMessage">Mensaje de alerta</p>
-            <button id="modalBtnAceptar" onclick="resolverModal(true)" style="background-color: #28a745;">Aceptar / Continuar</button>
-            <button id="modalBtnCancelar" onclick="resolverModal(false)" style="background-color: #dc3545;">Cancelar</button>
+            <button id="modalBtnAceptar" onclick="resolverModal(true)" style="background-color: rgba(40, 167, 69, 0.9);">Aceptar / Continuar</button>
+            <button id="modalBtnCancelar" onclick="resolverModal(false)" style="background-color: rgba(220, 53, 69, 0.9);">Cancelar</button>
         </div>
     </div>
 
@@ -107,7 +229,6 @@
             });
         });
 
-        // Botón mágico para probar sin necesidad de subir archivos físicos
         function cargarDatosPrueba() {
             datosPlano = [
                 { bodega: "Bodega_Norte", calle: "Calle_A1", cantidad_lotes: 3 },
@@ -126,7 +247,7 @@
             ];
 
             cargarBodegas();
-            alert("¡Datos de prueba cargados con éxito! Ya puedes seleccionar Bodega y Calle.");
+            alert("Datos de prueba cargados con exito. Seleccione Bodega y Calle.");
         }
 
         function cargarBodegas() {
@@ -192,7 +313,7 @@
         function procesarLoteEscaneado(bodega, calle, lote) {
             let yaCapturado = capturasCalleActual.find(c => c.lote == lote);
             if (yaCapturado) {
-                mostrarModal("Lote Duplicado", `El lote ${lote} ya fue escaneado en esta calle. ¿Confirma que desea registrarlo nuevamente?`, function(confirmado) {
+                mostrarModal("Lote Duplicado", `El lote ${lote} ya fue escaneado en esta calle. Desea registrarlo nuevamente?`, function(confirmado) {
                     if (confirmado) registrarCaptura(bodega, calle, lote, "DUPLICADO_CONFIRMADO");
                 });
                 return;
@@ -200,7 +321,7 @@
 
             let infoStock = datosStock.find(row => String(row.lote || row.Lote || row.LOTE) == lote);
             if (!infoStock && datosStock.length > 0) {
-                mostrarModal("Lote No Encontrado (Sobrante)", `El lote ${lote} no está en el stock lógico. Se agregará como sobrante/manual.`, function(confirmado) {
+                mostrarModal("Lote No Encontrado (Sobrante)", `El lote ${lote} no esta en el stock logico. Se agregara como sobrante/manual.`, function(confirmado) {
                     if (confirmado) registrarCaptura(bodega, calle, lote, "MANUAL_SOBRANTE", {});
                 });
                 return;
@@ -257,7 +378,7 @@
             }
 
             if (contadorActual !== meta) {
-                alert(`No se puede cerrar la calle. La cantidad de capturas (${contadorActual}) no coincide con la cantidad teórica esperada (${meta}).`);
+                alert(`No se puede cerrar la calle. La cantidad de capturas (${contadorActual}) no coincide con la cantidad teorica esperada (${meta}).`);
                 return;
             }
 
@@ -272,7 +393,8 @@
             let csv = Papa.unparse(capturasGlobales);
             let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             let link = document.createElement("a");
-            link.setAttribute("href", URL.createObjectURL(blob));
+            let url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
             link.setAttribute("download", "captura_tmt1_final.csv");
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
