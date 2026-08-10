@@ -106,6 +106,12 @@
             color: var(--color-text-primary);
         }
 
+        select:disabled, input:disabled {
+            background-color: #E0E0E0;
+            color: #616161;
+            cursor: not-allowed;
+        }
+
         select:focus, input:focus {
             outline: none;
             border-color: var(--color-primary-main);
@@ -176,7 +182,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Inventario Proceso</h1>
+        <h1>WMS Inventario Pro</h1>
         
         <!-- Pestañas de Navegación -->
         <div class="nav-tabs">
@@ -187,21 +193,34 @@
         <!-- VISTA 1: CONFIGURACIÓN Y ARCHIVOS -->
         <div id="viewConfig" class="view-section">
             <div class="file-section">
-                <label>Cargar Stock Lógico (stock_tmt1.csv):</label>
+                <label>Cargar Operarios (operarios.csv):</label>
+                <input type="file" id="fileOperarios" accept=".csv">
+                <div id="statusOperarios" class="status-box" style="display:none;">Operarios cargados con éxito</div>
+
+                <label style="margin-top: 15px;">Seleccionar Operario (Obligatorio):</label>
+                <select id="operarioSelect" onchange="bloquearOperarioConfig()">
+                    <option value="">Cargue operarios.csv primero...</option>
+                </select>
+
+                <label style="margin-top: 20px;">Cargar Stock (stock_tmt1.csv):</label>
                 <input type="file" id="fileStock" accept=".csv">
                 <div id="statusStock" class="status-box" style="display:none;">Stock cargado con éxito</div>
                 
-                <label style="margin-top: 15px;">Cargar Plano Bodega (plano_tmt1.csv):</label>
+                <label style="margin-top: 15px;">Cargar Plano (plano_tmt1.csv):</label>
                 <input type="file" id="filePlano" accept=".csv">
                 <div id="statusPlano" class="status-box" style="display:none;">Plano cargado con éxito</div>
             </div>
 
-            <button class="secondary" onclick="descargarCSVGlobal()">Descargar Inventario</button>
+            <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
             <button class="danger" onclick="reiniciarSistema()">Reiniciar Sistema / Nuevo Inventario</button>
         </div>
 
         <!-- VISTA 2: CAPTURA EN TERRENO -->
         <div id="viewCaptura" class="view-section active">
+            <div id="infoOperarioActivo" style="background: #FFF3E0; border: 1px solid #FFE0B2; color: #E65100; padding: 10px; border-radius: var(--border-radius-md); margin-bottom: 15px; font-weight: bold; text-align: center; font-size: 14px;">
+                Operario: No seleccionado
+            </div>
+
             <label>Bodega:</label>
             <select id="bodegaSelect" onchange="actualizarCalles()">
                 <option value="">Seleccione Bodega...</option>
@@ -212,7 +231,7 @@
                 <option value="">Seleccione Calle...</option>
             </select>
 
-            <label>Recuento de lotes</label>
+            <label>Meta de Lotes (Editable):</label>
             <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
 
             <div class="progress" id="displayProgress">0 / 300</div>
@@ -264,6 +283,8 @@
     <script>
         let datosPlano = [];
         let datosStock = [];
+        let datosOperarios = [];
+        let operarioActual = "";
         let capturasGlobales = [];
         let capturasCalleActual = [];
         let contadorActual = 0;
@@ -277,6 +298,11 @@
                 document.getElementById('tabConfig').classList.add('active');
                 document.getElementById('tabCaptura').classList.remove('active');
             } else {
+                if (!operarioActual) {
+                    alert("Debe seleccionar un operario en la pestaña de Configuración antes de continuar.");
+                    cambiarVista('config');
+                    return;
+                }
                 document.getElementById('viewConfig').classList.remove('active');
                 document.getElementById('viewCaptura').classList.add('active');
                 document.getElementById('tabConfig').classList.remove('active');
@@ -288,7 +314,6 @@
         function emitirPitido() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
                 
@@ -321,6 +346,16 @@
 
         const parseConfig = { header: true, skipEmptyLines: true, dynamicTyping: true, delimiter: "", encoding: "ISO-8859-1" };
 
+        document.getElementById('fileOperarios').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if(!file) return;
+            Papa.parse(file, { ...parseConfig, complete: function(results) { 
+                datosOperarios = results.data; 
+                cargarOperariosSelect(); 
+                document.getElementById('statusOperarios').style.display = 'block';
+            } });
+        });
+
         document.getElementById('filePlano').addEventListener('change', function(e) {
             let file = e.target.files[0];
             if(!file) return;
@@ -339,6 +374,23 @@
                 document.getElementById('statusStock').style.display = 'block';
             } });
         });
+
+        function cargarOperariosSelect() {
+            const opSelect = document.getElementById('operarioSelect');
+            opSelect.innerHTML = '<option value="">Seleccione Operario...</option>';
+            const operarios = [...new Set(datosOperarios.map(row => row.operario || row.Operario || row.OPERARIO || row.nombre || row.Nombre || row.NOMBRE))];
+            operarios.forEach(op => { if (op) opSelect.innerHTML += `<option value="${op}">${op}</option>`; });
+        }
+
+        function bloquearOperarioConfig() {
+            const opSelect = document.getElementById('operarioSelect');
+            operarioActual = opSelect.value;
+            if (operarioActual) {
+                opSelect.disabled = true; // Bloquea el selector permanentemente durante la sesión
+                document.getElementById('infoOperarioActivo').innerText = `Operario Activo: ${operarioActual}`;
+                alert(`Operario asignado: ${operarioActual}. El campo ha sido bloqueado para esta sesión.`);
+            }
+        }
 
         function cargarBodegas() {
             const bodegaSelect = document.getElementById('bodegaSelect');
@@ -417,6 +469,11 @@
 
         document.getElementById('scannerInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
+                if (!operarioActual) {
+                    alert("Error: No hay un operario asignado.");
+                    cambiarVista('config');
+                    return;
+                }
                 let bodega = document.getElementById('bodegaSelect').value;
                 let calle = document.getElementById('calleSelect').value;
                 let lote = String(this.value).trim();
@@ -490,7 +547,18 @@
                 }
             }
 
-            capturasCalleActual.push({ bodega, calle, lote, sku: extra.sku || '', descripcion: extra.descripcion || '', piezas: extra.piezas || '', volumen: extra.volumen || '', estado_captura: estado, timestamp: new Date().toISOString() });
+            capturasCalleActual.push({ 
+                operario: operarioActual, 
+                bodega, 
+                calle, 
+                lote, 
+                sku: extra.sku || '', 
+                descripcion: extra.descripcion || '', 
+                piezas: extra.piezas || '', 
+                volumen: extra.volumen || '', 
+                estado_captura: estado, 
+                timestamp: new Date().toISOString() 
+            });
             actualizarProgresoVisual();
         }
 
@@ -563,26 +631,35 @@
         }
 
         function reiniciarSistema() {
-            mostrarModal("¿Reiniciar Sistema?", "Se borrarán todas las capturas almacenadas y se limpiarán los datos para iniciar un nuevo inventario. Asegúrate de haber descargado tu consolidado final antes de continuar.", function(confirmado) {
+            mostrarModal("¿Reiniciar Sistema?", "Se borrarán todas las capturas, se deseará el operario y se limpiarán los datos para iniciar un nuevo inventario.", function(confirmado) {
                 if (confirmado) {
                     datosPlano = [];
                     datosStock = [];
+                    datosOperarios = [];
+                    operarioActual = "";
                     capturasGlobales = [];
                     capturasCalleActual = [];
                     contadorActual = 0;
                     calleCerradaGuardada = false;
 
+                    document.getElementById('fileOperarios').value = '';
                     document.getElementById('fileStock').value = '';
                     document.getElementById('filePlano').value = '';
+                    document.getElementById('statusOperarios').style.display = 'none';
                     document.getElementById('statusStock').style.display = 'none';
                     document.getElementById('statusPlano').style.display = 'none';
+
+                    const opSelect = document.getElementById('operarioSelect');
+                    opSelect.disabled = false;
+                    opSelect.innerHTML = '<option value="">Cargue operarios.csv primero...</option>';
+                    document.getElementById('infoOperarioActivo').innerText = "Operario: No seleccionado";
 
                     document.getElementById('bodegaSelect').innerHTML = '<option value="">Seleccione Bodega...</option>';
                     document.getElementById('calleSelect').innerHTML = '<option value="">Seleccione Calle...</option>';
                     document.getElementById('metaLotes').value = '300';
                     
                     actualizarProgresoVisual();
-                    alert("Sistema reiniciado con éxito. Listo para un nuevo inventario.");
+                    alert("Sistema reiniciado con éxito.");
                     cambiarVista('config');
                 }
             });
