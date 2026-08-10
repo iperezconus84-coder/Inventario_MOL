@@ -213,7 +213,7 @@
             </div>
 
             <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
-            <button class="warning" onclick="descargarReporteDiferencias()">Descargar Reporte de Diferencias (Sobrantes/Faltantes)</button>
+            <button class="warning" onclick="descargarReporteDiferencias()">Descargar Reporte de Diferencias (Pareados/Sobrantes/Faltantes)</button>
             <button class="danger" onclick="reiniciarSistema()">Reiniciar Sistema / Nuevo Inventario</button>
         </div>
 
@@ -684,10 +684,15 @@
                 return;
             }
 
-            // Extraer todos los lotes del stock lógico
-            let lotesStockSet = new Set(datosStock.map(row => String(row.lote || row.Lote || row.LOTE).trim()));
-            
-            // Extraer todos los lotes capturados
+            // Crear un mapa de stock lógico para búsqueda rápida por lote
+            let stockMap = new Map();
+            datosStock.forEach(row => {
+                let loteStock = String(row.lote || row.Lote || row.LOTE).trim();
+                if (loteStock) {
+                    stockMap.set(loteStock, row);
+                }
+            });
+
             let lotesCapturadosMap = new Map();
             capturasGlobales.forEach(c => {
                 let loteStr = String(c.lote).trim();
@@ -696,10 +701,25 @@
 
             let reporteDiferencias = [];
 
-            // 1. Calcular Sobrantes (Están en capturas pero NO en stock lógico)
+            // 1. Procesar Capturados (PAREADOS vs SOBRANTES)
             capturasGlobales.forEach(c => {
                 let loteStr = String(c.lote).trim();
-                if (!lotesStockSet.has(loteStr)) {
+                if (stockMap.has(loteStr)) {
+                    // Está en stock y en captura -> PAREADO
+                    let stockInfo = stockMap.get(loteStr);
+                    reporteDiferencias.push({
+                        tipo_diferencia: "PAREADO",
+                        lote: loteStr,
+                        bodega: c.bodega,
+                        calle: c.calle,
+                        sku: c.sku || stockInfo.sku || stockInfo.SKU || '',
+                        descripcion: c.descripcion || stockInfo.descripción || stockInfo.Descripción || '',
+                        piezas: c.piezas !== '' ? c.piezas : (stockInfo.piezas || stockInfo.Piezas || ''),
+                        volumen: c.volumen !== '' ? c.volumen : (stockInfo.volumen || stockInfo.Volumen || ''),
+                        operario: c.operario
+                    });
+                } else {
+                    // Está en captura pero NO en stock -> SOBRANTE
                     reporteDiferencias.push({
                         tipo_diferencia: "SOBRANTE",
                         lote: loteStr,
@@ -714,26 +734,25 @@
                 }
             });
 
-            // 2. Calcular Faltantes (Están en stock lógico pero NO aparecen en ninguna captura)
-            datosStock.forEach(row => {
-                let loteStock = String(row.lote || row.Lote || row.LOTE).trim();
+            // 2. Procesar Faltantes (Están en el stock lógico pero NO en las capturas)
+            stockMap.forEach((stockInfo, loteStock) => {
                 if (!lotesCapturadosMap.has(loteStock)) {
                     reporteDiferencias.push({
                         tipo_diferencia: "FALTANTE",
                         lote: loteStock,
-                        bodega: row.bodega || row.Bodega || row.BODEGA || "",
-                        calle: row.calle || row.Calle || row.CALLE || "",
-                        sku: row.sku || row.SKU || "",
-                        descripcion: row.descripción || row.Descripción || "",
-                        piezas: row.piezas || row.Piezas || "",
-                        volumen: row.volumen || row.Volumen || "",
+                        bodega: stockInfo.bodega || stockInfo.Bodega || stockInfo.BODEGA || "",
+                        calle: stockInfo.calle || stockInfo.Calle || stockInfo.CALLE || "",
+                        sku: stockInfo.sku || stockInfo.SKU || "",
+                        descripcion: stockInfo.descripción || stockInfo.Descripción || "",
+                        piezas: stockInfo.piezas || stockInfo.Piezas || "",
+                        volumen: stockInfo.volumen || stockInfo.Volumen || "",
                         operario: "-"
                     });
                 }
             });
 
             if (reporteDiferencias.length === 0) {
-                alert('¡Inventario perfecto! No se encontraron sobrantes ni faltantes.');
+                alert('¡Inventario perfecto!');
                 return;
             }
 
