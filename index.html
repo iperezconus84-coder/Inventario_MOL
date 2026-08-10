@@ -94,7 +94,7 @@
             text-transform: uppercase;
         }
 
-        select, input {
+        select, input, textarea {
             width: 100%;
             padding: 12px;
             margin-bottom: 16px;
@@ -104,6 +104,7 @@
             box-sizing: border-box;
             background-color: #FFF;
             color: var(--color-text-primary);
+            font-family: 'Open Sans', sans-serif;
         }
 
         select:disabled, input:disabled {
@@ -112,7 +113,7 @@
             cursor: not-allowed;
         }
 
-        select:focus, input:focus {
+        select:focus, input:focus, textarea:focus {
             outline: none;
             border-color: var(--color-primary-main);
         }
@@ -239,7 +240,7 @@
             <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus>
             
             <button id="btnVerDetalle" class="secondary" onclick="abrirModalDetalle()">Ver / Eliminar Lotes Capturados</button>
-            <button id="btnCerrarCalle" onclick="cerrarCalle()">Cerrar Calle y Guardar</button>
+            <button id="btnCerrarCalle" onclick="abrirModalCierreCalle()">Cerrar Calle y Guardar</button>
             <button id="btnReabrirCalle" class="warning" onclick="reabrirCalle()" style="display:none;">Reabrir Calle Actual</button>
         </div>
     </div>
@@ -255,6 +256,18 @@
             <p id="modalMessage">Mensaje de alerta</p>
             <button id="modalBtnAceptar" onclick="resolverModal(true)">Aceptar / Continuar</button>
             <button id="modalBtnCancelar" class="secondary" onclick="resolverModal(false)">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal para Cierre de Calle con Comentario -->
+    <div id="cierreModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <h3>Cierre de Calle</h3>
+            <p id="cierreInfoMeta" style="margin: 10px 0; font-size: 14px; color: var(--color-text-secondary);"></p>
+            <label style="text-align: left; margin-top: 15px;">Comentario u Observación (Opcional):</label>
+            <textarea id="comentarioCalleInput" rows="3" placeholder="Ej: 2 paquetes sin lote..." style="resize: none;"></textarea>
+            <button onclick="confirmarCierreCalle()">Confirmar y Cerrar Calle</button>
+            <button class="secondary" onclick="cerrarModalCierre()">Cancelar</button>
         </div>
     </div>
 
@@ -386,7 +399,7 @@
             const opSelect = document.getElementById('operarioSelect');
             operarioActual = opSelect.value;
             if (operarioActual) {
-                opSelect.disabled = true; // Bloquea el selector permanentemente durante la sesión
+                opSelect.disabled = true;
                 document.getElementById('infoOperarioActivo').innerText = `Operario Activo: ${operarioActual}`;
                 alert(`Operario asignado: ${operarioActual}. El campo ha sido bloqueado para esta sesión.`);
             }
@@ -557,6 +570,7 @@
                 piezas: extra.piezas || '', 
                 volumen: extra.volumen || '', 
                 estado_captura: estado, 
+                comentario_calle: "", // Se llenará al cerrar la calle
                 timestamp: new Date().toISOString() 
             });
             actualizarProgresoVisual();
@@ -604,14 +618,44 @@
 
         function cerrarModalDetalle() { document.getElementById('detalleModal').style.display = 'none'; }
 
-        function cerrarCalle() {
+        function abrirModalCierreCalle() {
+            let bodega = document.getElementById('bodegaSelect').value;
+            let calle = document.getElementById('calleSelect').value;
             let meta = parseInt(document.getElementById('metaLotes').value) || 0;
-            if (contadorActual !== meta) { alert(`No coincide la cantidad de capturas (${contadorActual}) con la meta (${meta}).`); return; }
-            let bodega = document.getElementById('bodegaSelect').value, calle = document.getElementById('calleSelect').value;
+
+            if (!bodega || !calle) {
+                alert('Seleccione Bodega y Calle primero.');
+                return;
+            }
+            if (contadorActual !== meta) {
+                alert(`No coincide la cantidad de capturas (${contadorActual}) con la meta (${meta}).`);
+                return;
+            }
+
+            document.getElementById('cierreInfoMeta').innerText = `Calle: ${calle} | Total capturados: ${contadorActual} / Meta: ${meta}`;
+            document.getElementById('comentarioCalleInput').value = '';
+            document.getElementById('cierreModal').style.display = 'block';
+        }
+
+        function cerrarModalCierre() {
+            document.getElementById('cierreModal').style.display = 'none';
+        }
+
+        function confirmarCierreCalle() {
+            let comentario = document.getElementById('comentarioCalleInput').value.trim();
+            let bodega = document.getElementById('bodegaSelect').value;
+            let calle = document.getElementById('calleSelect').value;
+
+            // Inyectar el comentario a todos los registros de esta calle actual
+            capturasCalleActual.forEach(item => {
+                item.comentario_calle = comentario;
+            });
+
             capturasGlobales = capturasGlobales.filter(c => !(c.bodega == bodega && c.calle == calle)).concat(capturasCalleActual);
             calleCerradaGuardada = true;
+            cerrarModalCierre();
             actualizarBotonesAccion();
-            alert(`Calle ${calle} cerrada correctamente.`);
+            alert(`Calle ${calle} cerrada correctamente con observación guardada.`);
         }
 
         function reabrirCalle() {
