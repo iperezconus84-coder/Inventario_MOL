@@ -175,7 +175,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Control de Inventario</h1>
+        <h1>WMS Inventario Pro</h1>
         
         <!-- Pestañas de Navegación -->
         <div class="nav-tabs">
@@ -186,11 +186,11 @@
         <!-- VISTA 1: CONFIGURACIÓN Y ARCHIVOS -->
         <div id="viewConfig" class="view-section">
             <div class="file-section">
-                <label>Cargar Stock Lógico (stock_tmt1.csv):</label>
+                <label>Cargar Stock (stock_tmt1.csv):</label>
                 <input type="file" id="fileStock" accept=".csv">
                 <div id="statusStock" class="status-box" style="display:none;">Stock cargado con éxito</div>
                 
-                <label style="margin-top: 15px;">Cargar Plano Bodega (plano_tmt1.csv):</label>
+                <label style="margin-top: 15px;">Cargar Plano (plano_tmt1.csv):</label>
                 <input type="file" id="filePlano" accept=".csv">
                 <div id="statusPlano" class="status-box" style="display:none;">Plano cargado con éxito</div>
             </div>
@@ -210,7 +210,7 @@
                 <option value="">Seleccione Calle...</option>
             </select>
 
-            <label>Cantidad de lotes:</label>
+            <label>Meta de Lotes (Editable):</label>
             <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
 
             <div class="progress" id="displayProgress">0 / 300</div>
@@ -286,15 +286,35 @@
         function emitirPitido() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Oscilador principal (tono alto industrial)
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
-                oscillator.type = 'sine';
-                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
-                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                
+                oscillator.type = 'square'; 
+                oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); 
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
+                
                 oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.1);
+                oscillator.stop(audioCtx.currentTime + 0.15); 
+                
+                setTimeout(() => {
+                    try {
+                        const osc2 = audioCtx.createOscillator();
+                        const gain2 = audioCtx.createGain();
+                        osc2.type = 'square';
+                        osc2.frequency.setValueAtTime(1500, audioCtx.currentTime);
+                        gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                        osc2.connect(gain2);
+                        gain2.connect(audioCtx.destination);
+                        osc2.start();
+                        osc2.stop(audioCtx.currentTime + 0.15);
+                    } catch(e){}
+                }, 180);
+
             } catch (e) {}
         }
 
