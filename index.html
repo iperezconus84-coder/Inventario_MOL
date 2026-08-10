@@ -175,7 +175,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>WMS Inventario Pro</h1>
+        <h1>Control de Inventario</h1>
         
         <!-- Pestañas de Navegación -->
         <div class="nav-tabs">
@@ -186,11 +186,11 @@
         <!-- VISTA 1: CONFIGURACIÓN Y ARCHIVOS -->
         <div id="viewConfig" class="view-section">
             <div class="file-section">
-                <label>Cargar Stock (stock_tmt1.csv):</label>
+                <label>Cargar Stock Lógico (stock_tmt1.csv):</label>
                 <input type="file" id="fileStock" accept=".csv">
                 <div id="statusStock" class="status-box" style="display:none;">Stock cargado con éxito</div>
                 
-                <label style="margin-top: 15px;">Cargar Plano (plano_tmt1.csv):</label>
+                <label style="margin-top: 15px;">Cargar Plano Bodega (plano_tmt1.csv):</label>
                 <input type="file" id="filePlano" accept=".csv">
                 <div id="statusPlano" class="status-box" style="display:none;">Plano cargado con éxito</div>
             </div>
@@ -210,7 +210,7 @@
                 <option value="">Seleccione Calle...</option>
             </select>
 
-            <label>Meta de Lotes (Editable):</label>
+            <label>Cantidad de lotes:</label>
             <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
 
             <div class="progress" id="displayProgress">0 / 300</div>
