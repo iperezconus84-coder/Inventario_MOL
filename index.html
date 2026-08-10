@@ -175,7 +175,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Inventario Proceso</h1>
+        <h1>WMS Inventario Pro</h1>
         
         <!-- Pestañas de Navegación -->
         <div class="nav-tabs">
@@ -186,11 +186,11 @@
         <!-- VISTA 1: CONFIGURACIÓN Y ARCHIVOS -->
         <div id="viewConfig" class="view-section">
             <div class="file-section">
-                <label>Cargar Stock Lógico (stock_tmt1.csv):</label>
+                <label>Cargar Stock (stock_tmt1.csv):</label>
                 <input type="file" id="fileStock" accept=".csv">
                 <div id="statusStock" class="status-box" style="display:none;">Stock cargado con éxito</div>
                 
-                <label style="margin-top: 15px;">Cargar Plano Bodega (plano_tmt1.csv):</label>
+                <label style="margin-top: 15px;">Cargar Plano (plano_tmt1.csv):</label>
                 <input type="file" id="filePlano" accept=".csv">
                 <div id="statusPlano" class="status-box" style="display:none;">Plano cargado con éxito</div>
             </div>
@@ -210,7 +210,7 @@
                 <option value="">Seleccione Calle...</option>
             </select>
 
-            <label>Cantidad etiquetas:</label>
+            <label>Meta de Lotes (Editable):</label>
             <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
 
             <div class="progress" id="displayProgress">0 / 300</div>
@@ -365,19 +365,27 @@
         }
 
         function actualizarProgresoVisual() {
-            let meta = document.getElementById('metaLotes').value;
+            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
             document.getElementById('displayProgress').innerText = `${contadorActual} / ${meta}`;
+            actualizarBotonesAccion();
         }
 
         function actualizarBotonesAccion() {
             let btnCerrar = document.getElementById('btnCerrarCalle');
             let btnReabrir = document.getElementById('btnReabrirCalle');
             let inputScanner = document.getElementById('scannerInput');
+            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
+
             if (calleCerradaGuardada) {
                 btnCerrar.style.display = 'none';
                 btnReabrir.style.display = 'block';
                 inputScanner.disabled = true;
                 inputScanner.placeholder = "Calle cerrada. Pulse Reabrir.";
+            } else if (contadorActual >= meta && meta > 0) {
+                btnCerrar.style.display = 'block';
+                btnReabrir.style.display = 'none';
+                inputScanner.disabled = true;
+                inputScanner.placeholder = "Meta alcanzada. Amplíe meta para continuar.";
             } else {
                 btnCerrar.style.display = 'block';
                 btnReabrir.style.display = 'none';
@@ -394,6 +402,13 @@
                 this.value = '';
                 if (!bodega || !calle) { alert('Seleccione Bodega y Calle primero.'); return; }
                 if (lote === '') return;
+
+                let meta = parseInt(document.getElementById('metaLotes').value) || 0;
+                if (contadorActual >= meta) {
+                    alert(`Se ha alcanzado la meta de ${meta} lotes para esta calle. Amplíe la cantidad de forma manual si desea capturar más.`);
+                    return;
+                }
+
                 procesarLoteEscaneado(bodega, calle, lote);
             }
         });
@@ -422,6 +437,12 @@
         }
 
         function registrarCaptura(bodega, calle, lote, estado, extra = {}) {
+            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
+            if (contadorActual >= meta) {
+                alert(`No se pueden registrar más lotes. Se alcanzó la meta de ${meta}.`);
+                return;
+            }
+
             emitirPitido();
             contadorActual++;
             capturasCalleActual.push({ bodega, calle, lote, sku: extra.sku || '', descripcion: extra.descripcion || '', piezas: extra.piezas || '', volumen: extra.volumen || '', estado_captura: estado, timestamp: new Date().toISOString() });
