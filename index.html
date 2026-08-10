@@ -21,7 +21,7 @@
         }
 
         body {
-            font-family: 'Open Sans', sans-serif, sans-serif;
+            font-family: 'Open Sans', sans-serif;
             background-color: #FAFAFA;
             color: var(--color-text-primary);
             margin: 0;
@@ -179,12 +179,12 @@
         
         <!-- Pestañas de Navegación -->
         <div class="nav-tabs">
-            <div id="tabConfig" class="nav-tab active" onclick="cambiarVista('config')">Configuración</div>
-            <div id="tabCaptura" class="nav-tab" onclick="cambiarVista('captura')">Captura</div>
+            <div id="tabConfig" class="nav-tab" onclick="cambiarVista('config')">Configuración</div>
+            <div id="tabCaptura" class="nav-tab active" onclick="cambiarVista('captura')">Captura</div>
         </div>
 
         <!-- VISTA 1: CONFIGURACIÓN Y ARCHIVOS -->
-        <div id="viewConfig" class="view-section active">
+        <div id="viewConfig" class="view-section">
             <div class="file-section">
                 <label>Cargar Stock (stock_tmt1.csv):</label>
                 <input type="file" id="fileStock" accept=".csv">
@@ -199,7 +199,7 @@
         </div>
 
         <!-- VISTA 2: CAPTURA EN TERRENO -->
-        <div id="viewCaptura" class="view-section">
+        <div id="viewCaptura" class="view-section active">
             <label>Bodega:</label>
             <select id="bodegaSelect" onchange="actualizarCalles()">
                 <option value="">Seleccione Bodega...</option>
@@ -279,7 +279,6 @@
                 document.getElementById('viewCaptura').classList.add('active');
                 document.getElementById('tabConfig').classList.remove('active');
                 document.getElementById('tabCaptura').classList.add('active');
-                // Al pasar a captura, enfocar automáticamente el input si hay bodega y calle seleccionadas
                 setTimeout(() => { document.getElementById('scannerInput').focus(); }, 100);
             }
         }
@@ -474,7 +473,7 @@
         function cerrarModalDetalle() { document.getElementById('detalleModal').style.display = 'none'; }
 
         function cerrarCalle() {
-            let meta = parseInt(document.getElementById('metaLotes').value)요 || 0;
+            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
             if (contadorActual !== meta) { alert(`No coincide la cantidad de capturas (${contadorActual}) con la meta (${meta}).`); return; }
             let bodega = document.getElementById('bodegaSelect').value, calle = document.getElementById('calleSelect').value;
             capturasGlobales = capturasGlobales.filter(c => !(c.bodega == bodega && c.calle == calle)).concat(capturasCalleActual);
