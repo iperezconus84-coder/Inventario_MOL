@@ -1,0 +1,9 @@
+{
+  "name": "INVENTARIO DE PROCESOS",
+  "short_name": "WMS Inventario",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#00ff66",
+  "icons": []
+}
