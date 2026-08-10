@@ -43,6 +43,40 @@
             box-sizing: border-box;
         }
 
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px;
+            background-color: #EEEEEE;
+            border: 1px solid var(--color-border-subtle);
+            color: var(--color-text-secondary);
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            border-radius: var(--border-radius-md);
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        .nav-tab.active {
+            background-color: var(--color-primary-main);
+            color: white;
+            border-color: var(--color-primary-dark);
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
         h1 {
             color: var(--color-primary-dark);
             font-size: 24px;
@@ -110,10 +144,22 @@
 
         .file-section { 
             background: #F5F5F5; 
-            padding: 12px; 
+            padding: 16px; 
             border-radius: var(--border-radius-md); 
             margin-bottom: 16px; 
             border: 1px dashed var(--color-border-subtle); 
+        }
+
+        .status-box {
+            background: #E8F5E9;
+            border: 1px solid #A5D6A7;
+            color: #2E7D32;
+            padding: 12px;
+            border-radius: var(--border-radius-md);
+            margin-bottom: 16px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: bold;
         }
 
         .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
@@ -129,36 +175,52 @@
 </head>
 <body>
     <div class="container">
-        <h1>Inventario SLASA ANDROID</h1>
+        <h1>WMS Inventario Pro</h1>
         
-        <div class="file-section">
-            <label>Cargar Stock Lógico (stock_tmt1.csv):</label>
-            <input type="file" id="fileStock" accept=".csv">
-            <label>Cargar Plano Bodega (plano_tmt1.csv):</label>
-            <input type="file" id="filePlano" accept=".csv">
+        <!-- Pestañas de Navegación -->
+        <div class="nav-tabs">
+            <div id="tabConfig" class="nav-tab active" onclick="cambiarVista('config')">Configuración</div>
+            <div id="tabCaptura" class="nav-tab" onclick="cambiarVista('captura')">Captura</div>
         </div>
 
-        <label>Bodega:</label>
-        <select id="bodegaSelect" onchange="actualizarCalles()">
-            <option value="">Seleccione Bodega...</option>
-        </select>
+        <!-- VISTA 1: CONFIGURACIÓN Y ARCHIVOS -->
+        <div id="viewConfig" class="view-section active">
+            <div class="file-section">
+                <label>Cargar Stock (stock_tmt1.csv):</label>
+                <input type="file" id="fileStock" accept=".csv">
+                <div id="statusStock" class="status-box" style="display:none;">Stock cargado con éxito</div>
+                
+                <label style="margin-top: 15px;">Cargar Plano (plano_tmt1.csv):</label>
+                <input type="file" id="filePlano" accept=".csv">
+                <div id="statusPlano" class="status-box" style="display:none;">Plano cargado con éxito</div>
+            </div>
 
-        <label>Calle:</label>
-        <select id="calleSelect" onchange="configurarCalle()">
-            <option value="">Seleccione Calle...</option>
-        </select>
+            <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
+        </div>
 
-        <label>Cantidad etiquetas:</label>
-        <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
+        <!-- VISTA 2: CAPTURA EN TERRENO -->
+        <div id="viewCaptura" class="view-section">
+            <label>Bodega:</label>
+            <select id="bodegaSelect" onchange="actualizarCalles()">
+                <option value="">Seleccione Bodega...</option>
+            </select>
 
-        <div class="progress" id="displayProgress">0 / 300</div>
+            <label>Calle:</label>
+            <select id="calleSelect" onchange="configurarCalle()">
+                <option value="">Seleccione Calle...</option>
+            </select>
 
-        <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus>
-        
-        <button id="btnVerDetalle" class="secondary" onclick="abrirModalDetalle()">Ver / Eliminar Lotes Capturados</button>
-        <button id="btnCerrarCalle" onclick="cerrarCalle()">Cerrar Calle y Guardar</button>
-        <button id="btnReabrirCalle" class="warning" onclick="reabrirCalle()" style="display:none;">Reabrir Calle Actual</button>
-        <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
+            <label>Meta de Lotes (Editable):</label>
+            <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
+
+            <div class="progress" id="displayProgress">0 / 300</div>
+
+            <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus>
+            
+            <button id="btnVerDetalle" class="secondary" onclick="abrirModalDetalle()">Ver / Eliminar Lotes Capturados</button>
+            <button id="btnCerrarCalle" onclick="cerrarCalle()">Cerrar Calle y Guardar</button>
+            <button id="btnReabrirCalle" class="warning" onclick="reabrirCalle()" style="display:none;">Reabrir Calle Actual</button>
+        </div>
     </div>
 
     <footer>
@@ -206,6 +268,22 @@
         let callbackModal = null;
         let calleCerradaGuardada = false;
 
+        function cambiarVista(vista) {
+            if (vista === 'config') {
+                document.getElementById('viewConfig').classList.add('active');
+                document.getElementById('viewCaptura').classList.remove('active');
+                document.getElementById('tabConfig').classList.add('active');
+                document.getElementById('tabCaptura').classList.remove('active');
+            } else {
+                document.getElementById('viewConfig').classList.remove('active');
+                document.getElementById('viewCaptura').classList.add('active');
+                document.getElementById('tabConfig').classList.remove('active');
+                document.getElementById('tabCaptura').classList.add('active');
+                // Al pasar a captura, enfocar automáticamente el input si hay bodega y calle seleccionadas
+                setTimeout(() => { document.getElementById('scannerInput').focus(); }, 100);
+            }
+        }
+
         function emitirPitido() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -226,13 +304,20 @@
         document.getElementById('filePlano').addEventListener('change', function(e) {
             let file = e.target.files[0];
             if(!file) return;
-            Papa.parse(file, { ...parseConfig, complete: function(results) { datosPlano = results.data; cargarBodegas(); alert('Archivo plano cargado correctamente'); } });
+            Papa.parse(file, { ...parseConfig, complete: function(results) { 
+                datosPlano = results.data; 
+                cargarBodegas(); 
+                document.getElementById('statusPlano').style.display = 'block';
+            } });
         });
 
         document.getElementById('fileStock').addEventListener('change', function(e) {
             let file = e.target.files[0];
             if(!file) return;
-            Papa.parse(file, { ...parseConfig, complete: function(results) { datosStock = results.data; alert('Archivo de stock cargado correctamente'); } });
+            Papa.parse(file, { ...parseConfig, complete: function(results) { 
+                datosStock = results.data; 
+                document.getElementById('statusStock').style.display = 'block';
+            } });
         });
 
         function cargarBodegas() {
@@ -389,7 +474,7 @@
         function cerrarModalDetalle() { document.getElementById('detalleModal').style.display = 'none'; }
 
         function cerrarCalle() {
-            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
+            let meta = parseInt(document.getElementById('metaLotes').value)요 || 0;
             if (contadorActual !== meta) { alert(`No coincide la cantidad de capturas (${contadorActual}) con la meta (${meta}).`); return; }
             let bodega = document.getElementById('bodegaSelect').value, calle = document.getElementById('calleSelect').value;
             capturasGlobales = capturasGlobales.filter(c => !(c.bodega == bodega && c.calle == calle)).concat(capturasCalleActual);
