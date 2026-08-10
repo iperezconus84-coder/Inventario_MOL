@@ -175,7 +175,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Inventario de Proceso</h1>
+        <h1>WMS Inventario Pro</h1>
         
         <!-- Pestañas de Navegación -->
         <div class="nav-tabs">
@@ -186,11 +186,11 @@
         <!-- VISTA 1: CONFIGURACIÓN Y ARCHIVOS -->
         <div id="viewConfig" class="view-section">
             <div class="file-section">
-                <label>Cargar Stock Lógico (stock_tmt1.csv):</label>
+                <label>Cargar Stock (stock_tmt1.csv):</label>
                 <input type="file" id="fileStock" accept=".csv">
                 <div id="statusStock" class="status-box" style="display:none;">Stock cargado con éxito</div>
                 
-                <label style="margin-top: 15px;">Cargar Plano Bodega (plano_tmt1.csv):</label>
+                <label style="margin-top: 15px;">Cargar Plano (plano_tmt1.csv):</label>
                 <input type="file" id="filePlano" accept=".csv">
                 <div id="statusPlano" class="status-box" style="display:none;">Plano cargado con éxito</div>
             </div>
@@ -210,7 +210,7 @@
                 <option value="">Seleccione Calle...</option>
             </select>
 
-            <label>Recuento de lotes</label>
+            <label>Meta de Lotes (Editable):</label>
             <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
 
             <div class="progress" id="displayProgress">0 / 300</div>
@@ -286,6 +286,8 @@
         function emitirPitido() {
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Oscilador principal (tono alto industrial)
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
                 
@@ -490,10 +492,6 @@
             }
 
             capturasCalleActual.push({ bodega, calle, lote, sku: extra.sku || '', descripcion: extra.descripcion || '', piezas: extra.piezas || '', volumen: extra.volumen || '', estado_captura: estado, timestamp: new Date().toISOString() });
-            
-            // Actualizar también en capturas globales si ya existe la calle registrada
-            let idxGlobal = capturasGlobales.findIndex(c => c.bodega == bodega && c.calle == calle && c.lote == lote);
-            // O simplemente mantenemos sincronizado al cerrar o mediante el array actual
             actualizarProgresoVisual();
         }
 
