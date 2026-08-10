@@ -183,7 +183,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Inventario de Proceso</h1>
+        <h1>WMS Inventario Pro</h1>
         
         <!-- Pestañas de Navegación -->
         <div class="nav-tabs">
@@ -203,16 +203,17 @@
                     <option value="">Cargue operarios.csv primero...</option>
                 </select>
 
-                <label style="margin-top: 20px;">Cargar Stock Lógico (stock_tmt1.csv):</label>
+                <label style="margin-top: 20px;">Cargar Stock (stock_tmt1.csv):</label>
                 <input type="file" id="fileStock" accept=".csv">
                 <div id="statusStock" class="status-box" style="display:none;">Stock cargado con éxito</div>
                 
-                <label style="margin-top: 15px;">Cargar Plano Bodega (plano_tmt1.csv):</label>
+                <label style="margin-top: 15px;">Cargar Plano (plano_tmt1.csv):</label>
                 <input type="file" id="filePlano" accept=".csv">
                 <div id="statusPlano" class="status-box" style="display:none;">Plano cargado con éxito</div>
             </div>
 
-            <button class="secondary" onclick="descargarCSVGlobal()">Cerrar / Descargar inventario</button>
+            <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
+            <button class="warning" onclick="descargarReporteDiferencias()">Descargar Reporte de Diferencias (Sobrantes/Faltantes)</button>
             <button class="danger" onclick="reiniciarSistema()">Reiniciar Sistema / Nuevo Inventario</button>
         </div>
 
@@ -232,7 +233,7 @@
                 <option value="">Seleccione Calle...</option>
             </select>
 
-            <label>Recuento de lotes</label>
+            <label>Meta de Lotes (Editable):</label>
             <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
 
             <div class="progress" id="displayProgress">0 / 300</div>
@@ -570,7 +571,7 @@
                 piezas: extra.piezas || '', 
                 volumen: extra.volumen || '', 
                 estado_captura: estado, 
-                comentario_calle: "", // Se llenará al cerrar la calle
+                comentario_calle: "", 
                 timestamp: new Date().toISOString() 
             });
             actualizarProgresoVisual();
@@ -646,7 +647,6 @@
             let bodega = document.getElementById('bodegaSelect').value;
             let calle = document.getElementById('calleSelect').value;
 
-            // Inyectar el comentario a todos los registros de esta calle actual
             capturasCalleActual.forEach(item => {
                 item.comentario_calle = comentario;
             });
@@ -671,6 +671,77 @@
             let link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = "captura_tmt1_final.csv";
+            link.click();
+        }
+
+        function descargarReporteDiferencias() {
+            if (datosStock.length === 0) {
+                alert('Debe cargar el archivo de stock lógico primero.');
+                return;
+            }
+            if (capturasGlobales.length === 0) {
+                alert('No hay capturas registradas para comparar.');
+                return;
+            }
+
+            // Extraer todos los lotes del stock lógico
+            let lotesStockSet = new Set(datosStock.map(row => String(row.lote || row.Lote || row.LOTE).trim()));
+            
+            // Extraer todos los lotes capturados
+            let lotesCapturadosMap = new Map();
+            capturasGlobales.forEach(c => {
+                let loteStr = String(c.lote).trim();
+                lotesCapturadosMap.set(loteStr, c);
+            });
+
+            let reporteDiferencias = [];
+
+            // 1. Calcular Sobrantes (Están en capturas pero NO en stock lógico)
+            capturasGlobales.forEach(c => {
+                let loteStr = String(c.lote).trim();
+                if (!lotesStockSet.has(loteStr)) {
+                    reporteDiferencias.push({
+                        tipo_diferencia: "SOBRANTE",
+                        lote: loteStr,
+                        bodega: c.bodega,
+                        calle: c.calle,
+                        sku: c.sku,
+                        descripcion: c.descripcion,
+                        piezas: c.piezas,
+                        volumen: c.volumen,
+                        operario: c.operario
+                    });
+                }
+            });
+
+            // 2. Calcular Faltantes (Están en stock lógico pero NO aparecen en ninguna captura)
+            datosStock.forEach(row => {
+                let loteStock = String(row.lote || row.Lote || row.LOTE).trim();
+                if (!lotesCapturadosMap.has(loteStock)) {
+                    reporteDiferencias.push({
+                        tipo_diferencia: "FALTANTE",
+                        lote: loteStock,
+                        bodega: row.bodega || row.Bodega || row.BODEGA || "",
+                        calle: row.calle || row.Calle || row.CALLE || "",
+                        sku: row.sku || row.SKU || "",
+                        descripcion: row.descripción || row.Descripción || "",
+                        piezas: row.piezas || row.Piezas || "",
+                        volumen: row.volumen || row.Volumen || "",
+                        operario: "-"
+                    });
+                }
+            });
+
+            if (reporteDiferencias.length === 0) {
+                alert('¡Inventario perfecto! No se encontraron sobrantes ni faltantes.');
+                return;
+            }
+
+            let csv = Papa.unparse(reporteDiferencias);
+            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "reporte_diferencias_inventario.csv";
             link.click();
         }
 
