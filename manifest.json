@@ -1,0 +1,11 @@
+{
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "INVENTARIO DE PROCESOS",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "WMS Inventario",
+  "start_url": "./index.html",
+  "theme_color": "#ffffff"
+}
