@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INVENTARIO DE PROCESOS</title>
+    <!-- El enlace al manifiesto ahora usa una ruta relativa directa para maximizar compatibilidad con GitHub Pages -->
+    <link rel="manifest" href="manifest.json">
     <style>
         body { 
             font-family: "Consolas", "Courier New", Courier, monospace; 
@@ -242,7 +244,6 @@
         Renovables para una vida mejor
     </footer>
 
-    <!-- Modal para Alertas Generales / Confirmaciones -->
     <div id="alertModal" class="modal">
         <div class="modal-content" style="max-width: 400px; margin: 15% auto;">
             <h3 id="modalTitle">Atencion</h3>
@@ -252,7 +253,6 @@
         </div>
     </div>
 
-    <!-- Modal para Ver Detalle y Eliminar Lotes Capturados -->
     <div id="detalleModal" class="modal">
         <div class="modal-content">
             <h3 id="detalleTitle">Lotes Capturados</h3>
@@ -267,7 +267,6 @@
                         </tr>
                     </thead>
                     <tbody id="tablaDetalleBody">
-                        <!-- Filas dinamicas -->
                     </tbody>
                 </table>
             </div>
@@ -290,52 +289,28 @@
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
-                
                 oscillator.type = 'sine';
                 oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
                 gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
-                
                 oscillator.start();
                 oscillator.stop(audioCtx.currentTime + 0.1);
-            } catch (e) {
-                // Se ignora silenciosamente
-            }
+            } catch (e) {}
         }
 
-        const parseConfig = {
-            header: true,
-            skipEmptyLines: true,
-            dynamicTyping: true,
-            delimiter: "", 
-            encoding: "ISO-8859-1"
-        };
+        const parseConfig = { header: true, skipEmptyLines: true, dynamicTyping: true, delimiter: "", encoding: "ISO-8859-1" };
 
         document.getElementById('filePlano').addEventListener('change', function(e) {
             let file = e.target.files[0];
             if(!file) return;
-            Papa.parse(file, {
-                ...parseConfig,
-                complete: function(results) { 
-                    datosPlano = results.data; 
-                    cargarBodegas(); 
-                    alert('Archivo plano cargado correctamente'); 
-                }
-            });
+            Papa.parse(file, { ...parseConfig, complete: function(results) { datosPlano = results.data; cargarBodegas(); alert('Archivo plano cargado'); } });
         });
 
         document.getElementById('fileStock').addEventListener('change', function(e) {
             let file = e.target.files[0];
             if(!file) return;
-            Papa.parse(file, {
-                ...parseConfig,
-                complete: function(results) { 
-                    datosStock = results.data; 
-                    alert('Archivo de stock cargado correctamente'); 
-                }
-            });
+            Papa.parse(file, { ...parseConfig, complete: function(results) { datosStock = results.data; alert('Archivo de stock cargado'); } });
         });
 
         function cargarBodegas() {
@@ -362,7 +337,6 @@
         function configurarCalle() {
             const bodega = document.getElementById('bodegaSelect').value;
             const calleSelect = document.getElementById('calleSelect').value;
-            
             let capturasPrevias = capturasGlobales.filter(c => c.bodega == bodega && c.calle == calleSelect);
             if (capturasPrevias.length > 0) {
                 capturasCalleActual = [...capturasPrevias];
@@ -373,12 +347,8 @@
                 capturasCalleActual = [];
                 calleCerradaGuardada = false;
             }
-
             if (bodega && calleSelect) {
-                let registroPlano = datosPlano.find(row => 
-                    (row.bodega || row.Bodega || row.BODEGA) == bodega && 
-                    (row.calle || row.Calle || row.CALLE) == calleSelect
-                );
+                let registroPlano = datosPlano.find(row => (row.bodega || row.Bodega || row.BODEGA) == bodega && (row.calle || row.Calle || row.CALLE) == calleSelect);
                 if (registroPlano) {
                     let cantidadPlano = registroPlano.cantidad_lotes || registroPlano.Cantidad_Lotes || registroPlano.CANTIDAD_LOTES || 300;
                     document.getElementById('metaLotes').value = cantidadPlano;
@@ -397,12 +367,11 @@
             let btnCerrar = document.getElementById('btnCerrarCalle');
             let btnReabrir = document.getElementById('btnReabrirCalle');
             let inputScanner = document.getElementById('scannerInput');
-
             if (calleCerradaGuardada) {
                 btnCerrar.style.display = 'none';
                 btnReabrir.style.display = 'block';
                 inputScanner.disabled = true;
-                inputScanner.placeholder = "Calle cerrada. Pulse Reabrir para modificar.";
+                inputScanner.placeholder = "Calle cerrada. Pulse Reabrir.";
             } else {
                 btnCerrar.style.display = 'block';
                 btnReabrir.style.display = 'none';
@@ -417,13 +386,8 @@
                 let calle = document.getElementById('calleSelect').value;
                 let lote = String(this.value).trim();
                 this.value = '';
-
-                if (!bodega || !calle) {
-                    alert('Seleccione Bodega y Calle primero.');
-                    return;
-                }
+                if (!bodega || !calle) { alert('Seleccione Bodega y Calle.'); return; }
                 if (lote === '') return;
-
                 procesarLoteEscaneado(bodega, calle, lote);
             }
         });
@@ -431,71 +395,24 @@
         function procesarLoteEscaneado(bodega, calle, lote) {
             let yaCapturadoCalle = capturasCalleActual.find(c => c.lote == lote);
             if (yaCapturadoCalle) {
-                mostrarModal("Lote Duplicado (Calle Actual)", `El lote ${lote} ya fue escaneado en esta misma calle. Desea registrarlo nuevamente?`, function(confirmado) {
-                    if (confirmado) registrarCaptura(bodega, calle, lote, "DUPLICADO_CALLE_CONFIRMADO");
+                mostrarModal("Lote Duplicado", `El lote ${lote} ya esta en esta calle.`, function(confirmado) {
+                    if (confirmado) registrarCaptura(bodega, calle, lote, "DUPLICADO");
                 });
                 return;
             }
-
-            let yaCapturadoOtraCalle = capturasGlobales.find(c => c.lote == lote && c.calle != calle);
-            if (yaCapturadoOtraCalle) {
-                mostrarModal("Lote Duplicado (Otra Calle)", `El lote ${lote} ya fue registrado previamente en la calle ${yaCapturadoOtraCalle.calle}. Desea registrarlo aqui de todas formas?`, function(confirmado) {
-                    if (confirmado) {
-                        verificarStockYLuegoRegistrar(bodega, calle, lote, "DUPLICADO_OTRA_CALLE_CONFIRMADO");
-                    }
-                });
-                return;
-            }
-
             verificarStockYLuegoRegistrar(bodega, calle, lote, "NORMAL");
         }
 
         function verificarStockYLuegoRegistrar(bodega, calle, lote, estadoInicial) {
             let infoStock = datosStock.find(row => String(row.lote || row.Lote || row.LOTE) == lote);
-            if (!infoStock && datosStock.length > 0) {
-                mostrarModal("Lote No Encontrado (Sobrante)", `El lote ${lote} no esta en el stock logico. Se agregara como sobrante/manual.`, function(confirmado) {
-                    if (confirmado) registrarCaptura(bodega, calle, lote, estadoInicial === "NORMAL" ? "MANUAL_SOBRANTE" : estadoInicial, {});
-                });
-                return;
-            }
-
-            let datosExtra = infoStock ? {
-                sku: infoStock.sku || infoStock.SKU || '',
-                descripcion: infoStock.descripción || infoStock.Descripción || infoStock.DESCRIPCION || '',
-                piezas: infoStock.piezas || infoStock.Piezas || infoStock.PIEZAS || '',
-                volumen: infoStock.volumen || infoStock.Volumen || infoStock.VOLUMEN || ''
-            } : {};
-
+            let datosExtra = infoStock ? { sku: infoStock.sku || infoStock.SKU || '', descripcion: infoStock.descripción || infoStock.Descripción || '', piezas: infoStock.piezas || infoStock.Piezas || '', volumen: infoStock.volumen || infoStock.Volumen || '' } : {};
             registrarCaptura(bodega, calle, lote, estadoInicial, datosExtra);
         }
 
         function registrarCaptura(bodega, calle, lote, estado, extra = {}) {
             emitirPitido();
             contadorActual++;
-            
-            if (!extra.sku) {
-                let infoStock = datosStock.find(row => String(row.lote || row.Lote || row.LOTE) == lote);
-                if (infoStock) {
-                    extra = {
-                        sku: infoStock.sku || infoStock.SKU || '',
-                        descripcion: infoStock.descripción || infoStock.Descripción || infoStock.DESCRIPCION || '',
-                        piezas: infoStock.piezas || infoStock.Piezas || infoStock.PIEZAS || '',
-                        volumen: infoStock.volumen || infoStock.Volumen || infoStock.VOLUMEN || ''
-                    };
-                }
-            }
-
-            capturasCalleActual.push({
-                bodega: bodega,
-                calle: calle,
-                lote: lote,
-                sku: extra.sku || '',
-                descripcion: extra.descripcion || '',
-                piezas: extra.piezas || '',
-                volumen: extra.volumen || '',
-                estado_captura: estado,
-                timestamp: new Date().toISOString()
-            });
+            capturasCalleActual.push({ bodega, calle, lote, sku: extra.sku || '', descripcion: extra.descripcion || '', piezas: extra.piezas || '', volumen: extra.volumen || '', estado_captura: estado, timestamp: new Date().toISOString() });
             actualizarProgresoVisual();
         }
 
@@ -508,110 +425,52 @@
 
         function resolverModal(confirmado) {
             document.getElementById('alertModal').style.display = 'none';
-            if (callbackModal) {
-                callbackModal(confirmado);
-                callbackModal = null;
-            }
+            if (callbackModal) { callbackModal(confirmado); callbackModal = null; }
         }
 
         function abrirModalDetalle() {
-            let calle = document.getElementById('calleSelect').value;
-            if (!calle) {
-                alert('Seleccione una calle primero para ver sus lotes.');
-                return;
-            }
+            if (!document.getElementById('calleSelect').value) { alert('Seleccione una calle.'); return; }
             renderizarTablaDetalle();
             document.getElementById('detalleModal').style.display = 'block';
         }
 
         function renderizarTablaDetalle() {
-            let calle = document.getElementById('calleSelect').value;
-            document.getElementById('detalleTitle').innerText = `Lotes en: ${calle} (${contadorActual})`;
+            document.getElementById('detalleTitle').innerText = `Lotes en: ${document.getElementById('calleSelect').value} (${contadorActual})`;
             let tbody = document.getElementById('tablaDetalleBody');
             tbody.innerHTML = '';
-
-            if (capturasCalleActual.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No hay lotes capturados en esta calle aun.</td></tr>`;
-            } else {
-                capturasCalleActual.forEach((item, index) => {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${item.lote}</td>
-                            <td>${item.sku || '-'}</td>
-                            <td style="text-align:center;">
-                                <button class="danger" onclick="eliminarCaptura(${index})">Eliminar</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
+            capturasCalleActual.forEach((item, index) => {
+                tbody.innerHTML += `<tr><td>${index+1}</td><td>${item.lote}</td><td>${item.sku || '-'}</td><td style="text-align:center;"><button class="danger" onclick="eliminarCaptura(${index})">X</button></td></tr>`;
+            });
         }
 
         function eliminarCaptura(index) {
-            let loteEliminado = capturasCalleActual[index].lote;
             capturasCalleActual.splice(index, 1);
             contadorActual = capturasCalleActual.length;
             actualizarProgresoVisual();
             renderizarTablaDetalle();
-
-            // Si la calle ya estaba cerrada previamente, actualizamos el estado para exigir re-verificación de meta si cambia
-            if (calleCerradaGuardada) {
-                let bodega = document.getElementById('bodegaSelect').value;
-                capturasGlobales = capturasGlobales.filter(c => !(c.bodega == bodega && c.calle == document.getElementById('calleSelect').value));
-                capturasGlobales = capturasGlobales.concat(capturasCalleActual);
-            }
         }
 
-        function cerrarModalDetalle() {
-            document.getElementById('detalleModal').style.display = 'none';
-        }
+        function cerrarModalDetalle() { document.getElementById('detalleModal').style.display = 'none'; }
 
         function cerrarCalle() {
-            let calle = document.getElementById('calleSelect').value;
-            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
-
-            if (!calle) { 
-                alert('No hay calle seleccionada.'); 
-                return; 
-            }
-
-            if (contadorActual !== meta) {
-                alert(`No se puede cerrar la calle. La cantidad de capturas (${contadorActual}) no coincide con la cantidad teorica esperada (${meta}).`);
-                return;
-            }
-
-            let bodega = document.getElementById('bodegaSelect').value;
-            capturasGlobales = capturasGlobales.filter(c => !(c.bodega == bodega && c.calle == calle));
-            
-            capturasGlobales = capturasGlobales.concat(capturasCalleActual);
+            if (contadorActual !== parseInt(document.getElementById('metaLotes').value)) { alert('Meta no alcanzada.'); return; }
+            let bodega = document.getElementById('bodegaSelect').value, calle = document.getElementById('calleSelect').value;
+            capturasGlobales = capturasGlobales.filter(c => !(c.bodega == bodega && c.calle == calle)).concat(capturasCalleActual);
             calleCerradaGuardada = true;
             actualizarBotonesAccion();
-            
-            alert(`Calle ${calle} cerrada y guardada correctamente con ${contadorActual} lotes.`);
+            alert('Calle cerrada.');
         }
 
-        function reabrirCalle() {
-            let calle = document.getElementById('calleSelect').value;
-            if (!calle) return;
-
-            calleCerradaGuardada = false;
-            actualizarBotonesAccion();
-            alert(`Calle ${calle} reabierta para modificaciones de captura.`);
-        }
+        function reabrirCalle() { calleCerradaGuardada = false; actualizarBotonesAccion(); alert('Calle reabierta.'); }
 
         function descargarCSVGlobal() {
-            if (capturasGlobales.length === 0) { alert('Sin capturas guardadas.'); return; }
+            if (capturasGlobales.length === 0) { alert('Nada para descargar.'); return; }
             let csv = Papa.unparse(capturasGlobales);
-            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let blob = new Blob([csv], { type: 'text/csv' });
             let link = document.createElement("a");
-            let url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", "captura_tmt1_final.csv");
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
+            link.href = URL.createObjectURL(blob);
+            link.download = "inventario_final.csv";
             link.click();
-            document.body.removeChild(link);
         }
     </script>
 </body>
