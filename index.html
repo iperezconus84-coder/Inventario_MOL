@@ -183,7 +183,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>WMS Inventario Pro</h1>
+        <h1>Inventario de Proceso</h1>
         
         <!-- Pestañas de Navegación -->
         <div class="nav-tabs">
@@ -203,16 +203,16 @@
                     <option value="">Cargue operarios.csv primero...</option>
                 </select>
 
-                <label style="margin-top: 20px;">Cargar Stock (stock_tmt1.csv):</label>
+                <label style="margin-top: 20px;">Cargar Stock Lógico</label>
                 <input type="file" id="fileStock" accept=".csv">
                 <div id="statusStock" class="status-box" style="display:none;">Stock cargado con éxito</div>
                 
-                <label style="margin-top: 15px;">Cargar Plano (plano_tmt1.csv):</label>
+                <label style="margin-top: 15px;">Cargar Plano Bodega</label>
                 <input type="file" id="filePlano" accept=".csv">
                 <div id="statusPlano" class="status-box" style="display:none;">Plano cargado con éxito</div>
             </div>
 
-            <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
+            <button class="secondary" onclick="descargarCSVGlobal()">Descargar Inventario</button>
             <button class="warning" onclick="descargarReporteDiferencias()">Descargar Reporte de Diferencias (Pareados/Sobrantes/Faltantes)</button>
             <button class="danger" onclick="reiniciarSistema()">Reiniciar Sistema / Nuevo Inventario</button>
         </div>
@@ -233,7 +233,7 @@
                 <option value="">Seleccione Calle...</option>
             </select>
 
-            <label>Meta de Lotes (Editable):</label>
+            <label>Recuento de Lotes</label>
             <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
 
             <div class="progress" id="displayProgress">0 / 300</div>
