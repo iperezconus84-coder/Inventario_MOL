@@ -140,7 +140,8 @@
         button:hover { background-color: var(--color-primary-dark); }
         button.secondary { background-color: var(--color-bg-card-accent); }
         button.warning { background-color: #FFA726; color: #212121; }
-        button.danger { background-color: #D32F2F; color: white; font-size: 12px; padding: 6px; width: auto; margin-top: 0; }
+        button.danger { background-color: #D32F2F; color: white; }
+        button.danger-action { background-color: #D32F2F; color: white; font-size: 12px; padding: 6px; width: auto; margin-top: 0; }
 
         .file-section { 
             background: #F5F5F5; 
@@ -196,6 +197,7 @@
             </div>
 
             <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
+            <button class="danger" onclick="reiniciarSistema()">Reiniciar Sistema / Nuevo Inventario</button>
         </div>
 
         <!-- VISTA 2: CAPTURA EN TERRENO -->
@@ -287,7 +289,6 @@
             try {
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 
-                // Oscilador principal (tono alto industrial)
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
                 
@@ -434,7 +435,6 @@
         });
 
         function procesarLoteEscaneado(bodega, calle, lote) {
-            // 1. Validar si ya fue capturado en la calle actual
             let yaCapturadoCalle = capturasCalleActual.find(c => c.lote == lote);
             if (yaCapturadoCalle) {
                 mostrarModal("Lote Duplicado", `El lote ${lote} ya fue escaneado en esta misma calle. ¿Registrar de nuevo?`, function(confirmado) {
@@ -443,7 +443,6 @@
                 return;
             }
 
-            // 2. Validar si ya fue capturado previamente en OTRA calle (globalmente)
             let yaCapturadoOtraCalle = capturasGlobales.find(c => c.lote == lote && c.calle != calle);
             if (yaCapturadoOtraCalle) {
                 mostrarModal("Lote Duplicado (Otra Calle)", `El lote ${lote} ya fue registrado previamente en la calle ${yaCapturadoOtraCalle.calle}. ¿Desea registrarlo aquí de todas formas?`, function(confirmado) {
@@ -521,7 +520,7 @@
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No hay lotes capturados.</td></tr>`;
             } else {
                 capturasCalleActual.forEach((item, index) => {
-                    tbody.innerHTML += `<tr><td>${index+1}</td><td>${item.lote}</td><td>${item.sku || '-'}</td><td style="text-align:center;"><button class="danger" onclick="eliminarCaptura(${index})">Eliminar</button></td></tr>`;
+                    tbody.innerHTML += `<tr><td>${index+1}</td><td>${item.lote}</td><td>${item.sku || '-'}</td><td style="text-align:center;"><button class="danger-action" onclick="eliminarCaptura(${index})">Eliminar</button></td></tr>`;
                 });
             }
         }
@@ -561,6 +560,32 @@
             link.href = URL.createObjectURL(blob);
             link.download = "captura_tmt1_final.csv";
             link.click();
+        }
+
+        function reiniciarSistema() {
+            mostrarModal("¿Reiniciar Sistema?", "Se borrarán todas las capturas almacenadas y se limpiarán los datos para iniciar un nuevo inventario. Asegúrate de haber descargado tu consolidado final antes de continuar.", function(confirmado) {
+                if (confirmado) {
+                    datosPlano = [];
+                    datosStock = [];
+                    capturasGlobales = [];
+                    capturasCalleActual = [];
+                    contadorActual = 0;
+                    calleCerradaGuardada = false;
+
+                    document.getElementById('fileStock').value = '';
+                    document.getElementById('filePlano').value = '';
+                    document.getElementById('statusStock').style.display = 'none';
+                    document.getElementById('statusPlano').style.display = 'none';
+
+                    document.getElementById('bodegaSelect').innerHTML = '<option value="">Seleccione Bodega...</option>';
+                    document.getElementById('calleSelect').innerHTML = '<option value="">Seleccione Calle...</option>';
+                    document.getElementById('metaLotes').value = '300';
+                    
+                    actualizarProgresoVisual();
+                    alert("Sistema reiniciado con éxito. Listo para un nuevo inventario.");
+                    cambiarVista('config');
+                }
+            });
         }
     </script>
 </body>
