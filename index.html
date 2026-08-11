@@ -3,117 +3,861 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inventario Proceso</title>
+    <title>INVENTARIO PROCESO</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        :root { --color-primary-main: #F57C00; --color-primary-dark: #E65100; --color-text-primary: #212121; --color-text-secondary: #757575; --color-bg-surface: #FFFFFF; --color-bg-dark: #424242; --color-bg-card-accent: #8D6E63; --color-border-subtle: #BCAAA4; --border-radius-md: 8px; --spacing-sm: 16px; --spacing-md: 24px; }
-        body { font-family: 'Open Sans', sans-serif; background-color: #FAFAFA; color: var(--color-text-primary); margin: 0; padding: var(--spacing-sm); display: flex; flex-direction: column; min-height: 100vh; }
-        .container { max-width: 600px; margin: auto; background: var(--color-bg-surface); padding: var(--spacing-md); border-radius: var(--border-radius-md); border: 1px solid var(--color-border-subtle); box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
-        .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-        .nav-tab { flex: 1; padding: 12px; background-color: #EEEEEE; border: 1px solid var(--color-border-subtle); color: var(--color-text-secondary); font-weight: bold; text-align: center; cursor: pointer; border-radius: var(--border-radius-md); text-transform: uppercase; font-size: 14px; }
-        .nav-tab.active { background-color: var(--color-primary-main); color: white; border-color: var(--color-primary-dark); }
-        .view-section { display: none; }
-        .view-section.active { display: block; }
-        h1 { color: var(--color-primary-dark); font-size: 24px; margin-bottom: var(--spacing-md); text-align: center; text-transform: uppercase; }
-        label { font-weight: 600; color: var(--color-text-secondary); font-size: 14px; margin-bottom: 8px; display: block; text-transform: uppercase; }
-        select, input, textarea { width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--color-border-subtle); border-radius: var(--border-radius-md); font-size: 16px; box-sizing: border-box; background-color: #FFF; }
-        select:disabled, input:disabled { background-color: #E0E0E0; cursor: not-allowed; }
-        .progress { font-size: 24px; font-weight: bold; text-align: center; padding: 16px; background: var(--color-bg-dark); color: white; border-radius: var(--border-radius-md); margin-bottom: var(--spacing-md); }
-        button { width: 100%; padding: 16px; background-color: var(--color-primary-main); color: white; border: none; border-radius: var(--border-radius-md); font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; text-transform: uppercase; }
+        :root {
+            --color-primary-main: #F57C00;
+            --color-primary-dark: #E65100;
+            --color-text-primary: #212121;
+            --color-text-secondary: #757575;
+            --color-bg-surface: #FFFFFF;
+            --color-bg-dark: #424242;
+            --color-bg-card-accent: #8D6E63;
+            --color-border-subtle: #BCAAA4;
+            --border-radius-md: 8px;
+            --spacing-sm: 16px;
+            --spacing-md: 24px;
+        }
+
+        body {
+            font-family: 'Open Sans', sans-serif;
+            background-color: #FAFAFA;
+            color: var(--color-text-primary);
+            margin: 0;
+            padding: var(--spacing-sm);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: var(--color-bg-surface);
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--color-border-subtle);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 12px;
+            background-color: #EEEEEE;
+            border: 1px solid var(--color-border-subtle);
+            color: var(--color-text-secondary);
+            font-weight: bold;
+            text-align: center;
+            cursor: pointer;
+            border-radius: var(--border-radius-md);
+            text-transform: uppercase;
+            font-size: 14px;
+        }
+
+        .nav-tab.active {
+            background-color: var(--color-primary-main);
+            color: white;
+            border-color: var(--color-primary-dark);
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        h1 {
+            color: var(--color-primary-dark);
+            font-size: 24px;
+            margin-bottom: var(--spacing-md);
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            font-size: 14px;
+            margin-bottom: 8px;
+            display: block;
+            text-transform: uppercase;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 16px;
+            border: 1px solid var(--color-border-subtle);
+            border-radius: var(--border-radius-md);
+            font-size: 16px;
+            box-sizing: border-box;
+            background-color: #FFF;
+            color: var(--color-text-primary);
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        select:disabled, input:disabled {
+            background-color: #E0E0E0;
+            color: #616161;
+            cursor: not-allowed;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-primary-main);
+        }
+
+        .progress {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            padding: 16px;
+            background: var(--color-bg-dark);
+            color: white;
+            border-radius: var(--border-radius-md);
+            margin-bottom: var(--spacing-md);
+            letter-spacing: 2px;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background-color: var(--color-primary-main);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            text-transform: uppercase;
+        }
+
+        button:hover { background-color: var(--color-primary-dark); }
         button.secondary { background-color: var(--color-bg-card-accent); }
         button.warning { background-color: #FFA726; color: #212121; }
         button.danger { background-color: #D32F2F; color: white; }
+        button.danger-action { background-color: #D32F2F; color: white; font-size: 12px; padding: 6px; width: auto; margin-top: 0; }
         button.camera-btn { background-color: #0288D1; margin-bottom: 16px; }
+        button.camera-btn:hover { background-color: #01579B; }
+
+        .file-section { 
+            background: #F5F5F5; 
+            padding: 16px; 
+            border-radius: var(--border-radius-md); 
+            margin-bottom: 16px; 
+            border: 1px dashed var(--color-border-subtle); 
+        }
+
+        .status-box {
+            background: #E8F5E9;
+            border: 1px solid #A5D6A7;
+            color: #2E7D32;
+            padding: 12px;
+            border-radius: var(--border-radius-md);
+            margin-bottom: 16px;
+            font-size: 14px;
+            text-align: center;
+            font-weight: bold;
+        }
+
         .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
         .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: var(--border-radius-md); text-align: center; }
         .modal-body { overflow-y: auto; max-height: 40vh; margin: 10px 0; border: 1px solid var(--color-border-subtle); padding: 10px; text-align: left; }
+        
         table.detalle-lotes { width: 100%; border-collapse: collapse; font-size: 14px; }
         table.detalle-lotes th, table.detalle-lotes td { border: 1px solid var(--color-border-subtle); padding: 8px; text-align: left; }
+        table.detalle-lotes th { background-color: #EEEEEE; }
+        
+        footer { text-align: center; font-size: 12px; color: var(--color-text-secondary); margin-top: 32px; text-transform: uppercase; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Inventario Proceso</h1>
+        
+        <!-- Pestañas de Navegación -->
         <div class="nav-tabs">
             <div id="tabConfig" class="nav-tab" onclick="cambiarVista('config')">Configuración</div>
             <div id="tabCaptura" class="nav-tab active" onclick="cambiarVista('captura')">Captura</div>
         </div>
 
+        <!-- VISTA 1: CONFIGURACIÓN Y ARCHIVOS -->
         <div id="viewConfig" class="view-section">
-            <label>Operarios (operarios.csv):</label>
-            <input type="file" id="fileOperarios" accept=".csv">
-            <label>Seleccionar Operario:</label>
-            <select id="operarioSelect" onchange="bloquearOperarioConfig()"></select>
-            <label>Stock (stock_tmt1.csv):</label>
-            <input type="file" id="fileStock" accept=".csv">
-            <label>Plano (plano_tmt1.csv):</label>
-            <input type="file" id="filePlano" accept=".csv">
-            <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado</button>
-            <button class="warning" onclick="descargarReporteDiferencias()">Reporte Diferencias</button>
-            <button class="danger" onclick="reiniciarSistema()">Reiniciar Sistema</button>
+            <div class="file-section">
+                <label>Cargar Operarios (operarios.csv):</label>
+                <input type="file" id="fileOperarios" accept=".csv">
+                <div id="statusOperarios" class="status-box" style="display:none;">Operarios cargados con éxito</div>
+
+                <label style="margin-top: 15px;">Seleccionar Operario (Obligatorio):</label>
+                <select id="operarioSelect" onchange="bloquearOperarioConfig()">
+                    <option value="">Cargue operarios.csv primero...</option>
+                </select>
+
+                <label style="margin-top: 20px;">Cargar Stock (stock_tmt1.csv):</label>
+                <input type="file" id="fileStock" accept=".csv">
+                <div id="statusStock" class="status-box" style="display:none;">Stock cargado con éxito</div>
+                
+                <label style="margin-top: 15px;">Cargar Plano (plano_tmt1.csv):</label>
+                <input type="file" id="filePlano" accept=".csv">
+                <div id="statusPlano" class="status-box" style="display:none;">Plano cargado con éxito</div>
+            </div>
+
+            <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
+            <button class="warning" onclick="descargarReporteDiferencias()">Descargar Reporte de Diferencias (Pareados/Sobrantes/Faltantes)</button>
+            <button class="danger" onclick="reiniciarSistema()">Reiniciar Sistema / Nuevo Inventario</button>
         </div>
 
+        <!-- VISTA 2: CAPTURA EN TERRENO -->
         <div id="viewCaptura" class="view-section active">
-            <div id="infoOperarioActivo" style="padding:10px; text-align:center; font-weight:bold; background:#FFF3E0; border-radius:8px; margin-bottom:15px;">Operario: No seleccionado</div>
+            <div id="infoOperarioActivo" style="background: #FFF3E0; border: 1px solid #FFE0B2; color: #E65100; padding: 10px; border-radius: var(--border-radius-md); margin-bottom: 15px; font-weight: bold; text-align: center; font-size: 14px;">
+                Operario: No seleccionado
+            </div>
+
             <label>Bodega:</label>
-            <select id="bodegaSelect" onchange="actualizarCalles()"><option value="">Seleccione...</option></select>
+            <select id="bodegaSelect" onchange="actualizarCalles()">
+                <option value="">Seleccione Bodega...</option>
+            </select>
+
             <label>Calle:</label>
-            <select id="calleSelect" onchange="configurarCalle()"><option value="">Seleccione...</option></select>
-            <label>Meta de Lotes:</label>
+            <select id="calleSelect" onchange="configurarCalle()">
+                <option value="">Seleccione Calle...</option>
+            </select>
+
+            <label>Meta de Lotes (Editable):</label>
             <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
+
             <div class="progress" id="displayProgress">0 / 300</div>
-            <button class="camera-btn" onclick="abrirEscanearCamara()">Escanear Cámara</button>
+
+            <button class="camera-btn" onclick="abrirEscanearCamara()">Escanear con Cámara (Móvil)</button>
             <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus>
-            <button id="btnVerDetalle" class="secondary" onclick="abrirModalDetalle()">Ver Lotes</button>
-            <button id="btnCerrarCalle" onclick="abrirModalCierreCalle()">Cerrar Calle</button>
+            
+            <button id="btnVerDetalle" class="secondary" onclick="abrirModalDetalle()">Ver / Eliminar Lotes Capturados</button>
+            <button id="btnCerrarCalle" onclick="abrirModalCierreCalle()">Cerrar Calle y Guardar</button>
+            <button id="btnReabrirCalle" class="warning" onclick="reabrirCalle()" style="display:none;">Reabrir Calle Actual</button>
         </div>
     </div>
 
-    <!-- Modales -->
-    <div id="camaraModal" class="modal"><div class="modal-content"><h3>Cámara</h3><div id="reader"></div><button class="secondary" onclick="cerrarEscanearCamara()">Cerrar</button></div></div>
-    <div id="alertModal" class="modal"><div class="modal-content"><h3 id="modalTitle">Atención</h3><p id="modalMessage"></p><button id="modalBtnAceptar" onclick="resolverModal(true)">Aceptar</button><button class="secondary" onclick="resolverModal(false)">Cancelar</button></div></div>
-    <div id="cierreModal" class="modal"><div class="modal-content"><h3>Cierre</h3><textarea id="comentarioCalleInput" rows="3"></textarea><button onclick="confirmarCierreCalle()">Confirmar</button></div></div>
-    <div id="detalleModal" class="modal"><div class="modal-content"><h3>Lotes</h3><div class="modal-body"><table class="detalle-lotes"><tbody id="tablaDetalleBody"></tbody></table></div><button onclick="cerrarModalDetalle()">Cerrar</button></div></div>
+    <footer>
+        Renovables para una vida mejor
+    </footer>
 
+    <!-- Modal para Escáner de Cámara -->
+    <div id="camaraModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <h3>Escáner de Cámara</h3>
+            <div id="reader" style="width: 100%; border-radius: 8px; overflow: hidden; margin: 10px 0;"></div>
+            <button class="secondary" onclick="cerrarEscanearCamara()">Cerrar Cámara</button>
+        </div>
+    </div>
+
+    <!-- Modal para Alertas Generales -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3 id="modalTitle">Atención</h3>
+            <p id="modalMessage">Mensaje de alerta</p>
+            <button id="modalBtnAceptar" onclick="resolverModal(true)">Aceptar / Continuar</button>
+            <button id="modalBtnCancelar" class="secondary" onclick="resolverModal(false)">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal para Cierre de Calle con Comentario -->
+    <div id="cierreModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <h3>Cierre de Calle</h3>
+            <p id="cierreInfoMeta" style="margin: 10px 0; font-size: 14px; color: var(--color-text-secondary);"></p>
+            <label style="text-align: left; margin-top: 15px;">Comentario u Observación (Opcional):</label>
+            <textarea id="comentarioCalleInput" rows="3" placeholder="Ej: 2 paquetes sin lote..." style="resize: none;"></textarea>
+            <button onclick="confirmarCierreCalle()">Confirmar y Cerrar Calle</button>
+            <button class="secondary" onclick="cerrarModalCierre()">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal para Ver Detalle / Eliminar -->
+    <div id="detalleModal" class="modal">
+        <div class="modal-content">
+            <h3 id="detalleTitle">Lotes Capturados</h3>
+            <div class="modal-body">
+                <table class="detalle-lotes">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Lote</th>
+                            <th>SKU</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaDetalleBody"></tbody>
+                </table>
+            </div>
+            <button onclick="cerrarModalDetalle()">Cerrar Vista</button>
+        </div>
+    </div>
+
+    <!-- Librerías Externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
-        let datosPlano = [], datosStock = [], capturasGlobales = JSON.parse(localStorage.getItem('capturasGlobales') || '[]');
-        let operarioActual = localStorage.getItem('operarioActual') || "";
-        let capturasCalleActual = [], contadorActual = 0, html5QrCode = null;
+        let datosPlano = [];
+        let datosStock = [];
+        let datosOperarios = [];
+        let operarioActual = "";
+        let capturasGlobales = [];
+        let capturasCalleActual = [];
+        let contadorActual = 0;
+        let callbackModal = null;
+        let calleCerradaGuardada = false;
+        let html5QrCode = null;
 
-        window.onload = () => {
-            if(operarioActual) {
-                document.getElementById('infoOperarioActivo').innerText = `Operario: ${operarioActual}`;
-                document.getElementById('operarioSelect').disabled = true;
+        function cambiarVista(vista) {
+            if (vista === 'config') {
+                document.getElementById('viewConfig').classList.add('active');
+                document.getElementById('viewCaptura').classList.remove('active');
+                document.getElementById('tabConfig').classList.add('active');
+                document.getElementById('tabCaptura').classList.remove('active');
+            } else {
+                if (!operarioActual) {
+                    alert("Debe seleccionar un operario en la pestaña de Configuración antes de continuar.");
+                    cambiarVista('config');
+                    return;
+                }
+                document.getElementById('viewConfig').classList.remove('active');
+                document.getElementById('viewCaptura').classList.add('active');
+                document.getElementById('tabConfig').classList.remove('active');
+                document.getElementById('tabCaptura').classList.add('active');
+                setTimeout(() => { document.getElementById('scannerInput').focus(); }, 100);
+            }
+        }
+
+        function emitirPitido() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+                
+                oscillator.type = 'square'; 
+                oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); 
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.15); 
+                
+                setTimeout(() => {
+                    try {
+                        const osc2 = audioCtx.createOscillator();
+                        const gain2 = audioCtx.createGain();
+                        osc2.type = 'square';
+                        osc2.frequency.setValueAtTime(1500, audioCtx.currentTime);
+                        gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                        osc2.connect(gain2);
+                        gain2.connect(audioCtx.destination);
+                        osc2.start();
+                        osc2.stop(audioCtx.currentTime + 0.15);
+                    } catch(e){}
+                }, 180);
+
+            } catch (e) {}
+        }
+
+        const parseConfig = { header: true, skipEmptyLines: true, dynamicTyping: true, delimiter: "", encoding: "ISO-8859-1" };
+
+        document.getElementById('fileOperarios').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if(!file) return;
+            Papa.parse(file, { ...parseConfig, complete: function(results) { 
+                datosOperarios = results.data; 
+                cargarOperariosSelect(); 
+                document.getElementById('statusOperarios').style.display = 'block';
+            } });
+        });
+
+        document.getElementById('filePlano').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if(!file) return;
+            Papa.parse(file, { ...parseConfig, complete: function(results) { 
+                datosPlano = results.data; 
+                cargarBodegas(); 
+                document.getElementById('statusPlano').style.display = 'block';
+            } });
+        });
+
+        document.getElementById('fileStock').addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if(!file) return;
+            Papa.parse(file, { ...parseConfig, complete: function(results) { 
+                datosStock = results.data; 
+                document.getElementById('statusStock').style.display = 'block';
+            } });
+        });
+
+        function cargarOperariosSelect() {
+            const opSelect = document.getElementById('operarioSelect');
+            opSelect.innerHTML = '<option value="">Seleccione Operario...</option>';
+            const operarios = [...new Set(datosOperarios.map(row => row.operario || row.Operario || row.OPERARIO || row.nombre || row.Nombre || row.NOMBRE))];
+            operarios.forEach(op => { if (op) opSelect.innerHTML += `<option value="${op}">${op}</option>`; });
+        }
+
+        function bloquearOperarioConfig() {
+            const opSelect = document.getElementById('operarioSelect');
+            operarioActual = opSelect.value;
+            if (operarioActual) {
+                opSelect.disabled = true;
+                document.getElementById('infoOperarioActivo').innerText = `Operario Activo: ${operarioActual}`;
+                alert(`Operario asignado: ${operarioActual}. El campo ha sido bloqueado para esta sesión.`);
+            }
+        }
+
+        function cargarBodegas() {
+            const bodegaSelect = document.getElementById('bodegaSelect');
+            bodegaSelect.innerHTML = '<option value="">Seleccione Bodega...</option>';
+            const bodegas = [...new Set(datosPlano.map(row => row.bodega || row.Bodega || row.BODEGA))];
+            bodegas.forEach(b => { if (b) bodegaSelect.innerHTML += `<option value="${b}">${b}</option>`; });
+        }
+
+        function actualizarCalles() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const calleSelect = document.getElementById('calleSelect');
+            calleSelect.innerHTML = '<option value="">Seleccione Calle...</option>';
+            if (!bodega) return;
+            const calles = datosPlano.filter(row => (row.bodega || row.Bodega || row.BODEGA) == bodega);
+            calles.forEach(c => {
+                let nombreCalle = c.calle || c.Calle || c.CALLE;
+                if (nombreCalle) calleSelect.innerHTML += `<option value="${nombreCalle}">${nombreCalle}</option>`;
+            });
+            calleCerradaGuardada = false;
+            actualizarBotonesAccion();
+        }
+
+        function configurarCalle() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const calleSelect = document.getElementById('calleSelect').value;
+            let capturasPrevias = capturasGlobales.filter(c => c.bodega == bodega && c.calle == calleSelect);
+            if (capturasPrevias.length > 0) {
+                capturasCalleActual = [...capturasPrevias];
+                contadorActual = capturasCalleActual.length;
+                calleCerradaGuardada = true;
+            } else {
+                contadorActual = 0;
+                capturasCalleActual = [];
+                calleCerradaGuardada = false;
+            }
+            if (bodega && calleSelect) {
+                let registroPlano = datosPlano.find(row => (row.bodega || row.Bodega || row.BODEGA) == bodega && (row.calle || row.Calle || row.CALLE) == calleSelect);
+                if (registroPlano) {
+                    let cantidadPlano = registroPlano.cantidad_lotes || registroPlano.Cantidad_Lotes || registroPlano.CANTIDAD_LOTES || 300;
+                    document.getElementById('metaLotes').value = cantidadPlano;
+                }
             }
             actualizarProgresoVisual();
-        };
+            actualizarBotonesAccion();
+        }
 
-        function persistir() {
-            localStorage.setItem('capturasGlobales', JSON.stringify(capturasGlobales));
-            localStorage.setItem('operarioActual', operarioActual);
+        function actualizarProgresoVisual() {
+            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
+            document.getElementById('displayProgress').innerText = `${contadorActual} / ${meta}`;
+            actualizarBotonesAccion();
+        }
+
+        function actualizarBotonesAccion() {
+            let btnCerrar = document.getElementById('btnCerrarCalle');
+            let btnReabrir = document.getElementById('btnReabrirCalle');
+            let inputScanner = document.getElementById('scannerInput');
+            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
+
+            if (calleCerradaGuardada) {
+                btnCerrar.style.display = 'none';
+                btnReabrir.style.display = 'block';
+                inputScanner.disabled = true;
+                inputScanner.placeholder = "Calle cerrada. Pulse Reabrir.";
+            } else if (contadorActual >= meta && meta > 0) {
+                btnCerrar.style.display = 'block';
+                btnReabrir.style.display = 'none';
+                inputScanner.disabled = true;
+                inputScanner.placeholder = "Meta alcanzada. Amplíe meta para continuar.";
+            } else {
+                btnCerrar.style.display = 'block';
+                btnReabrir.style.display = 'none';
+                inputScanner.disabled = false;
+                inputScanner.placeholder = "Escanear Lote...";
+            }
+        }
+
+        document.getElementById('scannerInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                procesarEntradaLote(this.value);
+                this.value = '';
+            }
+        });
+
+        function procesarEntradaLote(valorLote) {
+            if (!operarioActual) {
+                alert("Error: No hay un operario asignado.");
+                cambiarVista('config');
+                return;
+            }
+            let bodega = document.getElementById('bodegaSelect').value;
+            let calle = document.getElementById('calleSelect').value;
+            let lote = String(valorLote).trim();
+
+            if (!bodega || !calle) { alert('Seleccione Bodega y Calle primero.'); return; }
+            if (lote === '') return;
+
+            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
+            if (contadorActual >= meta) {
+                alert(`Se ha alcanzado la meta de ${meta} lotes para esta calle. Amplíe la cantidad de forma manual si desea capturar más.`);
+                return;
+            }
+
+            procesarLoteEscaneado(bodega, calle, lote);
+        }
+
+        function procesarLoteEscaneado(bodega, calle, lote) {
+            let yaCapturadoCalle = capturasCalleActual.find(c => c.lote == lote);
+            if (yaCapturadoCalle) {
+                mostrarModal("Lote Duplicado", `El lote ${lote} ya fue escaneado en esta misma calle. ¿Registrar de nuevo?`, function(confirmado) {
+                    if (confirmado) registrarCaptura(bodega, calle, lote, "DUPLICADO_CALLE_CONFIRMADO");
+                });
+                return;
+            }
+
+            let yaCapturadoOtraCalle = capturasGlobales.find(c => c.lote == lote && c.calle != calle);
+            if (yaCapturadoOtraCalle) {
+                mostrarModal("Lote Duplicado (Otra Calle)", `El lote ${lote} ya fue registrado previamente en la calle ${yaCapturadoOtraCalle.calle}. ¿Desea registrarlo aquí de todas formas?`, function(confirmado) {
+                    if (confirmado) {
+                        verificarStockYLuegoRegistrar(bodega, calle, lote, "DUPLICADO_OTRA_CALLE_CONFIRMADO");
+                    }
+                });
+                return;
+            }
+
+            verificarStockYLuegoRegistrar(bodega, calle, lote, "NORMAL");
+        }
+
+        function verificarStockYLuegoRegistrar(bodega, calle, lote, estadoInicial) {
+            let infoStock = datosStock.find(row => String(row.lote || row.Lote || row.LOTE) == lote);
+            if (!infoStock && datosStock.length > 0) {
+                mostrarModal("Sobrante / No Encontrado", `El lote ${lote} no está en stock. ¿Agregar igual?`, function(confirmado) {
+                    if (confirmado) registrarCaptura(bodega, calle, lote, estadoInicial === "NORMAL" ? "MANUAL_SOBRANTE" : estadoInicial, {});
+                });
+                return;
+            }
+            let datosExtra = infoStock ? { sku: infoStock.sku || infoStock.SKU || '', descripcion: infoStock.descripción || infoStock.Descripción || '', piezas: infoStock.piezas || infoStock.Piezas || '', volumen: infoStock.volumen || infoStock.Volumen || '' } : {};
+            registrarCaptura(bodega, calle, lote, estadoInicial, datosExtra);
         }
 
         function registrarCaptura(bodega, calle, lote, estado, extra = {}) {
+            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
+            if (contadorActual >= meta) {
+                alert(`No se pueden registrar más lotes. Se alcanzó la meta de ${meta}.`);
+                return;
+            }
+
+            emitirPitido();
             contadorActual++;
-            capturasCalleActual.push({ operario: operarioActual, bodega, calle, lote, sku: extra.sku || '', estado_captura: estado, timestamp: new Date().toISOString() });
-            capturasGlobales = capturasGlobales.filter(c => !(c.bodega == bodega && c.calle == calle)).concat(capturasCalleActual);
-            persistir();
+            
+            if (!extra.sku) {
+                let infoStock = datosStock.find(row => String(row.lote || row.Lote || row.LOTE) == lote);
+                if (infoStock) {
+                    extra = {
+                        sku: infoStock.sku || infoStock.SKU || '',
+                        descripcion: infoStock.descripción || infoStock.Descripción || '',
+                        piezas: infoStock.piezas || infoStock.Piezas || '',
+                        volumen: infoStock.volumen || infoStock.Volumen || ''
+                    };
+                }
+            }
+
+            capturasCalleActual.push({ 
+                operario: operarioActual, 
+                bodega, 
+                calle, 
+                lote, 
+                sku: extra.sku || '', 
+                descripcion: extra.descripcion || '', 
+                piezas: extra.piezas || '', 
+                volumen: extra.volumen || '', 
+                estado_captura: estado, 
+                comentario_calle: "", 
+                timestamp: new Date().toISOString() 
+            });
             actualizarProgresoVisual();
         }
 
-        // ... (resto de funciones lógica: cambiarVista, procesarEntradaLote, descargarCSV, etc.)
-        // Nota: Asegúrate de llamar a persistir() después de cada modificación en capturasGlobales
-        
-        function reiniciarSistema() {
-            if(confirm("¿Borrar todo el inventario?")) {
-                localStorage.clear();
-                location.reload();
+        /* Funciones de la Cámara con Html5Qrcode optimizadas */
+        function abrirEscanearCamara() {
+            let bodega = document.getElementById('bodegaSelect').value;
+            let calle = document.getElementById('calleSelect').value;
+            if (!bodega || !calle) {
+                alert('Seleccione Bodega y Calle primero.');
+                return;
+            }
+
+            document.getElementById('camaraModal').style.display = 'block';
+            
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 150 }
+                },
+                (decodedText, decodedResult) => {
+                    cerrarEscanearCamara();
+                    procesarEntradaLote(decodedText);
+                },
+                (errorMessage) => {}
+            ).catch((err) => {
+                alert("No se pudo iniciar la cámara. Verifique permisos de navegador.");
+                document.getElementById('camaraModal').style.display = 'none';
+            });
+        }
+
+        function cerrarEscanearCamara() {
+            // Ocultar la modal de inmediato para evitar sensación de congelamiento
+            document.getElementById('camaraModal').style.display = 'none';
+            setTimeout(() => { document.getElementById('scannerInput').focus(); }, 100);
+
+            // Detener la cámara de forma segura en segundo plano
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => {
+                    console.warn("Aviso al detener cámara:", err);
+                });
             }
         }
 
-        // (El resto de funciones siguen tu lógica anterior validada)
+        function mostrarModal(titulo, mensaje, callback) {
+            document.getElementById('modalTitle').innerText = titulo;
+            document.getElementById('modalMessage').innerText = mensaje;
+            document.getElementById('alertModal').style.display = 'block';
+            callbackModal = callback;
+        }
+
+        function resolverModal(confirmado) {
+            document.getElementById('alertModal').style.display = 'none';
+            if (callbackModal) { callbackModal(confirmado); callbackModal = null; }
+        }
+
+        function abrirModalDetalle() {
+            if (!document.getElementById('calleSelect').value) { alert('Seleccione una calle primero.'); return; }
+            renderizarTablaDetalle();
+            document.getElementById('detalleModal').style.display = 'block';
+        }
+
+        function renderizarTablaDetalle() {
+            document.getElementById('detalleTitle').innerText = `Lotes en: ${document.getElementById('calleSelect').value} (${contadorActual})`;
+            let tbody = document.getElementById('tablaDetalleBody');
+            tbody.innerHTML = '';
+            if (capturasCalleActual.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;">No hay lotes capturados.</td></tr>`;
+            } else {
+                capturasCalleActual.forEach((item, index) => {
+                    tbody.innerHTML += `<tr><td>${index+1}</td><td>${item.lote}</td><td>${item.sku || '-'}</td><td style="text-align:center;"><button class="danger-action" onclick="eliminarCaptura(${index})">Eliminar</button></td></tr>`;
+                });
+            }
+        }
+
+        function eliminarCaptura(index) {
+            capturasCalleActual.splice(index, 1);
+            contadorActual = capturasCalleActual.length;
+            actualizarProgresoVisual();
+            renderizarTablaDetalle();
+            let bodega = document.getElementById('bodegaSelect').value, calle = document.getElementById('calleSelect').value;
+            capturasGlobales = capturasGlobales.filter(c => !(c.bodega == bodega && c.calle == calle)).concat(capturasCalleActual);
+        }
+
+        function cerrarModalDetalle() { document.getElementById('detalleModal').style.display = 'none'; }
+
+        function abrirModalCierreCalle() {
+            let bodega = document.getElementById('bodegaSelect').value;
+            let calle = document.getElementById('calleSelect').value;
+            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
+
+            if (!bodega || !calle) {
+                alert('Seleccione Bodega y Calle primero.');
+                return;
+            }
+            if (contadorActual !== meta) {
+                alert(`No coincide la cantidad de capturas (${contadorActual}) con la meta (${meta}).`);
+                return;
+            }
+
+            document.getElementById('cierreInfoMeta').innerText = `Calle: ${calle} | Total capturados: ${contadorActual} / Meta: ${meta}`;
+            document.getElementById('comentarioCalleInput').value = '';
+            document.getElementById('cierreModal').style.display = 'block';
+        }
+
+        function cerrarModalCierre() {
+            document.getElementById('cierreModal').style.display = 'none';
+        }
+
+        function confirmarCierreCalle() {
+            let comentario = document.getElementById('comentarioCalleInput').value.trim();
+            let bodega = document.getElementById('bodegaSelect').value;
+            let calle = document.getElementById('calleSelect').value;
+
+            capturasCalleActual.forEach(item => {
+                item.comentario_calle = comentario;
+            });
+
+            capturasGlobales = capturasGlobales.filter(c => !(c.bodega == bodega && c.calle == calle)).concat(capturasCalleActual);
+            calleCerradaGuardada = true;
+            cerrarModalCierre();
+            actualizarBotonesAccion();
+            alert(`Calle ${calle} cerrada correctamente con observación guardada.`);
+        }
+
+        function reabrirCalle() {
+            calleCerradaGuardada = false;
+            actualizarBotonesAccion();
+            alert('Calle reabierta.');
+        }
+
+        function descargarCSVGlobal() {
+            if (capturasGlobales.length === 0) { alert('Sin capturas guardadas.'); return; }
+            let csv = Papa.unparse(capturasGlobales);
+            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "captura_tmt1_final.csv";
+            link.click();
+        }
+
+        function descargarReporteDiferencias() {
+            if (datosStock.length === 0) {
+                alert('Debe cargar el archivo de stock lógico primero.');
+                return;
+            }
+            if (capturasGlobales.length === 0) {
+                alert('No hay capturas registradas para comparar.');
+                return;
+            }
+
+            let stockMap = new Map();
+            datosStock.forEach(row => {
+                let loteStock = String(row.lote || row.Lote || row.LOTE).trim();
+                if (loteStock) {
+                    stockMap.set(loteStock, row);
+                }
+            });
+
+            let lotesCapturadosMap = new Map();
+            capturasGlobales.forEach(c => {
+                let loteStr = String(c.lote).trim();
+                lotesCapturadosMap.set(loteStr, c);
+            });
+
+            let reporteDiferencias = [];
+
+            capturasGlobales.forEach(c => {
+                let loteStr = String(c.lote).trim();
+                if (stockMap.has(loteStr)) {
+                    let stockInfo = stockMap.get(loteStr);
+                    reporteDiferencias.push({
+                        tipo_diferencia: "PAREADO",
+                        lote: loteStr,
+                        bodega: c.bodega,
+                        calle: c.calle,
+                        sku: c.sku || stockInfo.sku || stockInfo.SKU || '',
+                        descripcion: c.descripcion || stockInfo.descripción || stockInfo.Descripción || '',
+                        piezas: c.piezas !== '' ? c.piezas : (stockInfo.piezas || stockInfo.Piezas || ''),
+                        volumen: c.volumen !== '' ? c.volumen : (stockInfo.volumen || stockInfo.Volumen || ''),
+                        operario: c.operario
+                    });
+                } else {
+                    reporteDiferencias.push({
+                        tipo_diferencia: "SOBRANTE",
+                        lote: loteStr,
+                        bodega: c.bodega,
+                        calle: c.calle,
+                        sku: c.sku,
+                        descripcion: c.descripcion,
+                        piezas: c.piezas,
+                        volumen: c.volumen,
+                        operario: c.operario
+                    });
+                }
+            });
+
+            stockMap.forEach((stockInfo, loteStock) => {
+                if (!lotesCapturadosMap.has(loteStock)) {
+                    reporteDiferencias.push({
+                        tipo_diferencia: "FALTANTE",
+                        lote: loteStock,
+                        bodega: stockInfo.bodega || stockInfo.Bodega || stockInfo.BODEGA || "",
+                        calle: stockInfo.calle || stockInfo.Calle || stockInfo.CALLE || "",
+                        sku: stockInfo.sku || stockInfo.SKU || "",
+                        descripcion: stockInfo.descripción || stockInfo.Descripción || "",
+                        piezas: stockInfo.piezas || stockInfo.Piezas || "",
+                        volumen: stockInfo.volumen || stockInfo.Volumen || "",
+                        operario: "-"
+                    });
+                }
+            });
+
+            if (reporteDiferencias.length === 0) {
+                alert('¡Inventario perfecto!');
+                return;
+            }
+
+            let csv = Papa.unparse(reporteDiferencias);
+            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "reporte_diferencias_inventario.csv";
+            link.click();
+        }
+
+        function reiniciarSistema() {
+            mostrarModal("¿Reiniciar Sistema?", "Se borrarán todas las capturas, se deseará el operario y se limpiarán los datos para iniciar un nuevo inventario.", function(confirmado) {
+                if (confirmado) {
+                    datosPlano = [];
+                    datosStock = [];
+                    datosOperarios = [];
+                    operarioActual = "";
+                    capturasGlobales = [];
+                    capturasCalleActual = [];
+                    contadorActual = 0;
+                    calleCerradaGuardada = false;
+
+                    document.getElementById('fileOperarios').value = '';
+                    document.getElementById('fileStock').value = '';
+                    document.getElementById('filePlano').value = '';
+                    document.getElementById('statusOperarios').style.display = 'none';
+                    document.getElementById('statusStock').style.display = 'none';
+                    document.getElementById('statusPlano').style.display = 'none';
+
+                    const opSelect = document.getElementById('operarioSelect');
+                    opSelect.disabled = false;
+                    opSelect.innerHTML = '<option value="">Cargue operarios.csv primero...</option>';
+                    document.getElementById('infoOperarioActivo').innerText = "Operario: No seleccionado";
+
+                    document.getElementById('bodegaSelect').innerHTML = '<option value="">Seleccione Bodega...</option>';
+                    document.getElementById('calleSelect').innerHTML = '<option value="">Seleccione Calle...</option>';
+                    document.getElementById('metaLotes').value = '300';
+                    
+                    actualizarProgresoVisual();
+                    alert("Sistema reiniciado con éxito.");
+                    cambiarVista('config');
+                }
+            });
+        }
     </script>
 </body>
 </html>
