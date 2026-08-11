@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>INVENTARIO DE PROCESOS</title>
+    <title>INVENTARIO PROCESO</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root {
@@ -149,6 +149,8 @@
         button.warning { background-color: #FFA726; color: #212121; }
         button.danger { background-color: #D32F2F; color: white; }
         button.danger-action { background-color: #D32F2F; color: white; font-size: 12px; padding: 6px; width: auto; margin-top: 0; }
+        button.camera-btn { background-color: #0288D1; margin-bottom: 16px; }
+        button.camera-btn:hover { background-color: #01579B; }
 
         .file-section { 
             background: #F5F5F5; 
@@ -183,7 +185,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Inventario de Proceso</h1>
+        <h1>Inventario Proceso</h1>
         
         <!-- Pestañas de Navegación -->
         <div class="nav-tabs">
@@ -203,16 +205,16 @@
                     <option value="">Cargue operarios.csv primero...</option>
                 </select>
 
-                <label style="margin-top: 20px;">Cargar Stock Lógico</label>
+                <label style="margin-top: 20px;">Cargar Stock (stock_tmt1.csv):</label>
                 <input type="file" id="fileStock" accept=".csv">
                 <div id="statusStock" class="status-box" style="display:none;">Stock cargado con éxito</div>
                 
-                <label style="margin-top: 15px;">Cargar Plano Bodega</label>
+                <label style="margin-top: 15px;">Cargar Plano (plano_tmt1.csv):</label>
                 <input type="file" id="filePlano" accept=".csv">
                 <div id="statusPlano" class="status-box" style="display:none;">Plano cargado con éxito</div>
             </div>
 
-            <button class="secondary" onclick="descargarCSVGlobal()">Descargar Inventario</button>
+            <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado Final</button>
             <button class="warning" onclick="descargarReporteDiferencias()">Descargar Reporte de Diferencias (Pareados/Sobrantes/Faltantes)</button>
             <button class="danger" onclick="reiniciarSistema()">Reiniciar Sistema / Nuevo Inventario</button>
         </div>
@@ -233,11 +235,12 @@
                 <option value="">Seleccione Calle...</option>
             </select>
 
-            <label>Recuento de Lotes</label>
+            <label>Meta de Lotes (Editable):</label>
             <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
 
             <div class="progress" id="displayProgress">0 / 300</div>
 
+            <button class="camera-btn" onclick="abrirEscanearCamara()">Escanear con Cámara (Móvil)</button>
             <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus>
             
             <button id="btnVerDetalle" class="secondary" onclick="abrirModalDetalle()">Ver / Eliminar Lotes Capturados</button>
@@ -249,6 +252,15 @@
     <footer>
         Renovables para una vida mejor
     </footer>
+
+    <!-- Modal para Escáner de Cámara -->
+    <div id="camaraModal" class="modal">
+        <div class="modal-content" style="max-width: 450px;">
+            <h3>Escáner de Cámara</h3>
+            <div id="reader" style="width: 100%; border-radius: 8px; overflow: hidden; margin: 10px 0;"></div>
+            <button class="secondary" onclick="cerrarEscanearCamara()">Cerrar Cámara</button>
+        </div>
+    </div>
 
     <!-- Modal para Alertas Generales -->
     <div id="alertModal" class="modal">
@@ -293,7 +305,9 @@
         </div>
     </div>
 
+    <!-- Librerías Externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script>
         let datosPlano = [];
         let datosStock = [];
@@ -304,6 +318,7 @@
         let contadorActual = 0;
         let callbackModal = null;
         let calleCerradaGuardada = false;
+        let html5QrCode = null;
 
         function cambiarVista(vista) {
             if (vista === 'config') {
@@ -483,27 +498,32 @@
 
         document.getElementById('scannerInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
-                if (!operarioActual) {
-                    alert("Error: No hay un operario asignado.");
-                    cambiarVista('config');
-                    return;
-                }
-                let bodega = document.getElementById('bodegaSelect').value;
-                let calle = document.getElementById('calleSelect').value;
-                let lote = String(this.value).trim();
+                procesarEntradaLote(this.value);
                 this.value = '';
-                if (!bodega || !calle) { alert('Seleccione Bodega y Calle primero.'); return; }
-                if (lote === '') return;
-
-                let meta = parseInt(document.getElementById('metaLotes').value) || 0;
-                if (contadorActual >= meta) {
-                    alert(`Se ha alcanzado la meta de ${meta} lotes para esta calle. Amplíe la cantidad de forma manual si desea capturar más.`);
-                    return;
-                }
-
-                procesarLoteEscaneado(bodega, calle, lote);
             }
         });
+
+        function procesarEntradaLote(valorLote) {
+            if (!operarioActual) {
+                alert("Error: No hay un operario asignado.");
+                cambiarVista('config');
+                return;
+            }
+            let bodega = document.getElementById('bodegaSelect').value;
+            let calle = document.getElementById('calleSelect').value;
+            let lote = String(valorLote).trim();
+
+            if (!bodega || !calle) { alert('Seleccione Bodega y Calle primero.'); return; }
+            if (lote === '') return;
+
+            let meta = parseInt(document.getElementById('metaLotes').value) || 0;
+            if (contadorActual >= meta) {
+                alert(`Se ha alcanzado la meta de ${meta} lotes para esta calle. Amplíe la cantidad de forma manual si desea capturar más.`);
+                return;
+            }
+
+            procesarLoteEscaneado(bodega, calle, lote);
+        }
 
         function procesarLoteEscaneado(bodega, calle, lote) {
             let yaCapturadoCalle = capturasCalleActual.find(c => c.lote == lote);
@@ -575,6 +595,51 @@
                 timestamp: new Date().toISOString() 
             });
             actualizarProgresoVisual();
+        }
+
+        /* Funciones de la Cámara con Html5Qrcode optimizadas */
+        function abrirEscanearCamara() {
+            let bodega = document.getElementById('bodegaSelect').value;
+            let calle = document.getElementById('calleSelect').value;
+            if (!bodega || !calle) {
+                alert('Seleccione Bodega y Calle primero.');
+                return;
+            }
+
+            document.getElementById('camaraModal').style.display = 'block';
+            
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 150 }
+                },
+                (decodedText, decodedResult) => {
+                    cerrarEscanearCamara();
+                    procesarEntradaLote(decodedText);
+                },
+                (errorMessage) => {}
+            ).catch((err) => {
+                alert("No se pudo iniciar la cámara. Verifique permisos de navegador.");
+                document.getElementById('camaraModal').style.display = 'none';
+            });
+        }
+
+        function cerrarEscanearCamara() {
+            // Ocultar la modal de inmediato para evitar sensación de congelamiento
+            document.getElementById('camaraModal').style.display = 'none';
+            setTimeout(() => { document.getElementById('scannerInput').focus(); }, 100);
+
+            // Detener la cámara de forma segura en segundo plano
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => {
+                    console.warn("Aviso al detener cámara:", err);
+                });
+            }
         }
 
         function mostrarModal(titulo, mensaje, callback) {
@@ -684,7 +749,6 @@
                 return;
             }
 
-            // Crear un mapa de stock lógico para búsqueda rápida por lote
             let stockMap = new Map();
             datosStock.forEach(row => {
                 let loteStock = String(row.lote || row.Lote || row.LOTE).trim();
@@ -701,11 +765,9 @@
 
             let reporteDiferencias = [];
 
-            // 1. Procesar Capturados (PAREADOS vs SOBRANTES)
             capturasGlobales.forEach(c => {
                 let loteStr = String(c.lote).trim();
                 if (stockMap.has(loteStr)) {
-                    // Está en stock y en captura -> PAREADO
                     let stockInfo = stockMap.get(loteStr);
                     reporteDiferencias.push({
                         tipo_diferencia: "PAREADO",
@@ -719,7 +781,6 @@
                         operario: c.operario
                     });
                 } else {
-                    // Está en captura pero NO en stock -> SOBRANTE
                     reporteDiferencias.push({
                         tipo_diferencia: "SOBRANTE",
                         lote: loteStr,
@@ -734,7 +795,6 @@
                 }
             });
 
-            // 2. Procesar Faltantes (Están en el stock lógico pero NO en las capturas)
             stockMap.forEach((stockInfo, loteStock) => {
                 if (!lotesCapturadosMap.has(loteStock)) {
                     reporteDiferencias.push({
