@@ -1,11 +1,15 @@
 {
-  "background_color": "#ffffff",
-  "dir": "ltr",
+  "name": "Inventario Proceso",
+  "short_name": "InvProceso",
+  "start_url": "index.html",
   "display": "standalone",
-  "name": "INVENTARIO DE PROCESOS",
-  "orientation": "any",
-  "scope": "/",
-  "short_name": "WMS Inventario",
-  "start_url": "./index.html",
-  "theme_color": "#ffffff"
+  "background_color": "#FAFAFA",
+  "theme_color": "#F57C00",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
 }
