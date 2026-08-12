@@ -305,7 +305,7 @@
         </div>
     </div>
 
-    <!-- Librerías Externas: PapaParse, Html5-Qrcode y Dexie.js -->
+    <!-- Librerías Externas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
@@ -327,7 +327,7 @@
         let calleCerradaGuardada = false;
         let html5QrCode = null;
 
-        // Cargar datos de la BD IndexedDB al iniciar la aplicación
+        // Cargar datos al iniciar
         window.onload = async function() {
             if (operarioActual) {
                 document.getElementById('infoOperarioActivo').innerText = `Operario Activo: ${operarioActual}`;
@@ -338,6 +338,19 @@
                 console.error("Error al cargar datos desde DexieDB:", err);
             }
         };
+
+        // Registro del Service Worker para PWA y funcionamiento Offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('Service Worker registrado con éxito. Alcance:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.error('Error al registrar el Service Worker:', error);
+                    });
+            });
+        }
 
         function cambiarVista(vista) {
             if (vista === 'config') {
@@ -466,7 +479,6 @@
             const bodega = document.getElementById('bodegaSelect').value;
             const calleSelect = document.getElementById('calleSelect').value;
             
-            // Consultar capturas de esta calle directamente desde DexieDB
             capturasCalleActual = await db.capturas.where({ bodega: bodega, calle: calleSelect }).toArray();
             
             if (capturasCalleActual.length > 0) {
@@ -618,7 +630,6 @@
                 timestamp: new Date().toISOString() 
             };
 
-            // Guardar de forma segura en DexieDB (IndexedDB)
             await db.capturas.add(nuevaCaptura);
             capturasCalleActual.push(nuevaCaptura);
             capturasGlobales = await db.capturas.toArray();
