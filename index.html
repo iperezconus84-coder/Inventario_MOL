@@ -372,37 +372,38 @@
             }
         }
 
-        function emitirPitido() {
+        // --- SISTEMA DE AUDIO ROBUSTO Y DIFERENCIADO ---
+        function emitirSonido(tipo) {
             try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const audioCtx = new AudioContext();
+
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
                 const oscillator = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
                 
-                oscillator.type = 'square'; 
-                oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime); 
+                oscillator.type = 'square';
                 gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+
+                if (tipo === 'success') {
+                    oscillator.frequency.setValueAtTime(1200, audioCtx.currentTime);
+                } else if (tipo === 'error') {
+                    oscillator.frequency.setValueAtTime(300, audioCtx.currentTime);
+                } else if (tipo === 'warning') {
+                    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+                }
                 
                 oscillator.connect(gainNode);
                 gainNode.connect(audioCtx.destination);
                 
                 oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.15); 
-                
-                setTimeout(() => {
-                    try {
-                        const osc2 = audioCtx.createOscillator();
-                        const gain2 = audioCtx.createGain();
-                        osc2.type = 'square';
-                        osc2.frequency.setValueAtTime(1500, audioCtx.currentTime);
-                        gain2.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                        osc2.connect(gain2);
-                        gain2.connect(audioCtx.destination);
-                        osc2.start();
-                        osc2.stop(audioCtx.currentTime + 0.15);
-                    } catch(e){}
-                }, 180);
-
-            } catch (e) {}
+                oscillator.stop(audioCtx.currentTime + (tipo === 'error' ? 0.5 : (tipo === 'warning' ? 0.3 : 0.15)));
+            } catch (e) {
+                console.error("Error al emitir sonido:", e);
+            }
         }
 
         const parseConfig = { header: true, skipEmptyLines: true, dynamicTyping: true, delimiter: "", encoding: "ISO-8859-1" };
@@ -563,13 +564,19 @@
         async function procesarLoteEscaneado(bodega, calle, lote) {
             let yaCapturadoCalle = capturasCalleActual.find(c => c.lote == lote);
             if (yaCapturadoCalle) {
-                mostrarModal("¡BLOQUEO: LOTE DUPLICADO!", `El lote ${lote} ya fue escaneado en esta misma calle. La captura ha sido bloqueada.`, function() {}, false);
+                emitirSonido('error');
+                setTimeout(() => {
+                    mostrarModal("¡BLOQUEO: LOTE DUPLICADO!", `El lote ${lote} ya fue escaneado en esta misma calle. La captura ha sido bloqueada.`, function() {}, false);
+                }, 100);
                 return;
             }
 
             let yaCapturadoOtraCalle = await db.capturas.where('lote').equals(lote).and(c => c.calle != calle).first();
             if (yaCapturadoOtraCalle) {
-                mostrarModal("¡BLOQUEO: LOTE EN OTRA CALLE!", `El lote ${lote} ya fue registrado previamente en la calle ${yaCapturadoOtraCalle.calle}. La captura ha sido bloqueada.`, function() {}, false);
+                emitirSonido('error');
+                setTimeout(() => {
+                    mostrarModal("¡BLOQUEO: LOTE EN OTRA CALLE!", `El lote ${lote} ya fue registrado previamente en la calle ${yaCapturadoOtraCalle.calle}. La captura ha sido bloqueada.`, function() {}, false);
+                }, 100);
                 return;
             }
 
@@ -579,9 +586,15 @@
         function verificarStockYLuegoRegistrar(bodega, calle, lote, estadoInicial) {
             let infoStock = datosStock.find(row => String(row.lote || row.Lote || row.LOTE) == lote);
             if (!infoStock && datosStock.length > 0) {
-                mostrarModal("Sobrante / No Encontrado", `El lote ${lote} no está en stock. ¿Agregar igual?`, function(confirmado) {
-                    if (confirmado) registrarCaptura(bodega, calle, lote, estadoInicial === "NORMAL" ? "MANUAL_SOBRANTE" : estadoInicial, {});
-                }, true);
+                emitirSonido('warning');
+                setTimeout(() => {
+                    mostrarModal("Sobrante / No Encontrado", `El lote ${lote} no está en stock. ¿Agregar igual?`, function(confirmado) {
+                        if (confirmado) {
+                            emitirSonido('success');
+                            registrarCaptura(bodega, calle, lote, estadoInicial === "NORMAL" ? "MANUAL_SOBRANTE" : estadoInicial, {});
+                        }
+                    }, true);
+                }, 100);
                 return;
             }
             let datosExtra = infoStock ? { sku: infoStock.sku || infoStock.SKU || '', descripcion: infoStock.descripción || infoStock.Descripción || '', piezas: infoStock.piezas || infoStock.Piezas || '', volumen: infoStock.volumen || infoStock.Volumen || '' } : {};
@@ -595,7 +608,7 @@
                 return;
             }
 
-            emitirPitido();
+            emitirSonido('success');
             contadorActual++;
             
             if (!extra.sku) {
