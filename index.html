@@ -221,9 +221,15 @@
 
         <!-- VISTA 2: CAPTURA EN TERRENO -->
         <div id="viewCaptura" class="view-section active">
-            <div id="infoOperarioActivo" style="background: #FFF3E0; border: 1px solid #FFE0B2; color: #E65100; padding: 10px; border-radius: var(--border-radius-md); margin-bottom: 15px; font-weight: bold; text-align: center; font-size: 14px;">
+            <div id="infoOperarioActivo" style="background: #FFF3E0; border: 1px solid #FFE0B2; color: #E65100; padding: 10px; border-radius: var(--border-radius-md); margin-bottom: 5px; font-weight: bold; text-align: center; font-size: 14px;">
                 Operario: No seleccionado
             </div>
+
+            <!-- Nuevos bloques informativos -->
+            <div id="infoUltimaCalle" style="background: #E3F2FD; border: 1px solid #BBDEFB; color: #1976D2; padding: 5px; border-radius: var(--border-radius-md); margin-bottom: 5px; font-size: 12px; text-align: center;">
+                No hay calle reciente
+            </div>
+            <div id="resumenInventario" style="margin-bottom: 15px;"></div>
 
             <label>Bodega:</label>
             <select id="bodegaSelect" onchange="actualizarCalles()">
@@ -337,6 +343,8 @@
             } catch (err) {
                 console.error("Error al cargar datos desde DexieDB:", err);
             }
+            actualizarUIUltimaCalle();
+            await renderizarResumen();
         };
 
         // Registro del Service Worker para PWA y funcionamiento Offline
@@ -350,26 +358,6 @@
                         console.error('Error al registrar el Service Worker:', error);
                     });
             });
-        }
-
-        function cambiarVista(vista) {
-            if (vista === 'config') {
-                document.getElementById('viewConfig').classList.add('active');
-                document.getElementById('viewCaptura').classList.remove('active');
-                document.getElementById('tabConfig').classList.add('active');
-                document.getElementById('tabCaptura').classList.remove('active');
-            } else {
-                if (!operarioActual) {
-                    alert("Debe seleccionar un operario en la pestaña de Configuración antes de continuar.");
-                    cambiarVista('config');
-                    return;
-                }
-                document.getElementById('viewConfig').classList.remove('active');
-                document.getElementById('viewCaptura').classList.add('active');
-                document.getElementById('tabConfig').classList.remove('active');
-                document.getElementById('tabCaptura').classList.add('active');
-                setTimeout(() => { document.getElementById('scannerInput').focus(); }, 100);
-            }
         }
 
         // --- SISTEMA DE AUDIO ROBUSTO Y DIFERENCIADO ---
@@ -406,6 +394,39 @@
             }
         }
 
+        // --- FUNCIONES DE INTERFAZ NUEVAS (Última calle y Resumen) ---
+        function actualizarUIUltimaCalle() {
+            const ultima = localStorage.getItem('inv_ultima_calle');
+            const el = document.getElementById('infoUltimaCalle');
+            if (el) {
+                el.innerText = ultima ? `Última calle cerrada: ${ultima}` : "No hay calles cerradas recientemente";
+            }
+        }
+
+        async function renderizarResumen() {
+            const capturas = await db.capturas.toArray();
+            const resumen = {};
+            capturas.forEach(c => {
+                if(!resumen[c.bodega]) resumen[c.bodega] = {};
+                if(!resumen[c.bodega][c.calle]) resumen[c.bodega][c.calle] = 0;
+                resumen[c.bodega][c.calle]++;
+            });
+
+            let html = '<div style="background: #F1F8E9; padding: 10px; border-radius: 8px; border: 1px solid #C8E6C9; font-size: 13px;">';
+            html += '<div style="font-weight: bold; margin-bottom: 5px; color: #2E7D32;">RESUMEN DE AVANCE:</div>';
+            for(let b in resumen) {
+                html += `<div style="margin-top: 5px;"><strong>Bodega: ${b}</strong></div>`;
+                for(let c in resumen[b]) {
+                    html += `<div style="margin-left: 10px;">&bull; Calle ${c}: <strong>${resumen[b][c]}</strong> lotes</div>`;
+                }
+            }
+            html += '</div>';
+            const contenedorResumen = document.getElementById('resumenInventario');
+            if (contenedorResumen) {
+                contenedorResumen.innerHTML = Object.keys(resumen).length > 0 ? html : '';
+            }
+        }
+
         const parseConfig = { header: true, skipEmptyLines: true, dynamicTyping: true, delimiter: "", encoding: "ISO-8859-1" };
 
         document.getElementById('fileOperarios').addEventListener('change', function(e) {
@@ -436,6 +457,26 @@
                 document.getElementById('statusStock').style.display = 'block';
             } });
         });
+
+        function cambiarVista(vista) {
+            if (vista === 'config') {
+                document.getElementById('viewConfig').classList.add('active');
+                document.getElementById('viewCaptura').classList.remove('active');
+                document.getElementById('tabConfig').classList.add('active');
+                document.getElementById('tabCaptura').classList.remove('active');
+            } else {
+                if (!operarioActual) {
+                    alert("Debe seleccionar un operario en la pestaña de Configuración antes de continuar.");
+                    cambiarVista('config');
+                    return;
+                }
+                document.getElementById('viewConfig').classList.remove('active');
+                document.getElementById('viewCaptura').classList.add('active');
+                document.getElementById('tabConfig').classList.remove('active');
+                document.getElementById('tabCaptura').classList.add('active');
+                setTimeout(() => { document.getElementById('scannerInput').focus(); }, 100);
+            }
+        }
 
         function cargarOperariosSelect() {
             const opSelect = document.getElementById('operarioSelect');
@@ -642,6 +683,7 @@
             capturasGlobales = await db.capturas.toArray();
 
             actualizarProgresoVisual();
+            await renderizarResumen();
         }
 
         function abrirEscanearCamara() {
@@ -728,6 +770,7 @@
             capturasGlobales = await db.capturas.toArray();
             actualizarProgresoVisual();
             renderizarTablaDetalle();
+            await renderizarResumen();
         }
 
         function cerrarModalDetalle() { document.getElementById('detalleModal').style.display = 'none'; setTimeout(() => { document.getElementById('scannerInput').focus(); }, 100); }
@@ -767,8 +810,14 @@
             capturasCalleActual = await db.capturas.where({ bodega: bodega, calle: calle }).toArray();
             capturasGlobales = await db.capturas.toArray();
             calleCerradaGuardada = true;
+            
+            // Guardar última calle cerrada
+            localStorage.setItem('inv_ultima_calle', `${bodega} - ${calle}`);
+            actualizarUIUltimaCalle();
+
             cerrarModalCierre();
             actualizarBotonesAccion();
+            await renderizarResumen();
             alert(`Calle ${calle} cerrada correctamente con observación guardada.`);
         }
 
@@ -881,6 +930,7 @@
                 if (confirmado) {
                     await db.capturas.clear();
                     localStorage.removeItem('inv_operario');
+                    localStorage.removeItem('inv_ultima_calle');
 
                     datosPlano = [];
                     datosStock = [];
@@ -908,6 +958,8 @@
                     document.getElementById('metaLotes').value = '300';
                     
                     actualizarProgresoVisual();
+                    actualizarUIUltimaCalle();
+                    await renderizarResumen();
                     alert("Sistema reiniciado con éxito.");
                     cambiarVista('config');
                 }
