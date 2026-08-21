@@ -191,6 +191,7 @@
         <div class="nav-tabs">
             <div id="tabConfig" class="nav-tab" onclick="cambiarVista('config')">Configuración</div>
             <div id="tabCaptura" class="nav-tab active" onclick="cambiarVista('captura')">Captura</div>
+            <div id="tabAvance" class="nav-tab" onclick="cambiarVista('avance')">Avance</div>
         </div>
 
         <!-- VISTA 1: CONFIGURACIÓN Y ARCHIVOS -->
@@ -225,11 +226,10 @@
                 Operario: No seleccionado
             </div>
 
-            <!-- Nuevos bloques informativos -->
-            <div id="infoUltimaCalle" style="background: #E3F2FD; border: 1px solid #BBDEFB; color: #1976D2; padding: 5px; border-radius: var(--border-radius-md); margin-bottom: 5px; font-size: 12px; text-align: center;">
+            <!-- Visor de la última calle inventariada -->
+            <div id="infoUltimaCalle" style="background: #E3F2FD; border: 1px solid #BBDEFB; color: #1976D2; padding: 5px; border-radius: var(--border-radius-md); margin-bottom: 15px; font-size: 12px; text-align: center;">
                 No hay calle reciente
             </div>
-            <div id="resumenInventario" style="margin-bottom: 15px;"></div>
 
             <label>Bodega:</label>
             <select id="bodegaSelect" onchange="actualizarCalles()">
@@ -253,6 +253,13 @@
             <button id="btnCerrarCalle" onclick="abrirModalCierreCalle()">Cerrar Calle y Guardar</button>
             <button id="btnReabrirCalle" class="warning" onclick="reabrirCalle()" style="display:none;">Reabrir Calle Actual</button>
         </div>
+
+        <!-- VISTA 3: AVANCE POR CALLE -->
+        <div id="viewAvance" class="view-section">
+            <h2 style="color: var(--color-primary-dark); text-align: center; font-size: 18px;">Resumen de Avance</h2>
+            <div id="resumenInventario" style="margin-bottom: 15px;"></div>
+        </div>
+
     </div>
 
     <footer>
@@ -412,18 +419,23 @@
                 resumen[c.bodega][c.calle]++;
             });
 
-            let html = '<div style="background: #F1F8E9; padding: 10px; border-radius: 8px; border: 1px solid #C8E6C9; font-size: 13px;">';
-            html += '<div style="font-weight: bold; margin-bottom: 5px; color: #2E7D32;">RESUMEN DE AVANCE:</div>';
-            for(let b in resumen) {
-                html += `<div style="margin-top: 5px;"><strong>Bodega: ${b}</strong></div>`;
-                for(let c in resumen[b]) {
-                    html += `<div style="margin-left: 10px;">&bull; Calle ${c}: <strong>${resumen[b][c]}</strong> lotes</div>`;
+            let html = '<div style="background: #F1F8E9; padding: 10px; border-radius: 8px; border: 1px solid #C8E6C9; font-size: 14px;">';
+            
+            if (Object.keys(resumen).length === 0) {
+                html += 'No hay datos capturados aún.';
+            } else {
+                for(let b in resumen) {
+                    html += `<div style="margin-top: 5px; color: #2E7D32;"><strong>Bodega: ${b}</strong></div>`;
+                    for(let c in resumen[b]) {
+                        html += `<div style="margin-left: 15px; margin-top: 4px;">&bull; Calle ${c}: <strong>${resumen[b][c]}</strong> lotes</div>`;
+                    }
                 }
             }
             html += '</div>';
+            
             const contenedorResumen = document.getElementById('resumenInventario');
             if (contenedorResumen) {
-                contenedorResumen.innerHTML = Object.keys(resumen).length > 0 ? html : '';
+                contenedorResumen.innerHTML = html;
             }
         }
 
@@ -459,20 +471,32 @@
         });
 
         function cambiarVista(vista) {
+            // 1. Ocultar todas las vistas
+            document.getElementById('viewConfig').classList.remove('active');
+            document.getElementById('viewCaptura').classList.remove('active');
+            document.getElementById('viewAvance').classList.remove('active');
+            
+            // 2. Quitar estado activo de todas las pestañas
+            document.getElementById('tabConfig').classList.remove('active');
+            document.getElementById('tabCaptura').classList.remove('active');
+            document.getElementById('tabAvance').classList.remove('active');
+
+            // 3. Activar la vista solicitada
             if (vista === 'config') {
                 document.getElementById('viewConfig').classList.add('active');
-                document.getElementById('viewCaptura').classList.remove('active');
                 document.getElementById('tabConfig').classList.add('active');
-                document.getElementById('tabCaptura').classList.remove('active');
+            } else if (vista === 'avance') {
+                document.getElementById('viewAvance').classList.add('active');
+                document.getElementById('tabAvance').classList.add('active');
+                renderizarResumen(); // Asegurarnos de tener los datos frescos al entrar
             } else {
+                // Validación antes de entrar a captura
                 if (!operarioActual) {
                     alert("Debe seleccionar un operario en la pestaña de Configuración antes de continuar.");
                     cambiarVista('config');
                     return;
                 }
-                document.getElementById('viewConfig').classList.remove('active');
                 document.getElementById('viewCaptura').classList.add('active');
-                document.getElementById('tabConfig').classList.remove('active');
                 document.getElementById('tabCaptura').classList.add('active');
                 setTimeout(() => { document.getElementById('scannerInput').focus(); }, 100);
             }
