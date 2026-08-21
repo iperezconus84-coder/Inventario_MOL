@@ -4,48 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>INVENTARIO PROCESO</title>
-    <link rel="manifest" href="manifest.json">
     <style>
-        :root {
-            --color-primary-main: #F57C00;
-            --color-primary-dark: #E65100;
-            --color-text-primary: #212121;
-            --color-text-secondary: #757575;
-            --color-bg-surface: #FFFFFF;
-            --color-bg-dark: #424242;
-            --color-bg-card-accent: #8D6E63;
-            --color-border-subtle: #BCAAA4;
-            --border-radius-md: 8px;
-            --spacing-sm: 16px;
-            --spacing-md: 24px;
-        }
-
-        body { font-family: 'Open Sans', sans-serif; background-color: #FAFAFA; color: var(--color-text-primary); margin: 0; padding: var(--spacing-sm); display: flex; flex-direction: column; min-height: 100vh; }
-        .container { max-width: 600px; margin: auto; background: var(--color-bg-surface); padding: var(--spacing-md); border-radius: var(--border-radius-md); border: 1px solid var(--color-border-subtle); box-shadow: 0 2px 4px rgba(0,0,0,0.1); width: 100%; box-sizing: border-box; }
+        :root { --color-primary-main: #F57C00; --color-primary-dark: #E65100; --color-text-primary: #212121; --color-text-secondary: #757575; --color-bg-surface: #FFFFFF; --color-bg-dark: #424242; --color-border-subtle: #BCAAA4; --border-radius-md: 8px; --spacing-md: 24px; }
+        body { font-family: 'Open Sans', sans-serif; background-color: #FAFAFA; color: var(--color-text-primary); margin: 0; padding: 16px; min-height: 100vh; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
         .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-        .nav-tab { flex: 1; padding: 12px; background-color: #EEEEEE; border: 1px solid var(--color-border-subtle); color: var(--color-text-secondary); font-weight: bold; text-align: center; cursor: pointer; border-radius: var(--border-radius-md); text-transform: uppercase; font-size: 14px; }
-        .nav-tab.active { background-color: var(--color-primary-main); color: white; border-color: var(--color-primary-dark); }
+        .nav-tab { flex: 1; padding: 12px; background: #eee; text-align: center; cursor: pointer; border-radius: 8px; font-weight: bold; }
+        .nav-tab.active { background: var(--color-primary-main); color: white; }
         .view-section { display: none; }
         .view-section.active { display: block; }
-        h1 { color: var(--color-primary-dark); font-size: 24px; margin-bottom: var(--spacing-md); text-align: center; text-transform: uppercase; }
-        label { font-weight: 600; color: var(--color-text-secondary); font-size: 14px; margin-bottom: 8px; display: block; text-transform: uppercase; }
-        select, input, textarea { width: 100%; padding: 12px; margin-bottom: 16px; border: 1px solid var(--color-border-subtle); border-radius: var(--border-radius-md); font-size: 16px; box-sizing: border-box; background-color: #FFF; color: var(--color-text-primary); font-family: 'Open Sans', sans-serif; }
-        .progress { font-size: 24px; font-weight: bold; text-align: center; padding: 16px; background: var(--color-bg-dark); color: white; border-radius: var(--border-radius-md); margin-bottom: var(--spacing-md); letter-spacing: 2px; }
-        button { width: 100%; padding: 16px; background-color: var(--color-primary-main); color: white; border: none; border-radius: var(--border-radius-md); font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 8px; text-transform: uppercase; }
-        button:hover { background-color: var(--color-primary-dark); }
-        button.secondary { background-color: var(--color-bg-card-accent); }
-        button.warning { background-color: #FFA726; color: #212121; }
-        button.danger { background-color: #D32F2F; color: white; }
-        button.danger-action { background-color: #D32F2F; color: white; font-size: 12px; padding: 6px; width: auto; margin-top: 0; }
-        button.camera-btn { background-color: #0288D1; margin-bottom: 16px; }
-        .file-section { background: #F5F5F5; padding: 16px; border-radius: var(--border-radius-md); margin-bottom: 16px; border: 1px dashed var(--color-border-subtle); }
-        .status-box { background: #E8F5E9; border: 1px solid #A5D6A7; color: #2E7D32; padding: 12px; border-radius: var(--border-radius-md); margin-bottom: 16px; font-size: 14px; text-align: center; font-weight: bold; }
-        .modal { display: none; position: fixed; z-index: 10; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
-        .modal-content { background: white; margin: 10% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: var(--border-radius-md); text-align: center; }
-        .modal-body { overflow-y: auto; max-height: 40vh; margin: 10px 0; border: 1px solid var(--color-border-subtle); padding: 10px; text-align: left; }
-        table.detalle-lotes { width: 100%; border-collapse: collapse; font-size: 14px; }
-        table.detalle-lotes th, table.detalle-lotes td { border: 1px solid var(--color-border-subtle); padding: 8px; text-align: left; }
-        footer { text-align: center; font-size: 12px; color: var(--color-text-secondary); margin-top: 32px; text-transform: uppercase; }
+        label { font-weight: 600; display: block; margin: 10px 0 5px; color: #555; text-transform: uppercase; font-size: 13px; }
+        select, input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .progress { font-size: 24px; font-weight: bold; text-align: center; padding: 15px; background: #424242; color: white; border-radius: 8px; margin: 15px 0; }
+        button { width: 100%; padding: 15px; background: var(--color-primary-main); color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; }
+        .modal-content { background: white; margin: 20% auto; padding: 20px; width: 80%; border-radius: 8px; text-align: center; }
+        .status-box { background: #dff0d8; padding: 10px; border-radius: 5px; text-align: center; color: #3c763d; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -56,143 +30,124 @@
             <div id="tabCaptura" class="nav-tab active" onclick="cambiarVista('captura')">Captura</div>
         </div>
 
+        <!-- CONFIGURACIÓN -->
         <div id="viewConfig" class="view-section">
-            <div class="file-section">
-                <label>Cargar Operarios (operarios.csv):</label>
-                <input type="file" id="fileOperarios" accept=".csv">
-                <div id="statusOperarios" class="status-box" style="display:none;">Operarios cargados</div>
-                <label style="margin-top: 15px;">Seleccionar Operario:</label>
-                <select id="operarioSelect" onchange="bloquearOperarioConfig()"><option value="">Cargue operarios.csv primero...</option></select>
-                <label style="margin-top: 20px;">Cargar Stock (stock_tmt1.csv):</label>
-                <input type="file" id="fileStock" accept=".csv">
-                <div id="statusStock" class="status-box" style="display:none;">Stock cargado</div>
-                <label style="margin-top: 15px;">Cargar Plano (plano_tmt1.csv):</label>
-                <input type="file" id="filePlano" accept=".csv">
-                <div id="statusPlano" class="status-box" style="display:none;">Plano cargado</div>
-            </div>
-            <button class="secondary" onclick="descargarCSVGlobal()">Descargar Consolidado</button>
-            <button class="warning" onclick="descargarReporteDiferencias()">Reporte de Diferencias</button>
+            <label>Operarios (CSV):</label>
+            <input type="file" id="fileOperarios" accept=".csv">
+            <div id="statusOperarios" class="status-box" style="display:none;">Operarios cargados</div>
+            
+            <label>Seleccionar Operario:</label>
+            <select id="operarioSelect" onchange="bloquearOperarioConfig()"><option value="">Seleccione...</option></select>
+            
+            <label>Stock (CSV):</label>
+            <input type="file" id="fileStock" accept=".csv">
+            <div id="statusStock" class="status-box" style="display:none;">Stock cargado</div>
+            
+            <label>Plano (CSV):</label>
+            <input type="file" id="filePlano" accept=".csv">
+            <div id="statusPlano" class="status-box" style="display:none;">Plano cargado</div>
+            
             <button class="danger" onclick="reiniciarSistema()">Reiniciar Sistema</button>
         </div>
 
+        <!-- CAPTURA -->
         <div id="viewCaptura" class="view-section active">
-            <div id="infoOperarioActivo" style="background: #FFF3E0; padding: 10px; border-radius: 8px; margin-bottom: 15px; font-weight: bold; text-align: center;">Operario: No seleccionado</div>
+            <div id="infoOperarioActivo" style="padding:10px; background:#fff3e0; text-align:center; margin-bottom:10px;">Operario: No seleccionado</div>
             <label>Bodega:</label>
             <select id="bodegaSelect" onchange="actualizarCalles()"><option value="">Seleccione Bodega...</option></select>
             <label>Calle:</label>
             <select id="calleSelect" onchange="configurarCalle()"><option value="">Seleccione Calle...</option></select>
-            <label>Meta:</label>
-            <input type="number" id="metaLotes" value="300" oninput="actualizarProgresoVisual()">
             <div class="progress" id="displayProgress">0 / 300</div>
-            <button class="camera-btn" onclick="abrirEscanearCamara()">Escanear con Cámara</button>
             <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus>
-            <button id="btnVerDetalle" class="secondary" onclick="abrirModalDetalle()">Ver / Eliminar Lotes</button>
-            <button id="btnCerrarCalle" onclick="abrirModalCierreCalle()">Cerrar Calle y Guardar</button>
-            <button id="btnReabrirCalle" class="warning" onclick="reabrirCalle()" style="display:none;">Reabrir Calle</button>
+            <button onclick="abrirModalDetalle()">Ver Lotes Capturados</button>
         </div>
     </div>
 
-    <!-- Modales -->
-    <div id="camaraModal" class="modal"><div class="modal-content"><h3>Escáner</h3><div id="reader"></div><button class="secondary" onclick="cerrarEscanearCamara()">Cerrar</button></div></div>
-    <div id="alertModal" class="modal"><div class="modal-content"><h3 id="modalTitle">Atención</h3><p id="modalMessage"></p><button id="modalBtnAceptar" onclick="resolverModal(true)">Aceptar</button><button id="modalBtnCancelar" class="secondary" onclick="resolverModal(false)">Cancelar</button></div></div>
-    <div id="cierreModal" class="modal"><div class="modal-content"><h3>Cierre de Calle</h3><p id="cierreInfoMeta"></p><textarea id="comentarioCalleInput" placeholder="Comentario..."></textarea><button onclick="confirmarCierreCalle()">Confirmar</button><button class="secondary" onclick="cerrarModalCierre()">Cancelar</button></div></div>
-    <div id="detalleModal" class="modal"><div class="modal-content"><h3 id="detalleTitle">Lotes</h3><div class="modal-body"><table class="detalle-lotes"><tbody id="tablaDetalleBody"></tbody></table></div><button onclick="cerrarModalDetalle()">Cerrar</button></div></div>
+    <div id="alertModal" class="modal"><div class="modal-content"><h3 id="modalTitle">Atención</h3><p id="modalMessage"></p><button onclick="resolverModal()">Aceptar</button></div></div>
+    <div id="detalleModal" class="modal"><div class="modal-content"><h3 id="detalleTitle">Lotes</h3><div id="listaLotes"></div><button onclick="document.getElementById('detalleModal').style.display='none'">Cerrar</button></div></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
     <script>
         const db = new Dexie("InventarioProcesoDB");
         db.version(1).stores({ capturas: "++id, operario, bodega, calle, lote, sku, timestamp" });
 
-        let datosPlano = [], datosStock = [], datosOperarios = [], operarioActual = localStorage.getItem('inv_operario') || "", capturasCalleActual = [], contadorActual = 0, callbackModal = null, calleCerradaGuardada = false, html5QrCode = null;
+        let datosPlano = [], datosStock = [], datosOperarios = [], operarioActual = localStorage.getItem('inv_operario') || "", capturasCalleActual = [], contadorActual = 0, callbackModal = null;
 
-        // --- SISTEMA DE AUDIO ---
+        function cambiarVista(vista) {
+            if (vista === 'config') {
+                document.getElementById('viewConfig').classList.add('active');
+                document.getElementById('viewCaptura').classList.remove('active');
+                document.getElementById('tabConfig').classList.add('active');
+                document.getElementById('tabCaptura').classList.remove('active');
+            } else {
+                if (!operarioActual) { alert("Seleccione un operario en Configuración primero."); return; }
+                document.getElementById('viewConfig').classList.remove('active');
+                document.getElementById('viewCaptura').classList.add('active');
+                document.getElementById('tabConfig').classList.remove('active');
+                document.getElementById('tabCaptura').classList.add('active');
+            }
+        }
+
         function emitirSonido(tipo) {
             try {
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
                 osc.type = 'square';
-                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                if (tipo === 'success') { osc.frequency.setValueAtTime(1200, audioCtx.currentTime); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.15); }
-                else if (tipo === 'error') { osc.frequency.setValueAtTime(300, audioCtx.currentTime); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.5); }
-                else if (tipo === 'warning') { osc.frequency.setValueAtTime(600, audioCtx.currentTime); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.3); }
-            } catch (e) {}
+                osc.frequency.setValueAtTime(tipo === 'error' ? 300 : 1200, ctx.currentTime);
+                osc.connect(ctx.destination);
+                osc.start(); osc.stop(ctx.currentTime + (tipo === 'error' ? 0.5 : 0.15));
+            } catch(e){}
         }
 
-        // --- NAVEGACIÓN Y CARGA ---
-        function cambiarVista(vista) {
-            if (vista === 'config') { document.getElementById('viewConfig').classList.add('active'); document.getElementById('viewCaptura').classList.remove('active'); document.getElementById('tabConfig').classList.add('active'); document.getElementById('tabCaptura').classList.remove('active'); }
-            else { if (!operarioActual) { alert("Debe seleccionar un operario."); cambiarVista('config'); return; } document.getElementById('viewConfig').classList.remove('active'); document.getElementById('viewCaptura').classList.add('active'); document.getElementById('tabConfig').classList.remove('active'); document.getElementById('tabCaptura').classList.add('active'); setTimeout(() => { document.getElementById('scannerInput').focus(); }, 100); }
-        }
+        document.getElementById('fileOperarios').addEventListener('change', e => {
+            Papa.parse(e.target.files[0], { header: true, encoding: "ISO-8859-1", complete: res => {
+                datosOperarios = res.data;
+                let select = document.getElementById('operarioSelect');
+                select.innerHTML = '<option value="">Seleccione...</option>';
+                [...new Set(datosOperarios.map(r => r.operario || r.nombre))].forEach(n => { if(n) select.innerHTML += `<option value="${n}">${n}</option>`; });
+                document.getElementById('statusOperarios').style.display = 'block';
+            }});
+        });
 
-        document.getElementById('fileOperarios').addEventListener('change', function(e) { Papa.parse(e.target.files[0], { header: true, complete: function(results) { datosOperarios = results.data; const opSelect = document.getElementById('operarioSelect'); opSelect.innerHTML = '<option value="">Seleccione...</option>'; [...new Set(datosOperarios.map(r => r.operario || r.nombre))].forEach(op => {if(op) opSelect.innerHTML += `<option value="${op}">${op}</option>`;}); document.getElementById('statusOperarios').style.display = 'block'; } }); });
-        document.getElementById('fileStock').addEventListener('change', function(e) { Papa.parse(e.target.files[0], { header: true, complete: function(results) { datosStock = results.data; document.getElementById('statusStock').style.display = 'block'; } }); });
-        document.getElementById('filePlano').addEventListener('change', function(e) { Papa.parse(e.target.files[0], { header: true, complete: function(results) { datosPlano = results.data; const bSelect = document.getElementById('bodegaSelect'); bSelect.innerHTML = '<option value="">Seleccione...</option>'; [...new Set(datosPlano.map(r => r.bodega || r.Bodega))].forEach(b => {if(b) bSelect.innerHTML += `<option value="${b}">${b}</option>`;}); document.getElementById('statusPlano').style.display = 'block'; } }); });
+        document.getElementById('fileStock').addEventListener('change', e => Papa.parse(e.target.files[0], { header: true, encoding: "ISO-8859-1", complete: res => { datosStock = res.data; document.getElementById('statusStock').style.display = 'block'; } }));
+        document.getElementById('filePlano').addEventListener('change', e => Papa.parse(e.target.files[0], { header: true, encoding: "ISO-8859-1", complete: res => { datosPlano = res.data; let s = document.getElementById('bodegaSelect'); [...new Set(res.data.map(r => r.bodega || r.Bodega))].forEach(b => { if(b) s.innerHTML += `<option value="${b}">${b}</option>`; }); document.getElementById('statusPlano').style.display = 'block'; } }));
 
-        function bloquearOperarioConfig() { operarioActual = document.getElementById('operarioSelect').value; if(operarioActual) { document.getElementById('operarioSelect').disabled = true; document.getElementById('infoOperarioActivo').innerText = `Operario: ${operarioActual}`; localStorage.setItem('inv_operario', operarioActual); } }
-        function actualizarCalles() { const bodega = document.getElementById('bodegaSelect').value; const cSelect = document.getElementById('calleSelect'); cSelect.innerHTML = '<option value="">Seleccione Calle...</option>'; datosPlano.filter(r => (r.bodega || r.Bodega) == bodega).forEach(r => { let c = r.calle || r.Calle; if(c) cSelect.innerHTML += `<option value="${c}">${c}</option>`; }); }
+        function bloquearOperarioConfig() { operarioActual = document.getElementById('operarioSelect').value; if(operarioActual) { document.getElementById('operarioSelect').disabled = true; document.getElementById('infoOperarioActivo').innerText = "Operario: " + operarioActual; localStorage.setItem('inv_operario', operarioActual); } }
+        function actualizarCalles() { let b = document.getElementById('bodegaSelect').value, s = document.getElementById('calleSelect'); s.innerHTML = '<option value="">Seleccione...</option>'; datosPlano.filter(r => (r.bodega || r.Bodega) == b).forEach(r => { let c = r.calle || r.Calle; if(c) s.innerHTML += `<option value="${c}">${c}</option>`; }); }
         
         async function configurarCalle() {
-            const bodega = document.getElementById('bodegaSelect').value, calle = document.getElementById('calleSelect').value;
-            capturasCalleActual = await db.capturas.where({bodega, calle}).toArray();
+            let b = document.getElementById('bodegaSelect').value, c = document.getElementById('calleSelect').value;
+            capturasCalleActual = await db.capturas.where({bodega:b, calle:c}).toArray();
             contadorActual = capturasCalleActual.length;
-            calleCerradaGuardada = capturasCalleActual.length > 0;
-            actualizarProgresoVisual(); actualizarBotonesAccion();
+            document.getElementById('displayProgress').innerText = contadorActual + " / 300";
         }
 
-        function actualizarProgresoVisual() { document.getElementById('displayProgress').innerText = `${contadorActual} / ${document.getElementById('metaLotes').value}`; }
-        function actualizarBotonesAccion() { 
-            document.getElementById('btnCerrarCalle').style.display = calleCerradaGuardada ? 'none' : 'block';
-            document.getElementById('btnReabrirCalle').style.display = calleCerradaGuardada ? 'block' : 'none';
-        }
+        document.getElementById('scannerInput').addEventListener('keypress', e => {
+            if(e.key === 'Enter') { procesarLote(document.getElementById('scannerInput').value.trim()); document.getElementById('scannerInput').value = ''; }
+        });
 
-        // --- LÓGICA DE CAPTURA CON BLOQUEO ---
-        document.getElementById('scannerInput').addEventListener('keypress', function (e) { if (e.key === 'Enter') { procesarLoteEscaneado(document.getElementById('bodegaSelect').value, document.getElementById('calleSelect').value, this.value.trim()); this.value = ''; } });
-
-        async function procesarLoteEscaneado(bodega, calle, lote) {
-            if(!bodega || !calle) return alert('Seleccione Bodega y Calle.');
-            if(capturasCalleActual.find(c => c.lote == lote)) { emitirSonido('error'); mostrarModal("BLOQUEO", `Lote ${lote} ya registrado en esta calle.`, () => document.getElementById('scannerInput').focus()); return; }
-            let dupe = await db.capturas.where('lote').equals(lote).and(c => c.calle != calle).first();
-            if(dupe) { emitirSonido('error'); mostrarModal("BLOQUEO", `Lote ${lote} ya existe en calle ${dupe.calle}.`, () => document.getElementById('scannerInput').focus()); return; }
+        async function procesarLote(lote) {
+            let b = document.getElementById('bodegaSelect').value, c = document.getElementById('calleSelect').value;
+            if(!b || !c) return alert("Seleccione Bodega y Calle");
             
-            verificarStockYLuegoRegistrar(bodega, calle, lote, "NORMAL");
-        }
-
-        function verificarStockYLuegoRegistrar(bodega, calle, lote, estado) {
-            let infoStock = datosStock.find(r => String(r.lote || r.Lote || r.LOTE) == lote);
-            if(!infoStock && datosStock.length > 0) {
-                emitirSonido('warning');
-                mostrarModal("Sobrante", `Lote ${lote} no en stock. ¿Agregar?`, (ok) => { if(ok) { emitirSonido('success'); registrarCaptura(bodega, calle, lote, "SOBRANTE", {}); } });
-                return;
-            }
+            // Bloqueo estricto
+            if(capturasCalleActual.find(x => x.lote == lote)) { emitirSonido('error'); mostrarModal("BLOQUEO", "Lote duplicado en esta calle."); return; }
+            let dupe = await db.capturas.where('lote').equals(lote).and(x => x.calle != c).first();
+            if(dupe) { emitirSonido('error'); mostrarModal("BLOQUEO", "Lote duplicado en otra calle ("+dupe.calle+")."); return; }
+            
+            // Registro
             emitirSonido('success');
-            registrarCaptura(bodega, calle, lote, estado, infoStock || {});
-        }
-
-        async function registrarCaptura(bodega, calle, lote, estado, extra) {
             contadorActual++;
-            await db.capturas.add({ operario: operarioActual, bodega, calle, lote, sku: extra.sku || extra.SKU || '', timestamp: new Date().toISOString() });
-            capturasCalleActual = await db.capturas.where({bodega, calle}).toArray();
-            actualizarProgresoVisual();
+            await db.capturas.add({ operario: operarioActual, bodega: b, calle: c, lote: lote, timestamp: new Date().toISOString() });
+            capturasCalleActual = await db.capturas.where({bodega:b, calle:c}).toArray();
+            document.getElementById('displayProgress').innerText = contadorActual + " / 300";
         }
 
-        // --- UTILS ---
-        function mostrarModal(t, m, c) { document.getElementById('modalTitle').innerText = t; document.getElementById('modalMessage').innerText = m; document.getElementById('alertModal').style.display = 'block'; callbackModal = c; }
-        function resolverModal(ok) { document.getElementById('alertModal').style.display = 'none'; if(callbackModal) callbackModal(ok); }
-        function abrirModalDetalle() { renderizarTablaDetalle(); document.getElementById('detalleModal').style.display = 'block'; }
-        function renderizarTablaDetalle() { let tbody = document.getElementById('tablaDetalleBody'); tbody.innerHTML = ''; capturasCalleActual.forEach((c, i) => tbody.innerHTML += `<tr><td>${i+1}</td><td>${c.lote}</td><td>${c.sku}</td><td><button class="danger-action" onclick="eliminarCaptura(${c.id})">Eliminar</button></td></tr>`); }
-        async function eliminarCaptura(id) { await db.capturas.delete(id); await configurarCalle(); renderizarTablaDetalle(); }
-        function cerrarModalDetalle() { document.getElementById('detalleModal').style.display = 'none'; }
-        function abrirModalCierreCalle() { document.getElementById('cierreModal').style.display = 'block'; }
-        function cerrarModalCierre() { document.getElementById('cierreModal').style.display = 'none'; }
-        async function confirmarCierreCalle() { calleCerradaGuardada = true; cerrarModalCierre(); actualizarBotonesAccion(); }
-        function reabrirCalle() { calleCerradaGuardada = false; actualizarBotonesAccion(); }
-        function abrirEscanearCamara() { document.getElementById('camaraModal').style.display = 'block'; html5QrCode = new Html5Qrcode("reader"); html5QrCode.start({facingMode: "environment"}, {fps:10, qrbox:200}, (text) => { cerrarEscanearCamara(); procesarLoteEscaneado(document.getElementById('bodegaSelect').value, document.getElementById('calleSelect').value, text); }); }
-        function cerrarEscanearCamara() { document.getElementById('camaraModal').style.display = 'none'; if(html5QrCode) html5QrCode.stop(); }
-        function descargarCSVGlobal() { db.capturas.toArray().then(data => { let csv = Papa.unparse(data); let blob = new Blob([csv], {type:'text/csv'}); let a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'inventario.csv'; a.click(); }); }
-        function reiniciarSistema() { mostrarModal("¿Reiniciar?", "Se perderán datos.", async (ok) => { if(ok) { await db.capturas.clear(); location.reload(); } }); }
+        function mostrarModal(t, m, fn) { document.getElementById('modalTitle').innerText = t; document.getElementById('modalMessage').innerText = m; document.getElementById('alertModal').style.display = 'block'; callbackModal = fn; }
+        function resolverModal() { document.getElementById('alertModal').style.display = 'none'; if(callbackModal) callbackModal(); }
+        function abrirModalDetalle() { document.getElementById('listaLotes').innerHTML = capturasCalleActual.map(x => x.lote).join(', '); document.getElementById('detalleModal').style.display = 'block'; }
+        function reiniciarSistema() { if(confirm("¿Reiniciar?")) { db.capturas.clear().then(() => location.reload()); } }
     </script>
 </body>
 </html>
