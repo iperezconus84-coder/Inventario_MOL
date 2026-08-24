@@ -667,4 +667,940 @@
     </div>
 
     <!-- Modal para Cierre de Calle con Comentario -->
-    <div id="cierreModal
+    <div id="cierreModal" class="modal" role="dialog" aria-modal="true">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header-tag">CONFIRMACIÓN // CIERRE</div>
+            <h3>Cierre de Calle</h3>
+            <p id="cierreInfoMeta" style="margin: 8px 0 14px 0; font-family: var(--font-mono); font-size: 13px; color: var(--color-brand); font-weight: 600;"></p>
+            <label for="comentarioCalleInput" style="text-align: left;">Observación de Cierre (Opcional):</label>
+            <textarea id="comentarioCalleInput" rows="3" placeholder="Ej: 2 paquetes sin código legible..." style="resize: none;"></textarea>
+            <button type="button" class="btn-action primary-action" onclick="confirmarCierreCalle()">Confirmar y Cerrar Calle</button>
+            <button type="button" class="btn-action secondary" onclick="cerrarModalCierre()">Cancelar</button>
+        </div>
+    </div>
+
+    <!-- Modal para Ver Detalle / Eliminar -->
+    <div id="detalleModal" class="modal" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header-tag">REGISTRO // AUDITORÍA</div>
+            <h3 id="detalleTitle">Lotes Capturados</h3>
+            <div class="modal-body">
+                <table class="detalle-lotes">
+                    <thead>
+                        <tr>
+                            <th style="width: 35px;">#</th>
+                            <th>Lote</th>
+                            <th>SKU</th>
+                            <th style="text-align: center; width: 75px;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaDetalleBody"></tbody>
+                </table>
+            </div>
+            <button type="button" class="btn-action secondary" onclick="cerrarModalDetalle()">Cerrar Vista</button>
+        </div>
+    </div>
+
+    <!-- Librerías Externas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+    
+    <script>
+        // --- 1. BASE DE DATOS LOCAL (IndexedDB vía Dexie.js) ---
+        const db = new Dexie("InventarioProcesoDB");
+        db.version(1).stores({
+            capturas: "++id, operario, bodega, calle, lote, sku, timestamp"
+        });
+
+        // --- 2. ESTADO GLOBAL DE APLICACIÓN ---
+        let datosPlano = [];
+        let datosStock = [];
+        let datosOperarios = [];
+        let operarioActual = localStorage.getItem('inv_operario') || "";
+        let capturasGlobales = [];
+        let capturasCalleActual = [];
+        let contadorActual = 0;
+        let callbackModal = null;
+        let calleCerradaGuardada = false;
+        let html5QrCode = null;
+        let audioContextSingleton = null;
+
+        // --- 3. CICLO DE VIDA INICIAL ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                capturasGlobales = await db.capturas.toArray();
+            } catch (err) {
+                console.error("Error al cargar datos desde IndexedDB:", err);
+            }
+
+            // Enrutamiento inicial inteligente
+            if (operarioActual) {
+                document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
+                cambiarVista('captura');
+            } else {
+                cambiarVista('config');
+            }
+
+            actualizarUIUltimaCalle();
+            await renderizarResumen();
+        });
+
+        // Registro de Service Worker para PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker activo. Alcance:', reg.scope))
+                    .catch(err => console.error('Error al registrar Service Worker:', err));
+            });
+        }
+
+        // --- 4. UTILIDADES: FOCO Y NORMALIZACIÓN CSV ---
+        function enfocarScanner() {
+            setTimeout(() => {
+                const vistaCaptura = document.getElementById('viewCaptura');
+                const input = document.getElementById('scannerInput');
+                if (vistaCaptura && vistaCaptura.classList.contains('active') && input && !input.disabled) {
+                    input.focus();
+                }
+            }, 100);
+        }
+
+        function obtenerValorCSV(fila, ...nombres) {
+            if (!fila) return '';
+            for (const nombre of nombres) {
+                if (fila[nombre] !== undefined && fila[nombre] !== null) {
+                    return String(fila[nombre]).trim();
+                }
+                const lower = nombre.toLowerCase();
+                for (const key in fila) {
+                    if (key.toLowerCase().trim() === lower && fila[key] !== undefined && fila[key] !== null) {
+                        return String(fila[key]).trim();
+                    }
+                }
+            }
+            return '';
+        }
+
+        // --- 5. SISTEMA DE AUDIO INDUSTRIAL ---
+        function emitirSonido(tipo) {
+            try {
+                const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtxClass) return;
+
+                if (!audioContextSingleton) {
+                    audioContextSingleton = new AudioCtxClass();
+                }
+                if (audioContextSingleton.state === 'suspended') {
+                    audioContextSingleton.resume();
+                }
+
+                const ctx = audioContextSingleton;
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                
+                oscillator.type = 'square';
+                gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
+
+                let duracion = 0.15;
+                if (tipo === 'success') {
+                    oscillator.frequency.setValueAtTime(1200, ctx.currentTime);
+                    duracion = 0.12;
+                } else if (tipo === 'error') {
+                    oscillator.frequency.setValueAtTime(300, ctx.currentTime);
+                    duracion = 0.45;
+                } else if (tipo === 'warning') {
+                    oscillator.frequency.setValueAtTime(650, ctx.currentTime);
+                    duracion = 0.25;
+                }
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                oscillator.start();
+                oscillator.stop(ctx.currentTime + duracion);
+            } catch (e) {
+                console.warn("AudioContext no disponible:", e);
+            }
+        }
+
+        // --- 6. INTERFAZ Y RESUMEN DE AVANCE ---
+        function actualizarUIUltimaCalle() {
+            const ultima = localStorage.getItem('inv_ultima_calle');
+            const el = document.getElementById('infoUltimaCalle');
+            if (el) {
+                el.innerText = ultima ? `CALLE: ${ultima}` : "CALLE: Ninguna";
+            }
+        }
+
+        async function renderizarResumen() {
+            try {
+                const capturas = await db.capturas.toArray();
+                const resumen = {};
+                for (let i = 0; i < capturas.length; i++) {
+                    const c = capturas[i];
+                    if (!resumen[c.bodega]) resumen[c.bodega] = {};
+                    if (!resumen[c.bodega][c.calle]) resumen[c.bodega][c.calle] = 0;
+                    resumen[c.bodega][c.calle]++;
+                }
+
+                let html = '<div style="background: var(--bg-subtle); padding: 14px; border-radius: var(--radius-tech); border: 1px solid var(--color-border); font-size: 13px; font-family: var(--font-mono);">';
+                const bodegas = Object.keys(resumen);
+                if (bodegas.length === 0) {
+                    html += '<span style="color: var(--color-text-muted);">No hay datos capturados aún.</span>';
+                } else {
+                    for (const b of bodegas) {
+                        html += `<div style="margin-top: 6px; color: var(--color-brand); font-weight: 700;">[ BODEGA: ${b} ]</div>`;
+                        for (const c in resumen[b]) {
+                            html += `<div style="margin-left: 14px; margin-top: 4px; color: var(--color-text-main);">&bull; Calle ${c}: <strong>${resumen[b][c]}</strong> lotes</div>`;
+                        }
+                    }
+                }
+                html += '</div>';
+                
+                const contenedorResumen = document.getElementById('resumenInventario');
+                if (contenedorResumen) contenedorResumen.innerHTML = html;
+            } catch (err) {
+                console.error("Error al renderizar resumen:", err);
+            }
+        }
+
+        // --- 7. CARGA Y PROCESAMIENTO DE ARCHIVOS CSV ---
+        const parseConfig = { 
+            header: true, 
+            skipEmptyLines: 'greedy', 
+            dynamicTyping: false, 
+            encoding: "ISO-8859-1" 
+        };
+
+        document.getElementById('fileOperarios').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, { 
+                ...parseConfig, 
+                complete: function(results) { 
+                    datosOperarios = results.data; 
+                    cargarOperariosSelect(); 
+                    document.getElementById('statusOperarios').style.display = 'block';
+                },
+                error: function(err) {
+                    alert("Error al leer operarios.csv: " + err.message);
+                }
+            });
+        });
+
+        document.getElementById('filePlano').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, { 
+                ...parseConfig, 
+                complete: function(results) { 
+                    datosPlano = results.data; 
+                    cargarBodegas(); 
+                    document.getElementById('statusPlano').style.display = 'block';
+                },
+                error: function(err) {
+                    alert("Error al leer plano_tmt1.csv: " + err.message);
+                }
+            });
+        });
+
+        document.getElementById('fileStock').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, { 
+                ...parseConfig, 
+                complete: function(results) { 
+                    datosStock = results.data; 
+                    document.getElementById('statusStock').style.display = 'block';
+                },
+                error: function(err) {
+                    alert("Error al leer stock_tmt1.csv: " + err.message);
+                }
+            });
+        });
+
+        // --- 8. NAVEGACIÓN Y CONFIGURACIÓN ---
+        function cambiarVista(vista) {
+            // 1. Ocultar todas las vistas
+            document.getElementById('viewConfig').classList.remove('active');
+            document.getElementById('viewCaptura').classList.remove('active');
+            document.getElementById('viewAvance').classList.remove('active');
+            
+            // 2. Desactivar pestañas
+            document.getElementById('tabConfig').classList.remove('active');
+            document.getElementById('tabCaptura').classList.remove('active');
+            document.getElementById('tabAvance').classList.remove('active');
+
+            // 3. Activar la vista solicitada con validación
+            if (vista === 'config') {
+                document.getElementById('viewConfig').classList.add('active');
+                document.getElementById('tabConfig').classList.add('active');
+            } else if (vista === 'avance') {
+                document.getElementById('viewAvance').classList.add('active');
+                document.getElementById('tabAvance').classList.add('active');
+                renderizarResumen();
+            } else {
+                if (!operarioActual) {
+                    alert("Debe seleccionar un operario en la pestaña de Configuración antes de continuar.");
+                    cambiarVista('config');
+                    return;
+                }
+                document.getElementById('viewCaptura').classList.add('active');
+                document.getElementById('tabCaptura').classList.add('active');
+                enfocarScanner();
+            }
+        }
+
+        function cargarOperariosSelect() {
+            const opSelect = document.getElementById('operarioSelect');
+            opSelect.innerHTML = '<option value="">Seleccione Operario...</option>';
+            const operariosUnicos = new Set();
+            
+            datosOperarios.forEach(row => {
+                const op = obtenerValorCSV(row, 'operario', 'Operario', 'OPERARIO', 'nombre', 'Nombre', 'NOMBRE');
+                if (op) operariosUnicos.add(op);
+            });
+
+            operariosUnicos.forEach(op => {
+                const opt = document.createElement('option');
+                opt.value = op;
+                opt.textContent = op;
+                opSelect.appendChild(opt);
+            });
+        }
+
+        function bloquearOperarioConfig() {
+            const opSelect = document.getElementById('operarioSelect');
+            operarioActual = opSelect.value;
+            if (operarioActual) {
+                opSelect.disabled = true;
+                document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
+                localStorage.setItem('inv_operario', operarioActual);
+                alert(`Operario asignado: ${operarioActual}. Campo bloqueado para esta sesión.`);
+            }
+        }
+
+        function cargarBodegas() {
+            const bodegaSelect = document.getElementById('bodegaSelect');
+            bodegaSelect.innerHTML = '<option value="">Seleccione Bodega...</option>';
+            const bodegasUnicas = new Set();
+
+            datosPlano.forEach(row => {
+                const b = obtenerValorCSV(row, 'bodega', 'Bodega', 'BODEGA');
+                if (b) bodegasUnicas.add(b);
+            });
+
+            bodegasUnicas.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b;
+                opt.textContent = b;
+                bodegaSelect.appendChild(opt);
+            });
+        }
+
+        function actualizarCalles() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const calleSelect = document.getElementById('calleSelect');
+            calleSelect.innerHTML = '<option value="">Seleccione Calle...</option>';
+            if (!bodega) return;
+
+            const callesEnBodega = datosPlano.filter(row => obtenerValorCSV(row, 'bodega', 'Bodega', 'BODEGA') === bodega);
+            callesEnBodega.forEach(c => {
+                const nombreCalle = obtenerValorCSV(c, 'calle', 'Calle', 'CALLE');
+                if (nombreCalle) {
+                    const opt = document.createElement('option');
+                    opt.value = nombreCalle;
+                    opt.textContent = nombreCalle;
+                    calleSelect.appendChild(opt);
+                }
+            });
+            calleCerradaGuardada = false;
+            actualizarBotonesAccion();
+        }
+
+        async function configurarCalle() {
+            try {
+                const bodega = document.getElementById('bodegaSelect').value;
+                const calleSelect = document.getElementById('calleSelect').value;
+                
+                if (bodega && calleSelect) {
+                    capturasCalleActual = await db.capturas
+                        .where('bodega')
+                        .equals(bodega)
+                        .filter(c => c.calle === calleSelect)
+                        .toArray();
+                } else {
+                    capturasCalleActual = [];
+                }
+                
+                if (capturasCalleActual.length > 0) {
+                    contadorActual = capturasCalleActual.length;
+                    calleCerradaGuardada = true;
+                } else {
+                    contadorActual = 0;
+                    calleCerradaGuardada = false;
+                }
+
+                if (bodega && calleSelect) {
+                    const registroPlano = datosPlano.find(row => 
+                        obtenerValorCSV(row, 'bodega', 'Bodega', 'BODEGA') === bodega && 
+                        obtenerValorCSV(row, 'calle', 'Calle', 'CALLE') === calleSelect
+                    );
+                    if (registroPlano) {
+                        const cant = obtenerValorCSV(registroPlano, 'cantidad_lotes', 'Cantidad_Lotes', 'CANTIDAD_LOTES');
+                        document.getElementById('metaLotes').value = cant ? parseInt(cant, 10) : 300;
+                    }
+                }
+                actualizarProgresoVisual();
+                actualizarBotonesAccion();
+            } catch (err) {
+                console.error("Error al configurar calle:", err);
+            }
+        }
+
+        function actualizarProgresoVisual() {
+            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
+            document.getElementById('displayProgress').innerText = `${contadorActual} / ${meta}`;
+            
+            const pct = meta > 0 ? Math.min(100, Math.round((contadorActual / meta) * 100)) : 0;
+            const pctEl = document.getElementById('displayPercent');
+            if (pctEl) pctEl.innerText = `${pct}%`;
+            
+            const fillEl = document.getElementById('progressBarFill');
+            if (fillEl) fillEl.style.width = `${pct}%`;
+
+            actualizarBotonesAccion();
+        }
+
+        function actualizarBotonesAccion() {
+            const btnCerrar = document.getElementById('btnCerrarCalle');
+            const btnReabrir = document.getElementById('btnReabrirCalle');
+            const inputScanner = document.getElementById('scannerInput');
+            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
+
+            if (calleCerradaGuardada) {
+                btnCerrar.style.display = 'none';
+                btnReabrir.style.display = 'inline-flex';
+                inputScanner.disabled = true;
+                inputScanner.placeholder = "Calle cerrada. Pulse Reabrir.";
+            } else if (contadorActual >= meta && meta > 0) {
+                btnCerrar.style.display = 'inline-flex';
+                btnReabrir.style.display = 'none';
+                inputScanner.disabled = true;
+                inputScanner.placeholder = "Meta alcanzada. Amplíe meta para continuar.";
+            } else {
+                btnCerrar.style.display = 'inline-flex';
+                btnReabrir.style.display = 'none';
+                inputScanner.disabled = false;
+                inputScanner.placeholder = "Escanear Lote...";
+            }
+        }
+
+        // --- 9. MOTOR DE ESCANEO Y CAPTURA ---
+        document.getElementById('scannerInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                procesarEntradaLote(this.value);
+                this.value = '';
+            }
+        });
+
+        function procesarEntradaLote(valorLote) {
+            if (!operarioActual) {
+                alert("Error: No hay un operario asignado.");
+                cambiarVista('config');
+                return;
+            }
+            const bodega = document.getElementById('bodegaSelect').value;
+            const calle = document.getElementById('calleSelect').value;
+            const lote = String(valorLote || '').trim();
+
+            if (!bodega || !calle) { 
+                alert('Seleccione Bodega y Calle primero.'); 
+                return; 
+            }
+            if (lote === '') return;
+
+            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
+            if (contadorActual >= meta) {
+                alert(`Se ha alcanzado la meta de ${meta} lotes para esta calle. Amplíe la cantidad de forma manual si desea capturar más.`);
+                return;
+            }
+
+            procesarLoteEscaneado(bodega, calle, lote);
+        }
+
+        async function procesarLoteEscaneado(bodega, calle, lote) {
+            try {
+                // 1. Verificación en la misma calle (memoria)
+                const yaCapturadoCalle = capturasCalleActual.find(c => String(c.lote).trim() === lote);
+                if (yaCapturadoCalle) {
+                    emitirSonido('error');
+                    setTimeout(() => {
+                        mostrarModal("¡BLOQUEO: LOTE DUPLICADO!", `El lote ${lote} ya fue escaneado en esta misma calle. La captura ha sido bloqueada.`, function() {}, false);
+                    }, 50);
+                    return;
+                }
+
+                // 2. Verificación en otras calles (IndexedDB)
+                const yaCapturadoOtraCalle = await db.capturas
+                    .where('lote')
+                    .equals(lote)
+                    .filter(c => c.calle !== calle)
+                    .first();
+
+                if (yaCapturadoOtraCalle) {
+                    emitirSonido('error');
+                    setTimeout(() => {
+                        mostrarModal("¡BLOQUEO: LOTE EN OTRA CALLE!", `El lote ${lote} ya fue registrado previamente en la calle ${yaCapturadoOtraCalle.calle}. La captura ha sido bloqueada.`, function() {}, false);
+                    }, 50);
+                    return;
+                }
+
+                verificarStockYLuegoRegistrar(bodega, calle, lote, "NORMAL");
+            } catch (err) {
+                console.error("Error en validación de lote:", err);
+            }
+        }
+
+        function verificarStockYLuegoRegistrar(bodega, calle, lote, estadoInicial) {
+            let infoStock = null;
+            if (datosStock.length > 0) {
+                infoStock = datosStock.find(row => obtenerValorCSV(row, 'lote', 'Lote', 'LOTE') === lote);
+            }
+
+            if (!infoStock && datosStock.length > 0) {
+                emitirSonido('warning');
+                setTimeout(() => {
+                    mostrarModal("Sobrante / No Encontrado", `El lote ${lote} no está en stock. ¿Agregar de todas formas?`, function(confirmado) {
+                        if (confirmado) {
+                            emitirSonido('success');
+                            registrarCaptura(bodega, calle, lote, estadoInicial === "NORMAL" ? "MANUAL_SOBRANTE" : estadoInicial, {});
+                        } else {
+                            enfocarScanner();
+                        }
+                    }, true);
+                }, 50);
+                return;
+            }
+
+            const datosExtra = infoStock ? { 
+                sku: obtenerValorCSV(infoStock, 'sku', 'SKU'), 
+                descripcion: obtenerValorCSV(infoStock, 'descripción', 'descripcion', 'Descripción', 'Descripcion', 'DESCRIPCION'), 
+                piezas: obtenerValorCSV(infoStock, 'piezas', 'Piezas', 'PIEZAS'), 
+                volumen: obtenerValorCSV(infoStock, 'volumen', 'Volumen', 'VOLUMEN') 
+            } : {};
+
+            registrarCaptura(bodega, calle, lote, estadoInicial, datosExtra);
+        }
+
+        async function registrarCaptura(bodega, calle, lote, estado, extra = {}) {
+            try {
+                const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
+                if (contadorActual >= meta) {
+                    alert(`No se pueden registrar más lotes. Se alcanzó la meta de ${meta}.`);
+                    return;
+                }
+
+                emitirSonido('success');
+                contadorActual++;
+                
+                if (!extra.sku && datosStock.length > 0) {
+                    const infoStock = datosStock.find(row => obtenerValorCSV(row, 'lote', 'Lote', 'LOTE') === lote);
+                    if (infoStock) {
+                        extra = {
+                            sku: obtenerValorCSV(infoStock, 'sku', 'SKU'),
+                            descripcion: obtenerValorCSV(infoStock, 'descripción', 'descripcion', 'Descripción', 'Descripcion'),
+                            piezas: obtenerValorCSV(infoStock, 'piezas', 'Piezas'),
+                            volumen: obtenerValorCSV(infoStock, 'volumen', 'Volumen')
+                        };
+                    }
+                }
+
+                const nuevaCaptura = { 
+                    operario: operarioActual, 
+                    bodega: String(bodega), 
+                    calle: String(calle), 
+                    lote: String(lote), 
+                    sku: extra.sku || '', 
+                    descripcion: extra.descripcion || '', 
+                    piezas: extra.piezas || '', 
+                    volumen: extra.volumen || '', 
+                    estado_captura: estado, 
+                    comentario_calle: "", 
+                    timestamp: new Date().toISOString() 
+                };
+
+                const newId = await db.capturas.add(nuevaCaptura);
+                nuevaCaptura.id = newId;
+                capturasCalleActual.push(nuevaCaptura);
+                capturasGlobales.push(nuevaCaptura);
+
+                actualizarProgresoVisual();
+                await renderizarResumen();
+                enfocarScanner();
+            } catch (err) {
+                console.error("Error al guardar captura:", err);
+                alert("Error al registrar captura en almacenamiento local.");
+            }
+        }
+
+        // --- 10. ESCÁNER POR CÁMARA ---
+        function abrirEscanearCamara() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const calle = document.getElementById('calleSelect').value;
+            if (!bodega || !calle) {
+                alert('Seleccione Bodega y Calle primero.');
+                return;
+            }
+
+            document.getElementById('camaraModal').style.display = 'block';
+            
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                {
+                    fps: 10,
+                    qrbox: { width: 250, height: 150 }
+                },
+                (decodedText) => {
+                    cerrarEscanearCamara();
+                    procesarEntradaLote(decodedText);
+                },
+                () => {}
+            ).catch((err) => {
+                console.error("Error al inicializar cámara:", err);
+                alert("No se pudo iniciar la cámara. Verifique permisos de navegador.");
+                document.getElementById('camaraModal').style.display = 'none';
+                enfocarScanner();
+            });
+        }
+
+        function cerrarEscanearCamara() {
+            document.getElementById('camaraModal').style.display = 'none';
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => console.warn("Aviso al detener cámara:", err));
+            }
+            enfocarScanner();
+        }
+
+        // --- 11. MODALES Y DIÁLOGOS ---
+        function mostrarModal(titulo, mensaje, callback, mostrarCancelar = true) {
+            document.getElementById('modalTitle').innerText = titulo;
+            document.getElementById('modalMessage').innerText = mensaje;
+            document.getElementById('modalBtnCancelar').style.display = mostrarCancelar ? 'inline-flex' : 'none';
+            document.getElementById('alertModal').style.display = 'block';
+            callbackModal = callback;
+        }
+
+        function resolverModal(confirmado) {
+            document.getElementById('alertModal').style.display = 'none';
+            if (callbackModal) { 
+                const cb = callbackModal; 
+                callbackModal = null; 
+                cb(confirmado); 
+            }
+            enfocarScanner();
+        }
+
+        // Modal Detalle / Eliminar
+        function abrirModalDetalle() {
+            if (!document.getElementById('calleSelect').value) { 
+                alert('Seleccione una calle primero.'); 
+                return; 
+            }
+            renderizarTablaDetalle();
+            document.getElementById('detalleModal').style.display = 'block';
+        }
+
+        function renderizarTablaDetalle() {
+            const calle = document.getElementById('calleSelect').value;
+            document.getElementById('detalleTitle').innerText = `Lotes en: ${calle} (${contadorActual})`;
+            const tbody = document.getElementById('tablaDetalleBody');
+            tbody.innerHTML = '';
+            
+            if (capturasCalleActual.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--color-text-muted); padding: 16px;">No hay lotes capturados.</td></tr>`;
+                return;
+            }
+
+            const fragmento = document.createDocumentFragment();
+            capturasCalleActual.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><strong>${item.lote}</strong></td>
+                    <td>${item.sku || '-'}</td>
+                    <td style="text-align:center;">
+                        <button type="button" class="danger-action" onclick="eliminarCaptura(${item.id})">✕ Borrar</button>
+                    </td>
+                `;
+                fragmento.appendChild(tr);
+            });
+            tbody.appendChild(fragmento);
+        }
+
+        async function eliminarCaptura(idRegistro) {
+            try {
+                await db.capturas.delete(idRegistro);
+                const bodega = document.getElementById('bodegaSelect').value;
+                const calle = document.getElementById('calleSelect').value;
+                
+                capturasCalleActual = await db.capturas
+                    .where('bodega')
+                    .equals(bodega)
+                    .filter(c => c.calle === calle)
+                    .toArray();
+
+                contadorActual = capturasCalleActual.length;
+                capturasGlobales = await db.capturas.toArray();
+                
+                actualizarProgresoVisual();
+                renderizarTablaDetalle();
+                await renderizarResumen();
+            } catch (err) {
+                console.error("Error al eliminar captura:", err);
+                alert("Error al eliminar lote.");
+            }
+        }
+
+        function cerrarModalDetalle() { 
+            document.getElementById('detalleModal').style.display = 'none'; 
+            enfocarScanner(); 
+        }
+
+        // Modal Cierre de Calle
+        function abrirModalCierreCalle() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const calle = document.getElementById('calleSelect').value;
+            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
+
+            if (!bodega || !calle) {
+                alert('Seleccione Bodega y Calle primero.');
+                return;
+            }
+            if (contadorActual !== meta) {
+                alert(`No coincide la cantidad de capturas (${contadorActual}) con la meta (${meta}).`);
+                return;
+            }
+
+            document.getElementById('cierreInfoMeta').innerText = `CALLE: ${calle} // LOTES: ${contadorActual} / META: ${meta}`;
+            document.getElementById('comentarioCalleInput').value = '';
+            document.getElementById('cierreModal').style.display = 'block';
+        }
+
+        function cerrarModalCierre() {
+            document.getElementById('cierreModal').style.display = 'none';
+            enfocarScanner();
+        }
+
+        async function confirmarCierreCalle() {
+            try {
+                const comentario = document.getElementById('comentarioCalleInput').value.trim();
+                const bodega = document.getElementById('bodegaSelect').value;
+                const calle = document.getElementById('calleSelect').value;
+
+                const ids = capturasCalleActual.map(c => c.id);
+                await db.transaction('rw', db.capturas, async () => {
+                    for (const id of ids) {
+                        await db.capturas.update(id, { comentario_calle: comentario });
+                    }
+                });
+
+                capturasCalleActual = await db.capturas
+                    .where('bodega')
+                    .equals(bodega)
+                    .filter(c => c.calle === calle)
+                    .toArray();
+
+                capturasGlobales = await db.capturas.toArray();
+                calleCerradaGuardada = true;
+                
+                localStorage.setItem('inv_ultima_calle', `${bodega} - ${calle}`);
+                actualizarUIUltimaCalle();
+
+                cerrarModalCierre();
+                actualizarBotonesAccion();
+                await renderizarResumen();
+                alert(`Calle ${calle} cerrada correctamente.`);
+            } catch (err) {
+                console.error("Error al cerrar calle:", err);
+                alert("Ocurrió un error al guardar el cierre de la calle.");
+            }
+        }
+
+        function reabrirCalle() {
+            calleCerradaGuardada = false;
+            actualizarBotonesAccion();
+            alert('Calle reabierta para edición.');
+            enfocarScanner();
+        }
+
+        // --- 12. EXPORTACIONES CSV CON BOM PARA EXCEL ---
+        function descargarArchivoCSV(contenidoCSV, nombreArchivo) {
+            const blob = new Blob(["\uFEFF" + contenidoCSV], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.setAttribute("download", nombreArchivo);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        async function descargarCSVGlobal() {
+            try {
+                const todasLasCapturas = await db.capturas.toArray();
+                if (todasLasCapturas.length === 0) { 
+                    alert('Sin capturas guardadas.'); 
+                    return; 
+                }
+                const csv = Papa.unparse(todasLasCapturas);
+                descargarArchivoCSV(csv, "captura_tmt1_final.csv");
+            } catch (err) {
+                console.error("Error al exportar CSV global:", err);
+                alert("Error al generar el consolidado final.");
+            }
+        }
+
+        async function descargarReporteDiferencias() {
+            try {
+                if (datosStock.length === 0) {
+                    alert('Debe cargar el archivo de stock lógico primero.');
+                    return;
+                }
+                const todasLasCapturas = await db.capturas.toArray();
+                if (todasLasCapturas.length === 0) {
+                    alert('No hay capturas registradas para comparar.');
+                    return;
+                }
+
+                const stockMap = new Map();
+                datosStock.forEach(row => {
+                    const loteStock = obtenerValorCSV(row, 'lote', 'Lote', 'LOTE');
+                    if (loteStock) stockMap.set(loteStock, row);
+                });
+
+                const lotesCapturadosMap = new Map();
+                todasLasCapturas.forEach(c => {
+                    const loteStr = String(c.lote).trim();
+                    lotesCapturadosMap.set(loteStr, c);
+                });
+
+                const reporteDiferencias = [];
+
+                todasLasCapturas.forEach(c => {
+                    const loteStr = String(c.lote).trim();
+                    if (stockMap.has(loteStr)) {
+                        const stockInfo = stockMap.get(loteStr);
+                        reporteDiferencias.push({
+                            tipo_diferencia: "PAREADO",
+                            lote: loteStr,
+                            bodega: c.bodega,
+                            calle: c.calle,
+                            sku: c.sku || obtenerValorCSV(stockInfo, 'sku', 'SKU'),
+                            descripcion: c.descripcion || obtenerValorCSV(stockInfo, 'descripción', 'descripcion', 'Descripción'),
+                            piezas: c.piezas !== '' ? c.piezas : obtenerValorCSV(stockInfo, 'piezas', 'Piezas'),
+                            volumen: c.volumen !== '' ? c.volumen : obtenerValorCSV(stockInfo, 'volumen', 'Volumen'),
+                            operario: c.operario
+                        });
+                    } else {
+                        reporteDiferencias.push({
+                            tipo_diferencia: "SOBRANTE",
+                            lote: loteStr,
+                            bodega: c.bodega,
+                            calle: c.calle,
+                            sku: c.sku,
+                            descripcion: c.descripcion,
+                            piezas: c.piezas,
+                            volumen: c.volumen,
+                            operario: c.operario
+                        });
+                    }
+                });
+
+                stockMap.forEach((stockInfo, loteStock) => {
+                    if (!lotesCapturadosMap.has(loteStock)) {
+                        reporteDiferencias.push({
+                            tipo_diferencia: "FALTANTE",
+                            lote: loteStock,
+                            bodega: obtenerValorCSV(stockInfo, 'bodega', 'Bodega', 'BODEGA'),
+                            calle: obtenerValorCSV(stockInfo, 'calle', 'Calle', 'CALLE'),
+                            sku: obtenerValorCSV(stockInfo, 'sku', 'SKU'),
+                            descripcion: obtenerValorCSV(stockInfo, 'descripción', 'descripcion', 'Descripción'),
+                            piezas: obtenerValorCSV(stockInfo, 'piezas', 'Piezas'),
+                            volumen: obtenerValorCSV(stockInfo, 'volumen', 'Volumen'),
+                            operario: "-"
+                        });
+                    }
+                });
+
+                if (reporteDiferencias.length === 0) {
+                    alert('¡Inventario perfecto! No se encontraron diferencias.');
+                    return;
+                }
+
+                const csv = Papa.unparse(reporteDiferencias);
+                descargarArchivoCSV(csv, "reporte_diferencias_inventario.csv");
+            } catch (err) {
+                console.error("Error al exportar reporte de diferencias:", err);
+                alert("Error al generar el reporte de diferencias.");
+            }
+        }
+
+        // --- 13. REINICIO DE SISTEMA ---
+        function reiniciarSistema() {
+            mostrarModal("¿Reiniciar Sistema?", "Se borrarán todas las capturas de la base de datos local y se limpiarán los datos para iniciar un nuevo inventario.", async function(confirmado) {
+                if (confirmado) {
+                    try {
+                        await db.capturas.clear();
+                        localStorage.removeItem('inv_operario');
+                        localStorage.removeItem('inv_ultima_calle');
+
+                        datosPlano = [];
+                        datosStock = [];
+                        datosOperarios = [];
+                        operarioActual = "";
+                        capturasGlobales = [];
+                        capturasCalleActual = [];
+                        contadorActual = 0;
+                        calleCerradaGuardada = false;
+
+                        document.getElementById('fileOperarios').value = '';
+                        document.getElementById('fileStock').value = '';
+                        document.getElementById('filePlano').value = '';
+                        document.getElementById('statusOperarios').style.display = 'none';
+                        document.getElementById('statusStock').style.display = 'none';
+                        document.getElementById('statusPlano').style.display = 'none';
+
+                        const opSelect = document.getElementById('operarioSelect');
+                        opSelect.disabled = false;
+                        opSelect.innerHTML = '<option value="">Cargue operarios.csv primero...</option>';
+                        document.getElementById('infoOperarioActivo').innerText = "OP: No seleccionado";
+
+                        document.getElementById('bodegaSelect').innerHTML = '<option value="">Seleccione Bodega...</option>';
+                        document.getElementById('calleSelect').innerHTML = '<option value="">Seleccione Calle...</option>';
+                        document.getElementById('metaLotes').value = '300';
+                        
+                        actualizarProgresoVisual();
+                        actualizarUIUltimaCalle();
+                        await renderizarResumen();
+                        alert("Sistema reiniciado con éxito.");
+                        cambiarVista('config');
+                    } catch (err) {
+                        console.error("Error al reiniciar sistema:", err);
+                        alert("Error al limpiar la base de datos.");
+                    }
+                } else {
+                    enfocarScanner();
+                }
+            }, true);
+        }
+    </script>
+</body>
+</html>
