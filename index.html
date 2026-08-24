@@ -17,7 +17,7 @@
             --bg-app: #ECEEF1;
             --bg-surface: #FFFFFF;
             --bg-subtle: #F4F6F8;
-            --bg-element: #E3E6EB;
+            --bg-element: #E2E6EA;
             
             --color-brand: #D97706;         /* Ámbar / Ocre Industrial */
             --color-brand-dark: #B45309;
@@ -40,7 +40,7 @@
             --color-warning: #D97706;
             --color-info: #0284C7;
             
-            --radius-tech: 4px;             /* Curvatura sutil técnica */
+            --radius-tech: 4px;
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', 'Roboto Mono', Consolas, monospace;
             --shadow-card: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
@@ -115,22 +115,22 @@
             letter-spacing: 0.5px;
         }
 
-        /* SELECTOR DE PESTAÑAS (SEGMENTED SWITCH) */
+        /* SELECTOR DE PESTAÑAS (SEGMENTED SWITCH ROBUSTO) */
         .nav-tabs {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             background-color: var(--bg-element);
-            padding: 3px;
+            padding: 4px;
             border-radius: var(--radius-tech);
-            gap: 3px;
+            gap: 4px;
             margin-bottom: 20px;
             border: 1px solid var(--color-border);
         }
 
-        .nav-tab {
+        .nav-tabs .nav-tab {
+            all: unset;
             padding: 10px 4px;
-            background: transparent;
-            border: none;
+            background-color: transparent;
             color: var(--color-text-secondary);
             font-family: var(--font-mono);
             font-weight: 700;
@@ -141,21 +141,31 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
         }
 
-        .nav-tab.active {
+        .nav-tabs .nav-tab:hover {
+            background-color: rgba(255, 255, 255, 0.6);
+            color: var(--color-text-main);
+        }
+
+        .nav-tabs .nav-tab.active {
             background-color: var(--bg-surface);
             color: var(--color-text-main);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             border-bottom: 2px solid var(--color-brand);
+            font-weight: 700;
         }
 
         .view-section {
-            display: none;
+            display: none !important;
         }
 
         .view-section.active {
-            display: block;
+            display: block !important;
         }
 
         /* FORMULARIOS Y LABELS */
@@ -332,12 +342,12 @@
             pointer-events: none;
         }
 
-        /* BOTONES INDUSTRIALES */
-        button {
+        /* BOTONES DE ACCIÓN */
+        .btn-action {
             width: 100%;
             padding: 13px 16px;
             background-color: var(--color-text-main);
-            color: var(--bg-surface);
+            color: #FFFFFF;
             border: 1px solid var(--color-text-main);
             border-radius: var(--radius-tech);
             font-family: var(--font-sans);
@@ -354,45 +364,45 @@
             gap: 8px;
         }
 
-        button:hover { background-color: #1E293B; }
-        button:active { transform: scale(0.99); }
+        .btn-action:hover { background-color: #1E293B; }
+        .btn-action:active { transform: scale(0.99); }
 
-        button.primary-action {
+        .btn-action.primary-action {
             background-color: var(--color-brand);
             border-color: var(--color-brand);
             color: #FFFFFF;
         }
-        button.primary-action:hover { background-color: var(--color-brand-dark); }
+        .btn-action.primary-action:hover { background-color: var(--color-brand-dark); }
 
-        button.secondary {
+        .btn-action.secondary {
             background-color: var(--bg-surface);
             color: var(--color-text-main);
             border-color: var(--color-border);
         }
-        button.secondary:hover { background-color: var(--bg-subtle); }
+        .btn-action.secondary:hover { background-color: var(--bg-subtle); }
 
-        button.camera-btn {
+        .btn-action.camera-btn {
             background-color: var(--color-info);
             border-color: var(--color-info);
             color: white;
             margin-bottom: 12px;
             margin-top: 0;
         }
-        button.camera-btn:hover { background-color: #0369A1; }
+        .btn-action.camera-btn:hover { background-color: #0369A1; }
 
-        button.warning {
+        .btn-action.warning {
             background-color: var(--color-warning);
             border-color: var(--color-warning);
             color: white;
         }
-        button.warning:hover { background-color: #B45309; }
+        .btn-action.warning:hover { background-color: #B45309; }
 
-        button.danger {
+        .btn-action.danger {
             background-color: var(--color-danger);
             border-color: var(--color-danger);
             color: white;
         }
-        button.danger:hover { background-color: #B91C1C; }
+        .btn-action.danger:hover { background-color: #B91C1C; }
 
         button.danger-action {
             background-color: var(--color-danger-bg);
@@ -404,6 +414,7 @@
             width: auto;
             margin-top: 0;
             border-radius: 2px;
+            cursor: pointer;
         }
         button.danger-action:hover { background-color: #FEE2E2; }
 
@@ -429,7 +440,7 @@
             font-weight: 600;
         }
 
-        /* MODALES SUISOS / PRECISIÓN */
+        /* MODALES */
         .modal {
             display: none;
             position: fixed;
@@ -526,7 +537,7 @@
 </head>
 <body>
     <div class="container">
-        <!-- Encabezado Estilo Industrial -->
+        <!-- Encabezado Industrial -->
         <header class="app-header">
             <h1>Inventario Proceso</h1>
             <span class="tech-badge">PWA // V2.0</span>
@@ -534,13 +545,13 @@
         
         <!-- Pestañas de Navegación Segmentadas -->
         <nav class="nav-tabs" role="tablist">
-            <button type="button" id="tabConfig" class="nav-tab" role="tab" onclick="cambiarVista('config')">01. Config</button>
-            <button type="button" id="tabCaptura" class="nav-tab active" role="tab" onclick="cambiarVista('captura')">02. Captura</button>
+            <button type="button" id="tabConfig" class="nav-tab active" role="tab" onclick="cambiarVista('config')">01. Config</button>
+            <button type="button" id="tabCaptura" class="nav-tab" role="tab" onclick="cambiarVista('captura')">02. Captura</button>
             <button type="button" id="tabAvance" class="nav-tab" role="tab" onclick="cambiarVista('avance')">03. Avance</button>
         </nav>
 
         <!-- VISTA 1: CONFIGURACIÓN Y ARCHIVOS -->
-        <div id="viewConfig" class="view-section" role="tabpanel">
+        <div id="viewConfig" class="view-section active" role="tabpanel">
             <div class="file-section">
                 <label for="fileOperarios">1. Cargar Operarios (operarios.csv):</label>
                 <input type="file" id="fileOperarios" accept=".csv">
@@ -560,13 +571,13 @@
                 <div id="statusPlano" class="status-box" style="display:none;">✓ PLANO CARGADO</div>
             </div>
 
-            <button type="button" class="secondary" onclick="descargarCSVGlobal()">⬇ Descargar Consolidado Final</button>
-            <button type="button" class="warning" onclick="descargarReporteDiferencias()">⬇ Reporte Diferencias (Pareados / Sobrantes / Faltantes)</button>
-            <button type="button" class="danger" onclick="reiniciarSistema()">⚠ Reiniciar Sistema / Nuevo Inventario</button>
+            <button type="button" class="btn-action secondary" onclick="descargarCSVGlobal()">⬇ Descargar Consolidado Final</button>
+            <button type="button" class="btn-action warning" onclick="descargarReporteDiferencias()">⬇ Reporte Diferencias (Pareados / Sobrantes / Faltantes)</button>
+            <button type="button" class="btn-action danger" onclick="reiniciarSistema()">⚠ Reiniciar Sistema / Nuevo Inventario</button>
         </div>
 
         <!-- VISTA 2: CAPTURA EN TERRENO -->
-        <div id="viewCaptura" class="view-section active" role="tabpanel">
+        <div id="viewCaptura" class="view-section" role="tabpanel">
             <!-- Telemetría HUD -->
             <div class="hud-grid">
                 <div id="infoOperarioActivo" class="hud-chip primary">
@@ -610,7 +621,7 @@
                 </div>
             </div>
 
-            <button type="button" class="camera-btn" onclick="abrirEscanearCamara()">📷 Escanear con Cámara</button>
+            <button type="button" class="btn-action camera-btn" onclick="abrirEscanearCamara()">📷 Escanear con Cámara</button>
             
             <!-- Campo de Escáner con Indicador Óptico -->
             <div class="scanner-container">
@@ -618,9 +629,9 @@
                 <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             </div>
             
-            <button type="button" id="btnVerDetalle" class="secondary" onclick="abrirModalDetalle()">Ver / Eliminar Lotes Capturados</button>
-            <button type="button" id="btnCerrarCalle" class="primary-action" onclick="abrirModalCierreCalle()">Cerrar Calle y Guardar</button>
-            <button type="button" id="btnReabrirCalle" class="warning" onclick="reabrirCalle()" style="display:none;">Reabrir Calle Actual</button>
+            <button type="button" id="btnVerDetalle" class="btn-action secondary" onclick="abrirModalDetalle()">Ver / Eliminar Lotes Capturados</button>
+            <button type="button" id="btnCerrarCalle" class="btn-action primary-action" onclick="abrirModalCierreCalle()">Cerrar Calle y Guardar</button>
+            <button type="button" id="btnReabrirCalle" class="btn-action warning" onclick="reabrirCalle()" style="display:none;">Reabrir Calle Actual</button>
         </div>
 
         <!-- VISTA 3: AVANCE POR CALLE -->
@@ -640,7 +651,7 @@
             <div class="modal-header-tag">ÓPTICA // CÁMARA</div>
             <h3>Escáner Activo</h3>
             <div id="reader" style="width: 100%; border-radius: 4px; overflow: hidden; margin: 12px 0; border: 1px solid var(--color-border);"></div>
-            <button type="button" class="secondary" onclick="cerrarEscanearCamara()">Cerrar Cámara</button>
+            <button type="button" class="btn-action secondary" onclick="cerrarEscanearCamara()">Cerrar Cámara</button>
         </div>
     </div>
 
@@ -650,342 +661,10 @@
             <div class="modal-header-tag" id="modalTag">SISTEMA // ALERTA</div>
             <h3 id="modalTitle">Atención</h3>
             <p id="modalMessage" style="font-size: 14px; color: var(--color-text-secondary); margin-bottom: 18px;"></p>
-            <button type="button" id="modalBtnAceptar" class="primary-action" onclick="resolverModal(true)">Aceptar / Continuar</button>
-            <button type="button" id="modalBtnCancelar" class="secondary" onclick="resolverModal(false)">Cancelar</button>
+            <button type="button" id="modalBtnAceptar" class="btn-action primary-action" onclick="resolverModal(true)">Aceptar / Continuar</button>
+            <button type="button" id="modalBtnCancelar" class="btn-action secondary" onclick="resolverModal(false)">Cancelar</button>
         </div>
     </div>
 
     <!-- Modal para Cierre de Calle con Comentario -->
-    <div id="cierreModal" class="modal" role="dialog" aria-modal="true">
-        <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header-tag">CONFIRMACIÓN // CIERRE</div>
-            <h3>Cierre de Calle</h3>
-            <p id="cierreInfoMeta" style="margin: 8px 0 14px 0; font-family: var(--font-mono); font-size: 13px; color: var(--color-brand); font-weight: 600;"></p>
-            <label for="comentarioCalleInput" style="text-align: left;">Observación de Cierre (Opcional):</label>
-            <textarea id="comentarioCalleInput" rows="3" placeholder="Ej: 2 paquetes sin código legible..." style="resize: none;"></textarea>
-            <button type="button" class="primary-action" onclick="confirmarCierreCalle()">Confirmar y Cerrar Calle</button>
-            <button type="button" class="secondary" onclick="cerrarModalCierre()">Cancelar</button>
-        </div>
-    </div>
-
-    <!-- Modal para Ver Detalle / Eliminar -->
-    <div id="detalleModal" class="modal" role="dialog" aria-modal="true">
-        <div class="modal-content">
-            <div class="modal-header-tag">REGISTRO // AUDITORÍA</div>
-            <h3 id="detalleTitle">Lotes Capturados</h3>
-            <div class="modal-body">
-                <table class="detalle-lotes">
-                    <thead>
-                        <tr>
-                            <th style="width: 35px;">#</th>
-                            <th>Lote</th>
-                            <th>SKU</th>
-                            <th style="text-align: center; width: 75px;">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tablaDetalleBody"></tbody>
-                </table>
-            </div>
-            <button type="button" class="secondary" onclick="cerrarModalDetalle()">Cerrar Vista</button>
-        </div>
-    </div>
-
-    <!-- Librerías Externas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
-    
-    <script>
-        // --- 1. BASE DE DATOS LOCAL (IndexedDB vía Dexie.js) ---
-        const db = new Dexie("InventarioProcesoDB");
-        db.version(1).stores({
-            capturas: "++id, operario, bodega, calle, lote, sku, timestamp"
-        });
-
-        // --- 2. ESTADO GLOBAL DE APLICACIÓN ---
-        let datosPlano = [];
-        let datosStock = [];
-        let datosOperarios = [];
-        let operarioActual = localStorage.getItem('inv_operario') || "";
-        let capturasGlobales = [];
-        let capturasCalleActual = [];
-        let contadorActual = 0;
-        let callbackModal = null;
-        let calleCerradaGuardada = false;
-        let html5QrCode = null;
-        let audioContextSingleton = null;
-
-        // --- 3. CICLO DE VIDA INICIAL ---
-        window.addEventListener('DOMContentLoaded', async () => {
-            if (operarioActual) {
-                document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
-            }
-            try {
-                capturasGlobales = await db.capturas.toArray();
-            } catch (err) {
-                console.error("Error al cargar datos desde IndexedDB:", err);
-            }
-            actualizarUIUltimaCalle();
-            await renderizarResumen();
-            enfocarScanner();
-        });
-
-        // Registro de Service Worker para PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker activo. Alcance:', reg.scope))
-                    .catch(err => console.error('Error al registrar Service Worker:', err));
-            });
-        }
-
-        // --- 4. UTILIDADES: FOCO Y NORMALIZACIÓN CSV ---
-        function enfocarScanner() {
-            setTimeout(() => {
-                const vistaCaptura = document.getElementById('viewCaptura');
-                const input = document.getElementById('scannerInput');
-                if (vistaCaptura && vistaCaptura.classList.contains('active') && input && !input.disabled) {
-                    input.focus();
-                }
-            }, 100);
-        }
-
-        function obtenerValorCSV(fila, ...nombres) {
-            if (!fila) return '';
-            for (const nombre of nombres) {
-                if (fila[nombre] !== undefined && fila[nombre] !== null) {
-                    return String(fila[nombre]).trim();
-                }
-                const lower = nombre.toLowerCase();
-                for (const key in fila) {
-                    if (key.toLowerCase().trim() === lower && fila[key] !== undefined && fila[key] !== null) {
-                        return String(fila[key]).trim();
-                    }
-                }
-            }
-            return '';
-        }
-
-        // --- 5. SISTEMA DE AUDIO INDUSTRIAL ---
-        function emitirSonido(tipo) {
-            try {
-                const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
-                if (!AudioCtxClass) return;
-
-                if (!audioContextSingleton) {
-                    audioContextSingleton = new AudioCtxClass();
-                }
-                if (audioContextSingleton.state === 'suspended') {
-                    audioContextSingleton.resume();
-                }
-
-                const ctx = audioContextSingleton;
-                const oscillator = ctx.createOscillator();
-                const gainNode = ctx.createGain();
-                
-                oscillator.type = 'square';
-                gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
-
-                let duracion = 0.15;
-                if (tipo === 'success') {
-                    oscillator.frequency.setValueAtTime(1200, ctx.currentTime);
-                    duracion = 0.12;
-                } else if (tipo === 'error') {
-                    oscillator.frequency.setValueAtTime(300, ctx.currentTime);
-                    duracion = 0.45;
-                } else if (tipo === 'warning') {
-                    oscillator.frequency.setValueAtTime(650, ctx.currentTime);
-                    duracion = 0.25;
-                }
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(ctx.destination);
-                
-                oscillator.start();
-                oscillator.stop(ctx.currentTime + duracion);
-            } catch (e) {
-                console.warn("AudioContext no disponible:", e);
-            }
-        }
-
-        // --- 6. INTERFAZ Y RESUMEN DE AVANCE ---
-        function actualizarUIUltimaCalle() {
-            const ultima = localStorage.getItem('inv_ultima_calle');
-            const el = document.getElementById('infoUltimaCalle');
-            if (el) {
-                el.innerText = ultima ? `CALLE: ${ultima}` : "CALLE: Ninguna";
-            }
-        }
-
-        async function renderizarResumen() {
-            try {
-                const capturas = await db.capturas.toArray();
-                const resumen = {};
-                for (let i = 0; i < capturas.length; i++) {
-                    const c = capturas[i];
-                    if (!resumen[c.bodega]) resumen[c.bodega] = {};
-                    if (!resumen[c.bodega][c.calle]) resumen[c.bodega][c.calle] = 0;
-                    resumen[c.bodega][c.calle]++;
-                }
-
-                let html = '<div style="background: var(--bg-subtle); padding: 14px; border-radius: var(--radius-tech); border: 1px solid var(--color-border); font-size: 13px; font-family: var(--font-mono);">';
-                const bodegas = Object.keys(resumen);
-                if (bodegas.length === 0) {
-                    html += '<span style="color: var(--color-text-muted);">No hay datos capturados aún.</span>';
-                } else {
-                    for (const b of bodegas) {
-                        html += `<div style="margin-top: 6px; color: var(--color-brand); font-weight: 700;">[ BODEGA: ${b} ]</div>`;
-                        for (const c in resumen[b]) {
-                            html += `<div style="margin-left: 14px; margin-top: 4px; color: var(--color-text-main);">&bull; Calle ${c}: <strong>${resumen[b][c]}</strong> lotes</div>`;
-                        }
-                    }
-                }
-                html += '</div>';
-                
-                const contenedorResumen = document.getElementById('resumenInventario');
-                if (contenedorResumen) contenedorResumen.innerHTML = html;
-            } catch (err) {
-                console.error("Error al renderizar resumen:", err);
-            }
-        }
-
-        // --- 7. CARGA Y PROCESAMIENTO DE ARCHIVOS CSV ---
-        const parseConfig = { 
-            header: true, 
-            skipEmptyLines: 'greedy', 
-            dynamicTyping: false, 
-            encoding: "ISO-8859-1" 
-        };
-
-        document.getElementById('fileOperarios').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            Papa.parse(file, { 
-                ...parseConfig, 
-                complete: function(results) { 
-                    datosOperarios = results.data; 
-                    cargarOperariosSelect(); 
-                    document.getElementById('statusOperarios').style.display = 'block';
-                },
-                error: function(err) {
-                    alert("Error al leer operarios.csv: " + err.message);
-                }
-            });
-        });
-
-        document.getElementById('filePlano').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            Papa.parse(file, { 
-                ...parseConfig, 
-                complete: function(results) { 
-                    datosPlano = results.data; 
-                    cargarBodegas(); 
-                    document.getElementById('statusPlano').style.display = 'block';
-                },
-                error: function(err) {
-                    alert("Error al leer plano_tmt1.csv: " + err.message);
-                }
-            });
-        });
-
-        document.getElementById('fileStock').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            Papa.parse(file, { 
-                ...parseConfig, 
-                complete: function(results) { 
-                    datosStock = results.data; 
-                    document.getElementById('statusStock').style.display = 'block';
-                },
-                error: function(err) {
-                    alert("Error al leer stock_tmt1.csv: " + err.message);
-                }
-            });
-        });
-
-        // --- 8. NAVEGACIÓN Y CONFIGURACIÓN ---
-        function cambiarVista(vista) {
-            document.getElementById('viewConfig').classList.remove('active');
-            document.getElementById('viewCaptura').classList.remove('active');
-            document.getElementById('viewAvance').classList.remove('active');
-            
-            document.getElementById('tabConfig').classList.remove('active');
-            document.getElementById('tabCaptura').classList.remove('active');
-            document.getElementById('tabAvance').classList.remove('active');
-
-            if (vista === 'config') {
-                document.getElementById('viewConfig').classList.add('active');
-                document.getElementById('tabConfig').classList.add('active');
-            } else if (vista === 'avance') {
-                document.getElementById('viewAvance').classList.add('active');
-                document.getElementById('tabAvance').classList.add('active');
-                renderizarResumen();
-            } else {
-                if (!operarioActual) {
-                    alert("Debe seleccionar un operario en la pestaña de Configuración antes de continuar.");
-                    cambiarVista('config');
-                    return;
-                }
-                document.getElementById('viewCaptura').classList.add('active');
-                document.getElementById('tabCaptura').classList.add('active');
-                enfocarScanner();
-            }
-        }
-
-        function cargarOperariosSelect() {
-            const opSelect = document.getElementById('operarioSelect');
-            opSelect.innerHTML = '<option value="">Seleccione Operario...</option>';
-            const operariosUnicos = new Set();
-            
-            datosOperarios.forEach(row => {
-                const op = obtenerValorCSV(row, 'operario', 'Operario', 'OPERARIO', 'nombre', 'Nombre', 'NOMBRE');
-                if (op) operariosUnicos.add(op);
-            });
-
-            operariosUnicos.forEach(op => {
-                const opt = document.createElement('option');
-                opt.value = op;
-                opt.textContent = op;
-                opSelect.appendChild(opt);
-            });
-        }
-
-        function bloquearOperarioConfig() {
-            const opSelect = document.getElementById('operarioSelect');
-            operarioActual = opSelect.value;
-            if (operarioActual) {
-                opSelect.disabled = true;
-                document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
-                localStorage.setItem('inv_operario', operarioActual);
-                alert(`Operario asignado: ${operarioActual}. El campo ha sido bloqueado para esta sesión.`);
-            }
-        }
-
-        function cargarBodegas() {
-            const bodegaSelect = document.getElementById('bodegaSelect');
-            bodegaSelect.innerHTML = '<option value="">Seleccione Bodega...</option>';
-            const bodegasUnicas = new Set();
-
-            datosPlano.forEach(row => {
-                const b = obtenerValorCSV(row, 'bodega', 'Bodega', 'BODEGA');
-                if (b) bodegasUnicas.add(b);
-            });
-
-            bodegasUnicas.forEach(b => {
-                const opt = document.createElement('option');
-                opt.value = b;
-                opt.textContent = b;
-                bodegaSelect.appendChild(opt);
-            });
-        }
-
-        function actualizarCalles() {
-            const bodega = document.getElementById('bodegaSelect').value;
-            const calleSelect = document.getElementById('calleSelect');
-            calleSelect.innerHTML = '<option value="">Seleccione Calle...</option>';
-            if (!bodega) return;
-
-            const callesEnBodega = datosPlano.filter(row => obtenerValorCSV(row, 'bodega', 'Bodega', 'BODEGA') === bodega);
-            callesEnBodega.forEach(c => {
-                const nombreCalle = obtenerValorCSV(c
+    <div id="cierreModal
