@@ -89,7 +89,7 @@
             text-transform: uppercase;
         }
 
-        input, select {
+        input {
             width: 100%;
             padding: 10px 12px;
             margin-bottom: 14px;
@@ -101,7 +101,7 @@
             color: var(--sap-text-main);
         }
 
-        input:focus, select:focus {
+        input:focus {
             outline: none;
             border-color: var(--sap-blue);
             box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.15);
@@ -155,17 +155,9 @@
 
         <div class="file-box">
             <label for="tokenInput">Token de Seguridad GitHub (PAT):</label>
-            <input type="password" id="tokenInput" placeholder=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>
+            <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
 
-            <label for="archivoSelect">Seleccionar Archivo a Actualizar:</label>
-            <select id="archivoSelect">
-                <option value="stock_tmt1.csv">Stock Bodega TMT1 (stock_tmt1.csv)</option>
-                <option value="stock_ta04.csv">Stock Bodega TA04 (stock_ta04.csv)</option>
-                <option value="plano_general.csv">Plano Maestro (plano_general.csv)</option>
-                <option value="operarios.csv">Lista de Operarios (operarios.csv)</option>
-            </select>
-
-            <label for="csvFileInput">Examinar Nuevo Archivo CSV:</label>
+            <label for="csvFileInput">Seleccionar Archivo CSV:</label>
             <input type="file" id="csvFileInput" accept=".csv">
         </div>
 
@@ -177,16 +169,26 @@
     <footer>Arauco // Gestión Automatizada de Repositorio</footer>
 
     <script>
-        // Configura aquí los datos de tu repositorio de GitHub
         const CONFIG = {
             owner: "iperezconus84-coder",
             repo: "Inventario_MOL",
-            branch: "main" // o "master" según tu rama principal
+            branch: "main"
         };
+
+        // Recordar el token automáticamente en el navegador de este equipo
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedToken = localStorage.getItem('admin_github_token');
+            if (savedToken) {
+                document.getElementById('tokenInput').value = savedToken;
+            }
+        });
+
+        document.getElementById('tokenInput').addEventListener('input', function() {
+            localStorage.setItem('admin_github_token', this.value.trim());
+        });
 
         async function subirArchivoAGitHub() {
             const token = document.getElementById('tokenInput').value.trim();
-            const filename = document.getElementById('archivoSelect').value;
             const fileInput = document.getElementById('csvFileInput');
             const statusDiv = document.getElementById('statusMsg');
 
@@ -200,17 +202,17 @@
             }
 
             const file = fileInput.files[0];
+            const filename = file.name; // Toma el nombre exacto del archivo seleccionado (ej: stock_tmt1.csv)
+
             statusDiv.className = "status-msg";
             statusDiv.style.display = "block";
-            statusDiv.innerText = "⟳ Procesando y subiendo archivo a GitHub...";
+            statusDiv.innerText = `⟳ Subiendo ${filename} a GitHub...`;
 
             try {
-                // 1. Leer el archivo CSV como texto base64 (requerido por la API de GitHub)
                 const contentBase64 = await toBase64(file);
-                const path = `data/${filename}`;
+                const path = `data/${filename}`; // Lo ubica automáticamente dentro de la carpeta data/
                 const apiUrl = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
 
-                // 2. Consultar si el archivo ya existe para obtener su SHA (necesario para sobrescribir)
                 let sha = null;
                 const getRes = await fetch(apiUrl, {
                     headers: { "Authorization": `token ${token}` }
@@ -221,13 +223,12 @@
                     sha = fileData.sha;
                 }
 
-                // 3. Enviar la petición PUT para actualizar/crear el archivo
                 const bodyData = {
                     message: `Actualización automática de ${filename} via Panel Admin`,
                     content: contentBase64,
                     branch: CONFIG.branch
                 };
-                if (sha) bodyData.sha = sha; // Si existe, agregamos el SHA para permitir la sobrescritura
+                if (sha) bodyData.sha = sha;
 
                 const putRes = await fetch(apiUrl, {
                     method: "PUT",
@@ -243,7 +244,7 @@
                     throw new Error(errJson.message || "Error al actualizar en GitHub.");
                 }
 
-                mostrarEstado(`✓ ¡Archivo ${filename} actualizado con éxito en GitHub!`, "success");
+                mostrarEstado(`✓ ¡Archivo ${filename} actualizado con éxito en la carpeta data/!`, "success");
                 fileInput.value = "";
 
             } catch (err) {
@@ -257,7 +258,6 @@
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = () => {
-                    // Remover el encabezado data:*/*;base64, que agrega el lector
                     const base64String = reader.result.split(',')[1];
                     resolve(base64String);
                 };
