@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INVENTARIO PROCESO // SAP ENTERPRISE TERMINAL</title>
+    <title>INVENTARIO PROCESO // ARAUCO</title>
     <link rel="manifest" href="manifest.json">
     
     <!-- Tipografías Industriales -->
@@ -70,20 +70,23 @@
             border-bottom: 3px solid var(--sap-blue);
         }
 
-        h1 {
-            font-size: 15px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
+        .header-brand {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
-        h1::before {
-            content: "■";
-            color: #64B5F6;
-            font-size: 12px;
+        .header-brand img {
+            height: 22px;
+            filter: brightness(0) invert(1);
+        }
+
+        .header-title {
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            border-left: 1px solid rgba(255,255,255,0.3);
+            padding-left: 10px;
         }
 
         .tech-badge {
@@ -302,8 +305,11 @@
 <body>
     <div class="container">
         <header class="app-header">
-            <h1>Inventario Proceso</h1>
-            <span class="tech-badge">SAP // ENTERPRISE MII</span>
+            <div class="header-brand">
+                <img src="./logo_arauco.png" alt="Arauco">
+                <span class="header-title">Inventario Proceso</span>
+            </div>
+            <span class="tech-badge">LOGÍSTICA // TERRENO</span>
         </header>
         
         <nav class="nav-tabs" role="tablist">
@@ -393,11 +399,11 @@
         </div>
     </div>
 
-    <footer>SAP S/4HANA Logistics // Warehouse Management Terminal</footer>
+    <footer>Arauco // Warehouse Management Terminal</footer>
 
     <div id="camaraModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header-tag">SAP MII // MÓDULO ÓPTICO</div>
+            <div class="modal-header-tag">MÓDULO ÓPTICO</div>
             <h3>Escáner Activo</h3>
             <div id="reader" style="width: 100%; border-radius: 2px; overflow: hidden; margin: 10px 0; border: 1px solid var(--sap-border-dark);"></div>
             <button type="button" class="btn-action secondary" onclick="cerrarEscanearCamara()">Cerrar Cámara</button>
@@ -406,7 +412,7 @@
 
     <div id="alertModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content" style="max-width: 400px;">
-            <div class="modal-header-tag" id="modalTag">SAP MII // DIÁLOGO DE CONTROL</div>
+            <div class="modal-header-tag" id="modalTag">DIÁLOGO DE CONTROL</div>
             <h3 id="modalTitle">Atención</h3>
             <p id="modalMessage" style="font-size: 13px; color: var(--sap-text-secondary); margin-bottom: 16px;"></p>
             <button type="button" id="modalBtnAceptar" class="btn-action primary-action" onclick="resolverModal(true)">Aceptar / Continuar</button>
@@ -416,7 +422,7 @@
 
     <div id="cierreModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header-tag">SAP MII // CONFIRMACIÓN DE CIERRE</div>
+            <div class="modal-header-tag">CONFIRMACIÓN DE CIERRE</div>
             <h3>Cierre de Posición / Calle</h3>
             <p id="cierreInfoMeta" style="margin: 8px 0 12px 0; font-family: var(--font-mono); font-size: 12px; color: var(--sap-blue); font-weight: 600;"></p>
             <label for="comentarioCalleInput" style="text-align: left;">Observación de Auditoría (Opcional):</label>
@@ -428,7 +434,7 @@
 
     <div id="detalleModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content">
-            <div class="modal-header-tag">SAP MII // REGISTRO DE POSICIONES</div>
+            <div class="modal-header-tag">REGISTRO DE POSICIONES</div>
             <h3 id="detalleTitle">Lotes Capturados</h3>
             <div class="modal-body">
                 <table class="detalle-lotes">
