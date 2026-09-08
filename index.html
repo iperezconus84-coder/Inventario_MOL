@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INVENTARIO PROCESO // INDUSTRIAL PRECISION</title>
+    <title>INVENTARIO PROCESO // SAP MII CLOUD</title>
     <link rel="manifest" href="manifest.json">
     
     <!-- Tipografías Industriales de Alta Legibilidad -->
@@ -13,37 +13,37 @@
 
     <style>
         :root {
-            /* Paleta Swiss Precision / Matte Concrete */
-            --bg-app: #ECEEF1;
+            /* Paleta SAP Fiori / Enterprise Industrial */
+            --bg-app: #F5F6F7;
             --bg-surface: #FFFFFF;
-            --bg-subtle: #F4F6F8;
-            --bg-element: #E2E6EA;
+            --bg-subtle: #EDF1F5;
+            --bg-element: #E0E5EC;
             
-            --color-brand: #D97706;         /* Ámbar / Ocre Industrial */
-            --color-brand-dark: #B45309;
-            --color-brand-light: #FEF3C7;
+            --color-brand: #0A6ED1;         /* Azul SAP Fiori */
+            --color-brand-dark: #00457A;    /* Azul SAP Oscuro */
+            --color-brand-light: #E5F1FC;   /* Azul SAP Tenue */
             
-            --color-text-main: #0F172A;     /* Grafito Técnico */
-            --color-text-secondary: #475569;
-            --color-text-muted: #94A3B8;
+            --color-text-main: #1D2D3E;     /* Grafito SAP Main */
+            --color-text-secondary: #556B82;/* Gris Técnico */
+            --color-text-muted: #8899A6;    
             
-            --color-border: #CBD5E1;        /* Borde Acero Mate */
-            --color-border-subtle: #E2E8F0;
-            --color-border-focus: #D97706;
+            --color-border: #BFD0E0;        /* Borde Acero SAP */
+            --color-border-subtle: #D9E1E8;
+            --color-border-focus: #0A6ED1;
             
-            --color-success: #059669;
-            --color-success-bg: #ECFDF5;
-            --color-success-border: #A7F3D0;
+            --color-success: #107E3E;
+            --color-success-bg: #E8F5E9;
+            --color-success-border: #C8E6C9;
             
-            --color-danger: #DC2626;
-            --color-danger-bg: #FEF2F2;
-            --color-warning: #D97706;
-            --color-info: #0284C7;
+            --color-danger: #BB0000;
+            --color-danger-bg: #FFEBEE;
+            --color-warning: #E9730C;
+            --color-info: #0A6ED1;
             
-            --radius-tech: 4px;
+            --radius-tech: 2px; /* Estilo estricto SAP UI */
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', 'Roboto Mono', Consolas, monospace;
-            --shadow-card: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.08);
         }
 
         * {
@@ -74,22 +74,26 @@
             width: 100%;
         }
 
-        /* HEADER TÉCNICO */
+        /* HEADER SAP TÉCNICO */
         .app-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid var(--color-text-main);
-            padding-bottom: 12px;
-            margin-bottom: 18px;
+            background-color: var(--color-brand-dark);
+            color: white;
+            padding: 12px 16px;
+            margin: -24px -24px 20px -24px;
+            border-top-left-radius: var(--radius-tech);
+            border-top-right-radius: var(--radius-tech);
+            border-bottom: 3px solid var(--color-brand);
         }
 
         h1 {
-            color: var(--color-text-main);
-            font-size: 18px;
+            color: #FFFFFF;
+            font-size: 14px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -98,28 +102,28 @@
         h1::before {
             content: "";
             display: inline-block;
-            width: 10px;
-            height: 10px;
-            background-color: var(--color-brand);
+            width: 8px;
+            height: 8px;
+            background-color: #64B5F6;
             border-radius: 1px;
         }
 
         .tech-badge {
             font-family: var(--font-mono);
-            font-size: 11px;
-            background: var(--bg-element);
-            color: var(--color-text-secondary);
-            padding: 3px 8px;
+            font-size: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #FFFFFF;
+            padding: 3px 6px;
             border-radius: 2px;
-            font-weight: 600;
+            font-weight: 500;
             letter-spacing: 0.5px;
         }
 
-        /* SELECTOR DE PESTAÑAS (SEGMENTED SWITCH ROBUSTO) */
+        /* SELECTOR DE PESTAÑAS (SEGMENTED SWITCH CORPORATIVO) */
         .nav-tabs {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            background-color: var(--bg-element);
+            background-color: var(--bg-subtle);
             padding: 4px;
             border-radius: var(--radius-tech);
             gap: 4px;
@@ -136,8 +140,8 @@
             font-weight: 700;
             text-align: center;
             cursor: pointer;
-            border-radius: 2px;
-            font-size: 12px;
+            border-radius: var(--radius-tech);
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             transition: all 0.15s ease;
@@ -148,14 +152,14 @@
         }
 
         .nav-tabs .nav-tab:hover {
-            background-color: rgba(255, 255, 255, 0.6);
+            background-color: var(--bg-element);
             color: var(--color-text-main);
         }
 
         .nav-tabs .nav-tab.active {
             background-color: var(--bg-surface);
-            color: var(--color-text-main);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            color: var(--color-brand);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
             border-bottom: 2px solid var(--color-brand);
             font-weight: 700;
         }
@@ -173,7 +177,7 @@
             font-family: var(--font-sans);
             font-weight: 600;
             color: var(--color-text-secondary);
-            font-size: 12px;
+            font-size: 11px;
             margin-bottom: 6px;
             display: block;
             text-transform: uppercase;
@@ -189,11 +193,11 @@
 
         select, input, textarea {
             width: 100%;
-            padding: 11px 12px;
+            padding: 10px 12px;
             margin-bottom: 14px;
             border: 1px solid var(--color-border);
             border-radius: var(--radius-tech);
-            font-size: 14px;
+            font-size: 13px;
             font-family: var(--font-sans);
             background-color: var(--bg-surface);
             color: var(--color-text-main);
@@ -203,7 +207,7 @@
         select:focus, input:focus, textarea:focus {
             outline: none;
             border-color: var(--color-border-focus);
-            box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.15);
+            box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.15);
         }
 
         select:disabled, input:disabled {
@@ -240,14 +244,14 @@
 
         .hud-chip.primary {
             background: var(--color-brand-light);
-            border-color: #FDE68A;
+            border-color: #B3D7FF;
             color: var(--color-brand-dark);
         }
 
         .hud-chip.info {
-            background: #E0F2FE;
-            border-color: #BAE6FD;
-            color: #0369A1;
+            background: #E8F4FD;
+            border-color: #B3D7FF;
+            color: #0A6ED1;
         }
 
         /* DISPLAY INDUSTRIAL DE PROGRESO */
@@ -278,14 +282,14 @@
 
         .progress-percent-tag {
             font-family: var(--font-mono);
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
             color: var(--color-brand);
         }
 
         .progress {
             font-family: var(--font-mono);
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 700;
             text-align: center;
             color: var(--color-text-main);
@@ -316,42 +320,42 @@
 
         #scannerInput {
             font-family: var(--font-mono);
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-            padding: 14px 14px 14px 42px;
+            padding: 12px 12px 12px 38px;
             margin-bottom: 0;
-            border: 2px solid var(--color-text-main);
+            border: 2px solid var(--color-brand);
             background-color: var(--bg-surface);
             letter-spacing: 0.5px;
         }
 
         #scannerInput:focus {
-            border-color: var(--color-brand);
-            box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2);
+            border-color: var(--color-brand-dark);
+            box-shadow: 0 0 0 3px rgba(10, 110, 209, 0.15);
         }
 
         .scanner-icon {
             position: absolute;
-            left: 14px;
+            left: 12px;
             top: 50%;
             transform: translateY(-50%);
-            color: var(--color-text-secondary);
+            color: var(--color-brand);
             font-family: var(--font-mono);
             font-weight: 700;
-            font-size: 16px;
+            font-size: 15px;
             pointer-events: none;
         }
 
         /* BOTONES DE ACCIÓN */
         .btn-action {
             width: 100%;
-            padding: 13px 16px;
-            background-color: var(--color-text-main);
+            padding: 11px 16px;
+            background-color: var(--color-brand-dark);
             color: #FFFFFF;
-            border: 1px solid var(--color-text-main);
+            border: 1px solid var(--color-brand-dark);
             border-radius: var(--radius-tech);
             font-family: var(--font-sans);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
             cursor: pointer;
             margin-top: 8px;
@@ -364,15 +368,15 @@
             gap: 8px;
         }
 
-        .btn-action:hover { background-color: #1E293B; }
+        .btn-action:hover { background-color: var(--color-brand); }
         .btn-action:active { transform: scale(0.99); }
 
         .btn-action.primary-action {
-            background-color: var(--color-brand);
-            border-color: var(--color-brand);
+            background-color: var(--color-success);
+            border-color: #0B5329;
             color: #FFFFFF;
         }
-        .btn-action.primary-action:hover { background-color: var(--color-brand-dark); }
+        .btn-action.primary-action:hover { background-color: #0B5329; }
 
         .btn-action.secondary {
             background-color: var(--bg-surface);
@@ -383,31 +387,31 @@
 
         .btn-action.camera-btn {
             background-color: var(--color-info);
-            border-color: var(--color-info);
+            border-color: #08669E;
             color: white;
             margin-bottom: 12px;
             margin-top: 0;
         }
-        .btn-action.camera-btn:hover { background-color: #0369A1; }
+        .btn-action.camera-btn:hover { background-color: #08669E; }
 
         .btn-action.warning {
             background-color: var(--color-warning);
-            border-color: var(--color-warning);
+            border-color: #C05F05;
             color: white;
         }
-        .btn-action.warning:hover { background-color: #B45309; }
+        .btn-action.warning:hover { background-color: #C05F05; }
 
         .btn-action.danger {
             background-color: var(--color-danger);
-            border-color: var(--color-danger);
+            border-color: #900;
             color: white;
         }
-        .btn-action.danger:hover { background-color: #B91C1C; }
+        .btn-action.danger:hover { background-color: #900; }
 
         button.danger-action {
             background-color: var(--color-danger-bg);
             color: var(--color-danger);
-            border: 1px solid #FECACA;
+            border: 1px solid #FFCDD2;
             font-family: var(--font-mono);
             font-size: 11px;
             padding: 4px 8px;
@@ -416,7 +420,7 @@
             border-radius: 2px;
             cursor: pointer;
         }
-        button.danger-action:hover { background-color: #FEE2E2; }
+        button.danger-action:hover { background-color: #FFCDD2; }
 
         /* SECCIÓN DE ARCHIVOS */
         .file-section {
@@ -435,7 +439,7 @@
             border-radius: var(--radius-tech);
             margin-bottom: 14px;
             font-family: var(--font-mono);
-            font-size: 12px;
+            font-size: 11px;
             text-align: center;
             font-weight: 600;
         }
@@ -449,7 +453,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(29, 45, 62, 0.6);
             backdrop-filter: blur(2px);
         }
 
@@ -467,7 +471,7 @@
 
         .modal-header-tag {
             font-family: var(--font-mono);
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             color: var(--color-brand);
             text-transform: uppercase;
@@ -476,7 +480,7 @@
         }
 
         .modal-content h3 {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 700;
             color: var(--color-text-main);
             margin-bottom: 12px;
@@ -496,13 +500,13 @@
         table.detalle-lotes {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 12px;
             font-family: var(--font-mono);
         }
 
         table.detalle-lotes th, table.detalle-lotes td {
             border-bottom: 1px solid var(--color-border-subtle);
-            padding: 10px 12px;
+            padding: 9px 12px;
             text-align: left;
         }
 
@@ -522,7 +526,7 @@
         footer {
             text-align: center;
             font-family: var(--font-mono);
-            font-size: 11px;
+            font-size: 10px;
             color: var(--color-text-muted);
             margin-top: 24px;
             text-transform: uppercase;
@@ -537,10 +541,10 @@
 </head>
 <body>
     <div class="container">
-        <!-- Encabezado Industrial -->
+        <!-- Encabezado SAP MII -->
         <header class="app-header">
             <h1>Inventario Proceso</h1>
-            <span class="tech-badge">PWA // V2.1 CLOUD</span>
+            <span class="tech-badge">MII // CLOUD V2.1</span>
         </header>
         
         <!-- Pestañas de Navegación Segmentadas -->
@@ -629,13 +633,13 @@
 
         <!-- VISTA 3: AVANCE POR CALLE -->
         <div id="viewAvance" class="view-section" role="tabpanel">
-            <h2 style="font-family: var(--font-sans); color: var(--color-text-main); font-size: 15px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Resumen de Avance en Terreno</h2>
+            <h2 style="font-family: var(--font-sans); color: var(--color-text-main); font-size: 14px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Resumen de Avance en Terreno</h2>
             <div id="resumenInventario" style="margin-bottom: 15px;"></div>
         </div>
     </div>
 
     <footer>
-        Renovables para una vida mejor // Cloud Terminal
+        SAP MII // Terminal Cloud Operativo
     </footer>
 
     <!-- Modal para Escáner de Cámara -->
@@ -643,7 +647,7 @@
         <div class="modal-content" style="max-width: 450px;">
             <div class="modal-header-tag">ÓPTICA // CÁMARA</div>
             <h3>Escáner Activo</h3>
-            <div id="reader" style="width: 100%; border-radius: 4px; overflow: hidden; margin: 12px 0; border: 1px solid var(--color-border);"></div>
+            <div id="reader" style="width: 100%; border-radius: 2px; overflow: hidden; margin: 12px 0; border: 1px solid var(--color-border);"></div>
             <button type="button" class="btn-action secondary" onclick="cerrarEscanearCamara()">Cerrar Cámara</button>
         </div>
     </div>
@@ -653,7 +657,7 @@
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header-tag" id="modalTag">SISTEMA // ALERTA</div>
             <h3 id="modalTitle">Atención</h3>
-            <p id="modalMessage" style="font-size: 14px; color: var(--color-text-secondary); margin-bottom: 18px;"></p>
+            <p id="modalMessage" style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 18px;"></p>
             <button type="button" id="modalBtnAceptar" class="btn-action primary-action" onclick="resolverModal(true)">Aceptar / Continuar</button>
             <button type="button" id="modalBtnCancelar" class="btn-action secondary" onclick="resolverModal(false)">Cancelar</button>
         </div>
@@ -733,7 +737,6 @@
             // Enrutamiento inicial inteligente
             if (operarioActual) {
                 document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
-                // Bloquear select si ya estaba guardado en localStorage
                 const opSelect = document.getElementById('operarioSelect');
                 if (opSelect) {
                     opSelect.value = operarioActual;
@@ -929,7 +932,7 @@
                     resumen[c.bodega][c.calle]++;
                 }
 
-                let html = '<div style="background: var(--bg-subtle); padding: 14px; border-radius: var(--radius-tech); border: 1px solid var(--color-border); font-size: 13px; font-family: var(--font-mono);">';
+                let html = '<div style="background: var(--bg-subtle); padding: 14px; border-radius: var(--radius-tech); border: 1px solid var(--color-border); font-size: 12px; font-family: var(--font-mono);">';
                 const bodegas = Object.keys(resumen);
                 if (bodegas.length === 0) {
                     html += '<span style="color: var(--color-text-muted);">No hay datos capturados aún.</span>';
