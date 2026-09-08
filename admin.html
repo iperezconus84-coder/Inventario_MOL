@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PANEL DE CARGA // GESTIÓN DE STOCK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --sap-blue: #0A6ED1;
+            --sap-blue-dark: #00457A;
+            --sap-bg-app: #F5F6F7;
+            --sap-surface: #FFFFFF;
+            --sap-subtle: #EDF1F5;
+            --sap-border: #BFD0E0;
+            --sap-border-dark: #8899A6;
+            --sap-text-main: #1D2D3E;
+            --sap-text-secondary: #556B82;
+            --sap-success: #107E3E;
+            --sap-success-bg: #E8F5E9;
+            --sap-danger: #BB0000;
+            --sap-danger-bg: #FFEBEE;
+            --radius-sap: 2px;
+            --font-sans: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --shadow-sap: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--sap-bg-app);
+            color: var(--sap-text-main);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 520px;
+            margin: 0 auto;
+            background: var(--sap-surface);
+            padding: 24px;
+            border-radius: var(--radius-sap);
+            border: 1px solid var(--sap-border-dark);
+            box-shadow: var(--shadow-sap);
+            width: 100%;
+        }
+
+        .app-header {
+            background-color: var(--sap-blue-dark);
+            color: white;
+            padding: 12px 16px;
+            margin: -24px -24px 20px -24px;
+            border-top-left-radius: var(--radius-sap);
+            border-top-right-radius: var(--radius-sap);
+            border-bottom: 3px solid var(--sap-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .tech-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 3px 6px;
+            border-radius: 2px;
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--sap-text-secondary);
+            font-size: 11px;
+            margin-bottom: 6px;
+            display: block;
+            text-transform: uppercase;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 14px;
+            border: 1px solid var(--sap-border-dark);
+            border-radius: var(--radius-sap);
+            font-size: 13px;
+            font-family: var(--font-sans);
+            background-color: var(--sap-surface);
+            color: var(--sap-text-main);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--sap-blue);
+            box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.15);
+        }
+
+        .file-box {
+            background: var(--sap-subtle);
+            padding: 16px;
+            border-radius: var(--radius-sap);
+            border: 1px solid var(--sap-border);
+            margin-bottom: 16px;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--sap-success);
+            color: #FFFFFF;
+            border: 1px solid #0B5329;
+            border-radius: var(--radius-sap);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-action:hover { background-color: #0B5329; }
+
+        .status-msg {
+            margin-top: 14px;
+            padding: 10px;
+            border-radius: var(--radius-sap);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            text-align: center;
+            display: none;
+        }
+        .status-msg.success { background: var(--sap-success-bg); color: var(--sap-success); border: 1px solid #C8E6C9; display: block; }
+        .status-msg.error { background: var(--sap-danger-bg); color: var(--sap-danger); border: 1px solid #FFCDD2; display: block; }
+
+        footer { text-align: center; font-family: var(--font-mono); font-size: 10px; color: var(--sap-text-secondary); margin-top: 24px; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="app-header">
+            <h1>Panel de Carga de Stock</h1>
+            <span class="tech-badge">ADMIN MII</span>
+        </header>
+
+        <div class="file-box">
+            <label for="tokenInput">Token de Seguridad GitHub (PAT):</label>
+            <input type="password" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+
+            <label for="archivoSelect">Seleccionar Archivo a Actualizar:</label>
+            <select id="archivoSelect">
+                <option value="stock_tmt1.csv">Stock Bodega TMT1 (stock_tmt1.csv)</option>
+                <option value="stock_ta04.csv">Stock Bodega TA04 (stock_ta04.csv)</option>
+                <option value="plano_general.csv">Plano Maestro (plano_general.csv)</option>
+                <option value="operarios.csv">Lista de Operarios (operarios.csv)</option>
+            </select>
+
+            <label for="csvFileInput">Examinar Nuevo Archivo CSV:</label>
+            <input type="file" id="csvFileInput" accept=".csv">
+        </div>
+
+        <button type="button" class="btn-action" onclick="subirArchivoAGitHub()">☁ Subir y Actualizar en Repositorio</button>
+
+        <div id="statusMsg" class="status-msg"></div>
+    </div>
+
+    <footer>Arauco // Gestión Automatizada de Repositorio</footer>
+
+    <script>
+        // Configura aquí los datos de tu repositorio de GitHub
+        const CONFIG = {
+            owner: "TU_USUARIO_GITHUB",
+            repo: "NOMBRE_DEL_REPOSITORIO",
+            branch: "main" // o "master" según tu rama principal
+        };
+
+        async function subirArchivoAGitHub() {
+            const token = document.getElementById('tokenInput').value.trim();
+            const filename = document.getElementById('archivoSelect').value;
+            const fileInput = document.getElementById('csvFileInput');
+            const statusDiv = document.getElementById('statusMsg');
+
+            if (!token) {
+                mostrarEstado("Debe ingresar el token de acceso de GitHub.", "error");
+                return;
+            }
+            if (fileInput.files.length === 0) {
+                mostrarEstado("Debe seleccionar un archivo CSV.", "error");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            statusDiv.className = "status-msg";
+            statusDiv.style.display = "block";
+            statusDiv.innerText = "⟳ Procesando y subiendo archivo a GitHub...";
+
+            try {
+                // 1. Leer el archivo CSV como texto base64 (requerido por la API de GitHub)
+                const contentBase64 = await toBase64(file);
+                const path = `data/${filename}`;
+                const apiUrl = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
+
+                // 2. Consultar si el archivo ya existe para obtener su SHA (necesario para sobrescribir)
+                let sha = null;
+                const getRes = await fetch(apiUrl, {
+                    headers: { "Authorization": `token ${token}` }
+                });
+                
+                if (getRes.ok) {
+                    const fileData = await getRes.json();
+                    sha = fileData.sha;
+                }
+
+                // 3. Enviar la petición PUT para actualizar/crear el archivo
+                const bodyData = {
+                    message: `Actualización automática de ${filename} via Panel Admin`,
+                    content: contentBase64,
+                    branch: CONFIG.branch
+                };
+                if (sha) bodyData.sha = sha; // Si existe, agregamos el SHA para permitir la sobrescritura
+
+                const putRes = await fetch(apiUrl, {
+                    method: "PUT",
+                    headers: {
+                        "Authorization": `token ${token}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(bodyData)
+                });
+
+                if (!putRes.ok) {
+                    const errJson = await putRes.json();
+                    throw new Error(errJson.message || "Error al actualizar en GitHub.");
+                }
+
+                mostrarEstado(`✓ ¡Archivo ${filename} actualizado con éxito en GitHub!`, "success");
+                fileInput.value = "";
+
+            } catch (err) {
+                console.error(err);
+                mostrarEstado(`⚠ Error: ${err.message}`, "error");
+            }
+        }
+
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    // Remover el encabezado data:*/*;base64, que agrega el lector
+                    const base64String = reader.result.split(',')[1];
+                    resolve(base64String);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function mostrarEstado(mensaje, tipo) {
+            const statusDiv = document.getElementById('statusMsg');
+            statusDiv.className = `status-msg ${tipo}`;
+            statusDiv.innerText = mensaje;
+        }
+    </script>
+</body>
+</html>
