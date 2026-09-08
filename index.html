@@ -3,47 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INVENTARIO PROCESO // SAP MII CLOUD</title>
+    <title>INVENTARIO PROCESO // ARAUCO</title>
     <link rel="manifest" href="manifest.json">
     
-    <!-- Tipografías Industriales de Alta Legibilidad -->
+    <!-- Tipografías: Poppins (Wordmark Arauco), Inter (UI) y JetBrains Mono (Datos) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Poppins:wght@800;900&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            /* Paleta SAP Fiori / Enterprise Industrial */
-            --bg-app: #F5F6F7;
+            /* Paleta Corporativa Arauco Industrial */
+            --bg-app: #F4F6F8;
             --bg-surface: #FFFFFF;
-            --bg-subtle: #EDF1F5;
-            --bg-element: #E0E5EC;
+            --bg-subtle: #EBF0F4;
+            --bg-element: #DCE3EA;
             
-            --color-brand: #0A6ED1;         /* Azul SAP Fiori */
-            --color-brand-dark: #00457A;    /* Azul SAP Oscuro */
-            --color-brand-light: #E5F1FC;   /* Azul SAP Tenue */
+            --color-arauco-dark: #1E293B;    /* Grafito Oscuro Arauco */
+            --color-brand: #005F9E;          /* Azul Corporativo Arauco */
+            --color-brand-dark: #0F172A;     /* Navy Profundo Header */
+            --color-brand-light: #E0F0FA;    /* Azul Suave */
             
-            --color-text-main: #1D2D3E;     /* Grafito SAP Main */
-            --color-text-secondary: #556B82;/* Gris Técnico */
+            --color-text-main: #0F172A;      /* Texto Primario */
+            --color-text-secondary: #475569; /* Gris Técnico */
             --color-text-muted: #8899A6;    
             
-            --color-border: #BFD0E0;        /* Borde Acero SAP */
-            --color-border-subtle: #D9E1E8;
-            --color-border-focus: #0A6ED1;
+            --color-border: #CBD5E1;         /* Acero Mate */
+            --color-border-subtle: #E2E8F0;
+            --color-border-focus: #005F9E;
             
-            --color-success: #107E3E;
-            --color-success-bg: #E8F5E9;
-            --color-success-border: #C8E6C9;
+            --color-success: #059669;        /* Verde Forestal */
+            --color-success-bg: #ECFDF5;
+            --color-success-border: #A7F3D0;
             
-            --color-danger: #BB0000;
-            --color-danger-bg: #FFEBEE;
-            --color-warning: #E9730C;
-            --color-info: #0A6ED1;
+            --color-danger: #DC2626;
+            --color-danger-bg: #FEF2F2;
+            --color-warning: #D97706;
+            --color-info: #0284C7;
             
-            --radius-tech: 2px; /* Estilo estricto SAP UI */
+            --radius-tech: 3px;
+            --font-logo: 'Poppins', -apple-system, sans-serif;
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            --font-mono: 'JetBrains Mono', 'Roboto Mono', Consolas, monospace;
-            --shadow-card: 0 1px 3px rgba(0,0,0,0.08);
+            --font-mono: 'JetBrains Mono', monospace;
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
         }
 
         * {
@@ -74,48 +76,62 @@
             width: 100%;
         }
 
-        /* HEADER SAP TÉCNICO */
+        /* HEADER CORPORATIVO ARAUCO */
         .app-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             background-color: var(--color-brand-dark);
             color: white;
-            padding: 12px 16px;
+            padding: 14px 18px;
             margin: -24px -24px 20px -24px;
             border-top-left-radius: var(--radius-tech);
             border-top-right-radius: var(--radius-tech);
             border-bottom: 3px solid var(--color-brand);
         }
 
-        h1 {
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Logotipo textual Arauco según imagen */
+        .arauco-wordmark {
+            font-family: var(--font-logo);
+            font-size: 21px;
+            font-weight: 900;
             color: #FFFFFF;
-            font-size: 14px;
+            text-transform: lowercase;
+            letter-spacing: -0.6px;
+            line-height: 1;
+            user-select: none;
+        }
+
+        .brand-divider {
+            color: rgba(255, 255, 255, 0.35);
+            font-weight: 300;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .brand-app-title {
+            font-family: var(--font-sans);
+            font-size: 12px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        h1::before {
-            content: "";
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            background-color: #64B5F6;
-            border-radius: 1px;
+            color: #F8FAFC;
         }
 
         .tech-badge {
             font-family: var(--font-mono);
             font-size: 10px;
-            background: rgba(255, 255, 255, 0.15);
-            color: #FFFFFF;
-            padding: 3px 6px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #E2E8F0;
+            padding: 4px 8px;
             border-radius: 2px;
-            font-weight: 500;
+            font-weight: 600;
             letter-spacing: 0.5px;
         }
 
@@ -159,7 +175,7 @@
         .nav-tabs .nav-tab.active {
             background-color: var(--bg-surface);
             color: var(--color-brand);
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
             border-bottom: 2px solid var(--color-brand);
             font-weight: 700;
         }
@@ -207,7 +223,7 @@
         select:focus, input:focus, textarea:focus {
             outline: none;
             border-color: var(--color-border-focus);
-            box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.15);
+            box-shadow: 0 0 0 2px rgba(0, 95, 158, 0.15);
         }
 
         select:disabled, input:disabled {
@@ -244,28 +260,28 @@
 
         .hud-chip.primary {
             background: var(--color-brand-light);
-            border-color: #B3D7FF;
-            color: var(--color-brand-dark);
+            border-color: #BAE6FD;
+            color: var(--color-brand);
         }
 
         .hud-chip.info {
-            background: #E8F4FD;
-            border-color: #B3D7FF;
-            color: #0A6ED1;
+            background: #EBF5FB;
+            border-color: #B9E2FE;
+            color: #0369A1;
         }
 
         .hud-chip.stock-info {
             grid-column: span 2;
-            background: #E8F5E9;
-            border-color: #C8E6C9;
-            color: #107E3E;
+            background: #ECFDF5;
+            border-color: #A7F3D0;
+            color: #059669;
         }
 
         .hud-chip.stock-loading {
             grid-column: span 2;
-            background: #FFF8E1;
-            border-color: #FFE082;
-            color: #F57F17;
+            background: #FFFBEB;
+            border-color: #FDE68A;
+            color: #B45309;
         }
 
         /* DISPLAY INDUSTRIAL DE PROGRESO */
@@ -345,7 +361,7 @@
 
         #scannerInput:focus {
             border-color: var(--color-brand-dark);
-            box-shadow: 0 0 0 3px rgba(10, 110, 209, 0.15);
+            box-shadow: 0 0 0 3px rgba(0, 95, 158, 0.15);
         }
 
         .scanner-icon {
@@ -387,10 +403,10 @@
 
         .btn-action.primary-action {
             background-color: var(--color-success);
-            border-color: #0B5329;
+            border-color: #047857;
             color: #FFFFFF;
         }
-        .btn-action.primary-action:hover { background-color: #0B5329; }
+        .btn-action.primary-action:hover { background-color: #047857; }
 
         .btn-action.secondary {
             background-color: var(--bg-surface);
@@ -401,31 +417,31 @@
 
         .btn-action.camera-btn {
             background-color: var(--color-info);
-            border-color: #08669E;
+            border-color: #0284C7;
             color: white;
             margin-bottom: 12px;
             margin-top: 0;
         }
-        .btn-action.camera-btn:hover { background-color: #08669E; }
+        .btn-action.camera-btn:hover { background-color: #0369A1; }
 
         .btn-action.warning {
             background-color: var(--color-warning);
-            border-color: #C05F05;
+            border-color: #B45309;
             color: white;
         }
-        .btn-action.warning:hover { background-color: #C05F05; }
+        .btn-action.warning:hover { background-color: #B45309; }
 
         .btn-action.danger {
             background-color: var(--color-danger);
-            border-color: #900;
+            border-color: #B91C1C;
             color: white;
         }
-        .btn-action.danger:hover { background-color: #900; }
+        .btn-action.danger:hover { background-color: #B91C1C; }
 
         button.danger-action {
             background-color: var(--color-danger-bg);
             color: var(--color-danger);
-            border: 1px solid #FFCDD2;
+            border: 1px solid #FECACA;
             font-family: var(--font-mono);
             font-size: 11px;
             padding: 4px 8px;
@@ -434,7 +450,7 @@
             border-radius: 2px;
             cursor: pointer;
         }
-        button.danger-action:hover { background-color: #FFCDD2; }
+        button.danger-action:hover { background-color: #FEE2E2; }
 
         /* SECCIÓN DE ARCHIVOS */
         .file-section {
@@ -467,7 +483,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            background: rgba(29, 45, 62, 0.6);
+            background: rgba(15, 23, 42, 0.65);
             backdrop-filter: blur(2px);
         }
 
@@ -540,11 +556,19 @@
         footer {
             text-align: center;
             font-family: var(--font-mono);
-            font-size: 10px;
-            color: var(--color-text-muted);
+            font-size: 11px;
+            color: var(--color-text-secondary);
             margin-top: 24px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+        }
+
+        footer strong {
+            font-family: var(--font-logo);
+            font-size: 13px;
+            font-weight: 900;
+            color: var(--color-text-main);
+            text-transform: lowercase;
+            letter-spacing: -0.4px;
         }
 
         @media (max-width: 480px) {
@@ -555,10 +579,14 @@
 </head>
 <body>
     <div class="container">
-        <!-- Encabezado SAP MII -->
+        <!-- Encabezado Corporativo Arauco -->
         <header class="app-header">
-            <h1>Inventario Proceso</h1>
-            <span class="tech-badge">SAP MII // CLOUD V2.3</span>
+            <div class="brand-container">
+                <span class="arauco-wordmark">arauco</span>
+                <span class="brand-divider">|</span>
+                <span class="brand-app-title">Inventario Proceso</span>
+            </div>
+            <span class="tech-badge">OPERACIONES // V2.3</span>
         </header>
         
         <!-- Pestañas de Navegación Segmentadas -->
@@ -585,7 +613,7 @@
                 </button>
             </div>
 
-            <!-- RESPALDO MANUAL: Por si otra persona debe cargar un archivo local -->
+            <!-- RESPALDO MANUAL LOCAL -->
             <details class="file-section" style="cursor: pointer; margin-bottom: 16px;">
                 <summary style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-brand); text-transform: uppercase;">
                     + Carga Manual Local (Otras Bodegas / Sin Conexión)
@@ -676,7 +704,7 @@
     </div>
 
     <footer>
-        SAP MII // Terminal Cloud Operativo
+        Renovables para una vida mejor // <strong>arauco</strong>
     </footer>
 
     <!-- Modales -->
@@ -738,7 +766,7 @@
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
     
     <script>
-        // --- 1. BASE DE DATOS LOCAL PERSISTENTE (IndexedDB vía Dexie.js) ---
+        // --- 1. BASE DE DATOS LOCAL PERSISTENTE (IndexedDB) ---
         const db = new Dexie("InventarioProcesoDB");
         db.version(5).stores({
             capturas: "++id, operario, bodega, sub_bodega, calle, lote, sku, timestamp",
@@ -1145,8 +1173,7 @@
             document.getElementById('displayProgress').innerText = `${contadorActual} / ${meta}`;
             
             const pct = meta > 0 ? Math.min(100, Math.round((contadorActual / meta) * 100)) : 0;
-            const pctEl = document.getElementById('displayPercent');
-            if (pctEl) pctEl.innerText = `${pct}%`;
+            document.getElementById('displayPercent').innerText = `${pct}%`;
             
             const fillEl = document.getElementById('progressBarFill');
             if (fillEl) fillEl.style.width = `${pct}%`;
@@ -1647,7 +1674,7 @@
         async function descargarCSVGlobal() {
             const todas = await db.capturas.toArray();
             if (todas.length === 0) { alert('Sin capturas guardadas.'); return; }
-            descargarArchivoCSV(Papa.unparse(todas), "captura_sap_final.csv");
+            descargarArchivoCSV(Papa.unparse(todas), "captura_arauco_final.csv");
         }
 
         async function descargarReporteDiferencias() {
