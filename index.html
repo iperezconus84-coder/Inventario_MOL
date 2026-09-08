@@ -540,7 +540,7 @@
         <!-- Encabezado Industrial -->
         <header class="app-header">
             <h1>Inventario Proceso</h1>
-            <span class="tech-badge">PWA // V2.0</span>
+            <span class="tech-badge">PWA // V2.1 CLOUD</span>
         </header>
         
         <!-- Pestañas de Navegación Segmentadas -->
@@ -550,25 +550,18 @@
             <button type="button" id="tabAvance" class="nav-tab" role="tab" onclick="cambiarVista('avance')">03. Avance</button>
         </nav>
 
-        <!-- VISTA 1: CONFIGURACIÓN Y ARCHIVOS -->
+        <!-- VISTA 1: CONFIGURACIÓN Y SINCRONIZACIÓN CLOUD -->
         <div id="viewConfig" class="view-section active" role="tabpanel">
             <div class="file-section">
-                <label for="fileOperarios">1. Cargar Operarios (operarios.csv):</label>
-                <input type="file" id="fileOperarios" accept=".csv">
-                <div id="statusOperarios" class="status-box" style="display:none;">✓ OPERARIOS CARGADOS</div>
+                <label style="margin-bottom: 8px;">Estado de Sincronización Cloud (GitHub):</label>
+                <div id="statusOperarios" class="status-box" style="display:block; margin-bottom: 8px;">⟳ Sincronizando operarios...</div>
+                <div id="statusStock" class="status-box" style="display:block; margin-bottom: 8px;">⟳ Sincronizando stock...</div>
+                <div id="statusPlano" class="status-box" style="display:block; margin-bottom: 12px;">⟳ Sincronizando plano...</div>
 
                 <label for="operarioSelect" style="margin-top: 10px;">Operario Activo (Obligatorio):</label>
                 <select id="operarioSelect" onchange="bloquearOperarioConfig()">
-                    <option value="">Cargue operarios.csv primero...</option>
+                    <option value="">Cargando operarios desde la nube...</option>
                 </select>
-
-                <label for="fileStock" style="margin-top: 15px;">2. Cargar Stock Lógico (stock_tmt1.csv):</label>
-                <input type="file" id="fileStock" accept=".csv">
-                <div id="statusStock" class="status-box" style="display:none;">✓ STOCK CARGADO</div>
-                
-                <label for="filePlano" style="margin-top: 10px;">3. Cargar Plano de Calles (plano_tmt1.csv):</label>
-                <input type="file" id="filePlano" accept=".csv">
-                <div id="statusPlano" class="status-box" style="display:none;">✓ PLANO CARGADO</div>
             </div>
 
             <button type="button" class="btn-action secondary" onclick="descargarCSVGlobal()">⬇ Descargar Consolidado Final</button>
@@ -642,7 +635,7 @@
     </div>
 
     <footer>
-        Renovables para una vida mejor // Terminal Offline
+        Renovables para una vida mejor // Cloud Terminal
     </footer>
 
     <!-- Modal para Escáner de Cámara -->
@@ -726,7 +719,7 @@
         let html5QrCode = null;
         let audioContextSingleton = null;
 
-        // --- 3. CICLO DE VIDA INICIAL ---
+        // --- 3. CICLO DE VIDA INICIAL & SINCRONIZACIÓN CLOUD ---
         window.addEventListener('DOMContentLoaded', async () => {
             try {
                 capturasGlobales = await db.capturas.toArray();
@@ -734,9 +727,18 @@
                 console.error("Error al cargar datos desde IndexedDB:", err);
             }
 
+            // Sincronizar automáticamente archivos maestros desde la carpeta data/ en GitHub
+            await sincronizarDatosCloud();
+
             // Enrutamiento inicial inteligente
             if (operarioActual) {
                 document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
+                // Bloquear select si ya estaba guardado en localStorage
+                const opSelect = document.getElementById('operarioSelect');
+                if (opSelect) {
+                    opSelect.value = operarioActual;
+                    opSelect.disabled = true;
+                }
                 cambiarVista('captura');
             } else {
                 cambiarVista('config');
@@ -745,6 +747,89 @@
             actualizarUIUltimaCalle();
             await renderizarResumen();
         });
+
+        async function sincronizarDatosCloud() {
+            const parseConfigCloud = {
+                header: true,
+                skipEmptyLines: 'greedy',
+                dynamicTyping: false,
+                encoding: "ISO-8859-1"
+            };
+
+            // 1. Sincronizar Operarios
+            try {
+                const resOp = await fetch('./data/operarios.csv');
+                if (!resOp.ok) throw new Error("No se pudo descargar operarios.csv");
+                const textOp = await resOp.text();
+                Papa.parse(textOp, {
+                    ...parseConfigCloud,
+                    complete: function(results) {
+                        datosOperarios = results.data;
+                        cargarOperariosSelect();
+                        const statusOp = document.getElementById('statusOperarios');
+                        statusOp.style.display = 'block';
+                        statusOp.style.background = 'var(--color-success-bg)';
+                        statusOp.style.borderColor = 'var(--color-success-border)';
+                        statusOp.style.color = 'var(--color-success)';
+                        statusOp.innerText = "✓ OPERARIOS SINCRONIZADOS (CLOUD)";
+                    }
+                });
+            } catch (err) {
+                console.warn("Aviso cloud operarios:", err);
+                document.getElementById('statusOperarios').innerText = "⚠ Sin conexión o archivo operarios.csv ausente en /data/";
+                document.getElementById('statusOperarios').style.background = 'var(--color-danger-bg)';
+                document.getElementById('statusOperarios').style.color = 'var(--color-danger)';
+            }
+
+            // 2. Sincronizar Stock
+            try {
+                const resStock = await fetch('./data/stock_tmt1.csv');
+                if (!resStock.ok) throw new Error("No se pudo descargar stock_tmt1.csv");
+                const textStock = await resStock.text();
+                Papa.parse(textStock, {
+                    ...parseConfigCloud,
+                    complete: function(results) {
+                        datosStock = results.data;
+                        const statusStock = document.getElementById('statusStock');
+                        statusStock.style.display = 'block';
+                        statusStock.style.background = 'var(--color-success-bg)';
+                        statusStock.style.borderColor = 'var(--color-success-border)';
+                        statusStock.style.color = 'var(--color-success)';
+                        statusStock.innerText = "✓ STOCK SINCRONIZADO (CLOUD)";
+                    }
+                });
+            } catch (err) {
+                console.warn("Aviso cloud stock:", err);
+                document.getElementById('statusStock').innerText = "⚠ Sin conexión o stock_tmt1.csv ausente en /data/";
+                document.getElementById('statusStock').style.background = 'var(--color-danger-bg)';
+                document.getElementById('statusStock').style.color = 'var(--color-danger)';
+            }
+
+            // 3. Sincronizar Plano
+            try {
+                const resPlano = await fetch('./data/plano_tmt1.csv');
+                if (!resPlano.ok) throw new Error("No se pudo descargar plano_tmt1.csv");
+                const textPlano = await resPlano.text();
+                Papa.parse(textPlano, {
+                    ...parseConfigCloud,
+                    complete: function(results) {
+                        datosPlano = results.data;
+                        cargarBodegas();
+                        const statusPlano = document.getElementById('statusPlano');
+                        statusPlano.style.display = 'block';
+                        statusPlano.style.background = 'var(--color-success-bg)';
+                        statusPlano.style.borderColor = 'var(--color-success-border)';
+                        statusPlano.style.color = 'var(--color-success)';
+                        statusPlano.innerText = "✓ PLANO SINCRONIZADO (CLOUD)";
+                    }
+                });
+            } catch (err) {
+                console.warn("Aviso cloud plano:", err);
+                document.getElementById('statusPlano').innerText = "⚠ Sin conexión o plano_tmt1.csv ausente en /data/";
+                document.getElementById('statusPlano').style.background = 'var(--color-danger-bg)';
+                document.getElementById('statusPlano').style.color = 'var(--color-danger)';
+            }
+        }
 
         // Registro de Service Worker para PWA
         if ('serviceWorker' in navigator) {
@@ -865,74 +950,16 @@
             }
         }
 
-        // --- 7. CARGA Y PROCESAMIENTO DE ARCHIVOS CSV ---
-        const parseConfig = { 
-            header: true, 
-            skipEmptyLines: 'greedy', 
-            dynamicTyping: false, 
-            encoding: "ISO-8859-1" 
-        };
-
-        document.getElementById('fileOperarios').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            Papa.parse(file, { 
-                ...parseConfig, 
-                complete: function(results) { 
-                    datosOperarios = results.data; 
-                    cargarOperariosSelect(); 
-                    document.getElementById('statusOperarios').style.display = 'block';
-                },
-                error: function(err) {
-                    alert("Error al leer operarios.csv: " + err.message);
-                }
-            });
-        });
-
-        document.getElementById('filePlano').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            Papa.parse(file, { 
-                ...parseConfig, 
-                complete: function(results) { 
-                    datosPlano = results.data; 
-                    cargarBodegas(); 
-                    document.getElementById('statusPlano').style.display = 'block';
-                },
-                error: function(err) {
-                    alert("Error al leer plano_tmt1.csv: " + err.message);
-                }
-            });
-        });
-
-        document.getElementById('fileStock').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            Papa.parse(file, { 
-                ...parseConfig, 
-                complete: function(results) { 
-                    datosStock = results.data; 
-                    document.getElementById('statusStock').style.display = 'block';
-                },
-                error: function(err) {
-                    alert("Error al leer stock_tmt1.csv: " + err.message);
-                }
-            });
-        });
-
-        // --- 8. NAVEGACIÓN Y CONFIGURACIÓN ---
+        // --- 7. NAVEGACIÓN Y CONFIGURACIÓN ---
         function cambiarVista(vista) {
-            // 1. Ocultar todas las vistas
             document.getElementById('viewConfig').classList.remove('active');
             document.getElementById('viewCaptura').classList.remove('active');
             document.getElementById('viewAvance').classList.remove('active');
             
-            // 2. Desactivar pestañas
             document.getElementById('tabConfig').classList.remove('active');
             document.getElementById('tabCaptura').classList.remove('active');
             document.getElementById('tabAvance').classList.remove('active');
 
-            // 3. Activar la vista solicitada con validación
             if (vista === 'config') {
                 document.getElementById('viewConfig').classList.add('active');
                 document.getElementById('tabConfig').classList.add('active');
@@ -968,6 +995,10 @@
                 opt.textContent = op;
                 opSelect.appendChild(opt);
             });
+
+            if (operarioActual) {
+                opSelect.value = operarioActual;
+            }
         }
 
         function bloquearOperarioConfig() {
@@ -1097,7 +1128,7 @@
             }
         }
 
-        // --- 9. MOTOR DE ESCANEO Y CAPTURA ---
+        // --- 8. MOTOR DE ESCANEO Y CAPTURA ---
         document.getElementById('scannerInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1246,7 +1277,7 @@
             }
         }
 
-        // --- 10. ESCÁNER POR CÁMARA ---
+        // --- 9. ESCÁNER POR CÁMARA ---
         function abrirEscanearCamara() {
             const bodega = document.getElementById('bodegaSelect').value;
             const calle = document.getElementById('calleSelect').value;
@@ -1288,7 +1319,7 @@
             enfocarScanner();
         }
 
-        // --- 11. MODALES Y DIÁLOGOS ---
+        // --- 10. MODALES Y DIÁLOGOS ---
         function mostrarModal(titulo, mensaje, callback, mostrarCancelar = true) {
             document.getElementById('modalTitle').innerText = titulo;
             document.getElementById('modalMessage').innerText = mensaje;
@@ -1440,7 +1471,7 @@
             enfocarScanner();
         }
 
-        // --- 12. EXPORTACIONES CSV CON BOM PARA EXCEL ---
+        // --- 11. EXPORTACIONES CSV CON BOM PARA EXCEL ---
         function descargarArchivoCSV(contenidoCSV, nombreArchivo) {
             const blob = new Blob(["\uFEFF" + contenidoCSV], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
@@ -1471,7 +1502,7 @@
         async function descargarReporteDiferencias() {
             try {
                 if (datosStock.length === 0) {
-                    alert('Debe cargar el archivo de stock lógico primero.');
+                    alert('El archivo de stock lógico no está disponible en la nube o no se ha cargado.');
                     return;
                 }
                 const todasLasCapturas = await db.capturas.toArray();
@@ -1553,7 +1584,7 @@
             }
         }
 
-        // --- 13. REINICIO DE SISTEMA ---
+        // --- 12. REINICIO DE SISTEMA ---
         function reiniciarSistema() {
             mostrarModal("¿Reiniciar Sistema?", "Se borrarán todas las capturas de la base de datos local y se limpiarán los datos para iniciar un nuevo inventario.", async function(confirmado) {
                 if (confirmado) {
@@ -1562,25 +1593,17 @@
                         localStorage.removeItem('inv_operario');
                         localStorage.removeItem('inv_ultima_calle');
 
-                        datosPlano = [];
-                        datosStock = [];
-                        datosOperarios = [];
-                        operarioActual = "";
                         capturasGlobales = [];
                         capturasCalleActual = [];
                         contadorActual = 0;
                         calleCerradaGuardada = false;
 
-                        document.getElementById('fileOperarios').value = '';
-                        document.getElementById('fileStock').value = '';
-                        document.getElementById('filePlano').value = '';
-                        document.getElementById('statusOperarios').style.display = 'none';
-                        document.getElementById('statusStock').style.display = 'none';
-                        document.getElementById('statusPlano').style.display = 'none';
-
+                        operarioActual = "";
                         const opSelect = document.getElementById('operarioSelect');
-                        opSelect.disabled = false;
-                        opSelect.innerHTML = '<option value="">Cargue operarios.csv primero...</option>';
+                        if (opSelect) {
+                            opSelect.disabled = false;
+                            opSelect.value = "";
+                        }
                         document.getElementById('infoOperarioActivo').innerText = "OP: No seleccionado";
 
                         document.getElementById('bodegaSelect').innerHTML = '<option value="">Seleccione Bodega...</option>';
