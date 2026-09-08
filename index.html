@@ -3,49 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>INVENTARIO PROCESO // INDUSTRIAL PRECISION</title>
+    <title>INVENTARIO PROCESO // SAP ENTERPRISE TERMINAL</title>
     <link rel="manifest" href="manifest.json">
     
-    <!-- Tipografías Industriales de Alta Legibilidad -->
+    <!-- Tipografías Industriales -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --bg-app: #ECEEF1;
-            --bg-surface: #FFFFFF;
-            --bg-subtle: #F4F6F8;
-            --bg-element: #E2E6EA;
-            --color-brand: #D97706;
-            --color-brand-dark: #B45309;
-            --color-brand-light: #FEF3C7;
-            --color-text-main: #0F172A;
-            --color-text-secondary: #475569;
-            --color-text-muted: #94A3B8;
-            --color-border: #CBD5E1;
-            --color-border-subtle: #E2E8F0;
-            --color-border-focus: #D97706;
-            --color-success: #059669;
-            --color-success-bg: #ECFDF5;
-            --color-success-border: #A7F3D0;
-            --color-danger: #DC2626;
-            --color-danger-bg: #FEF2F2;
-            --color-warning: #D97706;
-            --color-info: #0284C7;
-            --radius-tech: 4px;
+            --sap-blue: #0A6ED1;
+            --sap-blue-dark: #00457A;
+            --sap-bg-app: #F5F6F7;
+            --sap-surface: #FFFFFF;
+            --sap-subtle: #EDF1F5;
+            --sap-border: #BFD0E0;
+            --sap-border-dark: #8899A6;
+            --sap-text-main: #1D2D3E;
+            --sap-text-secondary: #556B82;
+            --sap-success: #107E3E;
+            --sap-success-bg: #E8F5E9;
+            --sap-warning: #E9730C;
+            --sap-danger: #BB0000;
+            --sap-danger-bg: #FFEBEE;
+            --radius-sap: 2px;
             --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             --font-mono: 'JetBrains Mono', 'Roboto Mono', Consolas, monospace;
-            --shadow-card: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            --shadow-sap: 0 1px 3px rgba(0,0,0,0.08);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: var(--font-sans);
-            background-color: var(--bg-app);
-            color: var(--color-text-main);
-            padding: 16px;
+            background-color: var(--sap-bg-app);
+            color: var(--sap-text-main);
+            padding: 12px;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -55,11 +49,11 @@
         .container {
             max-width: 580px;
             margin: 0 auto;
-            background: var(--bg-surface);
-            padding: 24px;
-            border-radius: var(--radius-tech);
-            border: 1px solid var(--color-border);
-            box-shadow: var(--shadow-card);
+            background: var(--sap-surface);
+            padding: 20px;
+            border-radius: var(--radius-sap);
+            border: 1px solid var(--sap-border-dark);
+            box-shadow: var(--shadow-sap);
             width: 100%;
         }
 
@@ -67,79 +61,80 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 2px solid var(--color-text-main);
-            padding-bottom: 12px;
-            margin-bottom: 18px;
+            background-color: var(--sap-blue-dark);
+            color: white;
+            padding: 10px 14px;
+            margin: -20px -20px 16px -20px;
+            border-top-left-radius: var(--radius-sap);
+            border-top-right-radius: var(--radius-sap);
+            border-bottom: 3px solid var(--sap-blue);
         }
 
         h1 {
-            color: var(--color-text-main);
-            font-size: 18px;
+            font-size: 15px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
 
         h1::before {
-            content: "";
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            background-color: var(--color-brand);
-            border-radius: 1px;
+            content: "■";
+            color: #64B5F6;
+            font-size: 12px;
         }
 
         .tech-badge {
             font-family: var(--font-mono);
-            font-size: 11px;
-            background: var(--bg-element);
-            color: var(--color-text-secondary);
-            padding: 3px 8px;
+            font-size: 10px;
+            background: rgba(255, 255, 255, 0.15);
+            color: #E3F2FD;
+            padding: 3px 6px;
             border-radius: 2px;
             font-weight: 600;
             letter-spacing: 0.5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .nav-tabs {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
-            background-color: var(--bg-element);
-            padding: 4px;
-            border-radius: var(--radius-tech);
-            gap: 4px;
-            margin-bottom: 20px;
-            border: 1px solid var(--color-border);
+            background-color: var(--sap-subtle);
+            padding: 3px;
+            border-radius: var(--radius-sap);
+            gap: 3px;
+            margin-bottom: 16px;
+            border: 1px solid var(--sap-border);
         }
 
         .nav-tabs .nav-tab {
             all: unset;
-            padding: 10px 4px;
+            padding: 8px 4px;
             background-color: transparent;
-            color: var(--color-text-secondary);
+            color: var(--sap-text-secondary);
             font-family: var(--font-mono);
-            font-weight: 700;
+            font-weight: 600;
             text-align: center;
             cursor: pointer;
-            border-radius: 2px;
-            font-size: 12px;
+            border-radius: var(--radius-sap);
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            transition: all 0.15s ease;
+            transition: all 0.1s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             user-select: none;
         }
 
-        .nav-tabs .nav-tab:hover { background-color: rgba(255, 255, 255, 0.6); color: var(--color-text-main); }
+        .nav-tabs .nav-tab:hover { background-color: rgba(10, 110, 209, 0.08); color: var(--sap-blue); }
         .nav-tabs .nav-tab.active {
-            background-color: var(--bg-surface);
-            color: var(--color-text-main);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            border-bottom: 2px solid var(--color-brand);
+            background-color: var(--sap-surface);
+            color: var(--sap-blue-dark);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            border-top: 2px solid var(--sap-blue);
             font-weight: 700;
         }
 
@@ -149,166 +144,166 @@
         label {
             font-family: var(--font-sans);
             font-weight: 600;
-            color: var(--color-text-secondary);
-            font-size: 12px;
-            margin-bottom: 6px;
+            color: var(--sap-text-secondary);
+            font-size: 11px;
+            margin-bottom: 4px;
             display: block;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
         }
 
-        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
 
         select, input, textarea {
             width: 100%;
-            padding: 11px 12px;
-            margin-bottom: 14px;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-tech);
-            font-size: 14px;
+            padding: 9px 10px;
+            margin-bottom: 12px;
+            border: 1px solid var(--sap-border-dark);
+            border-radius: var(--radius-sap);
+            font-size: 13px;
             font-family: var(--font-sans);
-            background-color: var(--bg-surface);
-            color: var(--color-text-main);
-            transition: border-color 0.15s, box-shadow 0.15s;
+            background-color: var(--sap-surface);
+            color: var(--sap-text-main);
+            transition: border-color 0.1s;
         }
 
         select:focus, input:focus, textarea:focus {
             outline: none;
-            border-color: var(--color-border-focus);
-            box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.15);
+            border-color: var(--sap-blue);
+            box-shadow: 0 0 0 2px rgba(10, 110, 209, 0.15);
         }
 
         select:disabled, input:disabled {
-            background-color: var(--bg-subtle);
-            color: var(--color-text-muted);
-            border-color: var(--color-border-subtle);
+            background-color: var(--sap-subtle);
+            color: #9AAAB8;
+            border-color: var(--sap-border);
             cursor: not-allowed;
         }
 
-        .hud-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+        .hud-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
         .hud-chip {
-            padding: 8px 10px;
-            border-radius: var(--radius-tech);
+            padding: 7px 9px;
+            border-radius: var(--radius-sap);
             font-family: var(--font-mono);
             font-size: 11px;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 6px;
-            border: 1px solid var(--color-border);
-            background: var(--bg-subtle);
-            color: var(--color-text-secondary);
+            border: 1px solid var(--sap-border-dark);
+            background: var(--sap-subtle);
+            color: var(--sap-text-secondary);
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        .hud-chip.primary { background: var(--color-brand-light); border-color: #FDE68A; color: var(--color-brand-dark); }
-        .hud-chip.info { background: #E0F2FE; border-color: #BAE6FD; color: #0369A1; }
+        .hud-chip.primary { background: #E3F2FD; border-color: #90CAF9; color: #0D47A1; }
+        .hud-chip.info { background: #E8F5E9; border-color: #A5D6A7; color: #1B5E20; }
 
         .progress-box {
-            background: var(--bg-subtle);
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius-tech);
-            padding: 16px;
-            margin-bottom: 16px;
+            background: var(--sap-subtle);
+            border: 1px solid var(--sap-border-dark);
+            border-radius: var(--radius-sap);
+            padding: 14px;
+            margin-bottom: 14px;
             position: relative;
         }
-        .progress-meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-        .progress-label-tag { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-        .progress-percent-tag { font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--color-brand); }
-        .progress { font-family: var(--font-mono); font-size: 28px; font-weight: 700; text-align: center; color: var(--color-text-main); letter-spacing: 1px; margin: 4px 0 10px 0; }
-        .progress-track { width: 100%; height: 6px; background: var(--bg-element); border-radius: 3px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; width: 0%; background: var(--color-brand); transition: width 0.2s ease-out; }
+        .progress-meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .progress-label-tag { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--sap-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .progress-percent-tag { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--sap-blue); }
+        .progress { font-family: var(--font-mono); font-size: 26px; font-weight: 700; text-align: center; color: var(--sap-text-main); letter-spacing: 1px; margin: 4px 0 8px 0; }
+        .progress-track { width: 100%; height: 5px; background: var(--sap-border); border-radius: 2px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; width: 0%; background: var(--sap-blue); transition: width 0.2s ease-out; }
 
-        .scanner-container { position: relative; margin-bottom: 16px; }
+        .scanner-container { position: relative; margin-bottom: 14px; }
         #scannerInput {
             font-family: var(--font-mono);
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
-            padding: 14px 14px 14px 42px;
+            padding: 12px 12px 12px 38px;
             margin-bottom: 0;
-            border: 2px solid var(--color-text-main);
-            background-color: var(--bg-surface);
+            border: 2px solid var(--sap-blue-dark);
+            background-color: var(--sap-surface);
             letter-spacing: 0.5px;
         }
-        #scannerInput:focus { border-color: var(--color-brand); box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.2); }
-        .scanner-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--color-text-secondary); font-family: var(--font-mono); font-weight: 700; font-size: 16px; pointer-events: none; }
+        #scannerInput:focus { border-color: var(--sap-blue); box-shadow: 0 0 0 3px rgba(10, 110, 209, 0.2); }
+        .scanner-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--sap-blue-dark); font-family: var(--font-mono); font-weight: 700; font-size: 14px; pointer-events: none; }
 
         .btn-action {
             width: 100%;
-            padding: 13px 16px;
-            background-color: var(--color-text-main);
+            padding: 11px 14px;
+            background-color: var(--sap-blue);
             color: #FFFFFF;
-            border: 1px solid var(--color-text-main);
-            border-radius: var(--radius-tech);
+            border: 1px solid var(--sap-blue-dark);
+            border-radius: var(--radius-sap);
             font-family: var(--font-sans);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 700;
             cursor: pointer;
-            margin-top: 8px;
+            margin-top: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            transition: all 0.15s ease;
+            transition: background-color 0.1s;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
         }
-        .btn-action:hover { background-color: #1E293B; }
-        .btn-action.primary-action { background-color: var(--color-brand); border-color: var(--color-brand); color: #FFFFFF; }
-        .btn-action.primary-action:hover { background-color: var(--color-brand-dark); }
-        .btn-action.secondary { background-color: var(--bg-surface); color: var(--color-text-main); border-color: var(--color-border); }
-        .btn-action.secondary:hover { background-color: var(--bg-subtle); }
-        .btn-action.camera-btn { background-color: var(--color-info); border-color: var(--color-info); color: white; margin-bottom: 12px; margin-top: 0; }
-        .btn-action.warning { background-color: var(--color-warning); border-color: var(--color-warning); color: white; }
-        .btn-action.danger { background-color: var(--color-danger); border-color: var(--color-danger); color: white; }
+        .btn-action:hover { background-color: var(--sap-blue-dark); }
+        .btn-action.primary-action { background-color: var(--sap-success); border-color: #0B5329; color: #FFFFFF; }
+        .btn-action.primary-action:hover { background-color: #0B5329; }
+        .btn-action.secondary { background-color: var(--sap-surface); color: var(--sap-text-main); border-color: var(--sap-border-dark); }
+        .btn-action.secondary:hover { background-color: var(--sap-subtle); }
+        .btn-action.camera-btn { background-color: #455A64; border-color: #263238; color: white; margin-bottom: 10px; margin-top: 0; }
+        .btn-action.warning { background-color: var(--sap-warning); border-color: #B25300; color: white; }
+        .btn-action.danger { background-color: var(--sap-danger); border-color: #8B0000; color: white; }
 
         button.danger-action {
-            background-color: var(--color-danger-bg);
-            color: var(--color-danger);
-            border: 1px solid #FECACA;
+            background-color: var(--sap-danger-bg);
+            color: var(--sap-danger);
+            border: 1px solid #FFCDD2;
             font-family: var(--font-mono);
-            font-size: 11px;
-            padding: 4px 8px;
+            font-size: 10px;
+            padding: 3px 6px;
             width: auto;
             margin-top: 0;
-            border-radius: 2px;
+            border-radius: var(--radius-sap);
             cursor: pointer;
         }
 
-        .file-section { background: var(--bg-subtle); padding: 16px; border-radius: var(--radius-tech); margin-bottom: 16px; border: 1px solid var(--color-border); }
+        .file-section { background: var(--sap-subtle); padding: 14px; border-radius: var(--radius-sap); margin-bottom: 14px; border: 1px solid var(--sap-border); }
         .status-box {
-            background: var(--color-success-bg);
-            border: 1px solid var(--color-success-border);
-            color: var(--color-success);
-            padding: 8px 12px;
-            border-radius: var(--radius-tech);
-            margin-bottom: 14px;
+            background: var(--sap-success-bg);
+            border: 1px solid #C8E6C9;
+            color: var(--sap-success);
+            padding: 7px 10px;
+            border-radius: var(--radius-sap);
+            margin-bottom: 12px;
             font-family: var(--font-mono);
-            font-size: 12px;
+            font-size: 11px;
             text-align: center;
             font-weight: 600;
         }
 
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); }
-        .modal-content { background: var(--bg-surface); margin: 10% auto; padding: 24px; width: 90%; max-width: 480px; border-radius: var(--radius-tech); border: 1px solid var(--color-border); box-shadow: 0 10px 25px rgba(0,0,0,0.15); text-align: center; }
-        .modal-header-tag { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-brand); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-        .modal-body { overflow-y: auto; max-height: 45vh; margin: 12px 0; border: 1px solid var(--color-border); padding: 0; text-align: left; border-radius: var(--radius-tech); }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(29, 45, 62, 0.6); backdrop-filter: blur(1px); }
+        .modal-content { background: var(--sap-surface); margin: 12% auto; padding: 20px; width: 90%; max-width: 460px; border-radius: var(--radius-sap); border: 2px solid var(--sap-blue-dark); box-shadow: 0 8px 20px rgba(0,0,0,0.2); text-align: center; }
+        .modal-header-tag { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--sap-blue); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .modal-body { overflow-y: auto; max-height: 45vh; margin: 10px 0; border: 1px solid var(--sap-border-dark); padding: 0; text-align: left; border-radius: var(--radius-sap); }
 
-        table.detalle-lotes { width: 100%; border-collapse: collapse; font-size: 13px; font-family: var(--font-mono); }
-        table.detalle-lotes th, table.detalle-lotes td { border-bottom: 1px solid var(--color-border-subtle); padding: 10px 12px; text-align: left; }
-        table.detalle-lotes th { background-color: var(--bg-subtle); font-weight: 700; font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        table.detalle-lotes { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--font-mono); }
+        table.detalle-lotes th, table.detalle-lotes td { border-bottom: 1px solid var(--sap-border); padding: 8px 10px; text-align: left; }
+        table.detalle-lotes th { background-color: var(--sap-subtle); font-weight: 700; font-size: 10px; color: var(--sap-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
 
-        footer { text-align: center; font-family: var(--font-mono); font-size: 11px; color: var(--color-text-muted); margin-top: 24px; text-transform: uppercase; letter-spacing: 1px; }
+        footer { text-align: center; font-family: var(--font-mono); font-size: 10px; color: var(--sap-text-secondary); margin-top: 20px; text-transform: uppercase; letter-spacing: 1px; }
 
-        @media (max-width: 480px) { .container { padding: 16px; } .form-grid-2, .hud-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 480px) { .container { padding: 14px; } .form-grid-2, .hud-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="container">
         <header class="app-header">
             <h1>Inventario Proceso</h1>
-            <span class="tech-badge">PWA // HIERARCHY TERMINAL</span>
+            <span class="tech-badge">SAP // ENTERPRISE MII</span>
         </header>
         
         <nav class="nav-tabs" role="tablist">
@@ -321,10 +316,10 @@
             <div class="file-section">
                 <label style="margin-bottom: 8px;">Estado de Sincronización Cloud:</label>
                 <div id="statusOperarios" class="status-box" style="display:block; margin-bottom: 8px;">⟳ Sincronizando operarios...</div>
-                <div id="statusStock" class="status-box" style="display:block; margin-bottom: 8px; background: var(--bg-element); border-color: var(--color-border); color: var(--color-text-secondary);">ℹ Seleccione bodega para cargar stock</div>
-                <div id="statusPlano" class="status-box" style="display:block; margin-bottom: 12px;">⟳ Sincronizando plano maestro...</div>
+                <div id="statusStock" class="status-box" style="display:block; margin-bottom: 8px; background: #ECEFF1; border-color: var(--sap-border-dark); color: var(--sap-text-secondary);">ℹ Seleccione bodega para cargar stock</div>
+                <div id="statusPlano" class="status-box" style="display:block; margin-bottom: 10px;">⟳ Sincronizando plano maestro...</div>
 
-                <label for="operarioSelect" style="margin-top: 10px;">Operario Activo (Obligatorio):</label>
+                <label for="operarioSelect" style="margin-top: 8px;">Operario Activo (Obligatorio):</label>
                 <select id="operarioSelect" onchange="bloquearOperarioConfig()">
                     <option value="">Cargando operarios...</option>
                 </select>
@@ -342,7 +337,7 @@
             </div>
 
             <!-- JERARQUÍA EN CASCADA DE 3 NIVELES -->
-            <div style="margin-bottom: 12px;">
+            <div style="margin-bottom: 10px;">
                 <label for="bodegaSelect">Bodega Principal:</label>
                 <select id="bodegaSelect" onchange="cambiarBodegaSeleccionada()">
                     <option value="">Seleccione Bodega...</option>
@@ -364,7 +359,7 @@
                 </div>
             </div>
 
-            <div style="margin-bottom: 12px;">
+            <div style="margin-bottom: 10px;">
                 <label for="metaLotes">Meta de Lotes (Editable):</label>
                 <input type="number" id="metaLotes" value="300" min="1" oninput="actualizarProgresoVisual()" style="font-family: var(--font-mono); font-weight: 700;">
             </div>
@@ -393,27 +388,27 @@
         </div>
 
         <div id="viewAvance" class="view-section" role="tabpanel">
-            <h2 style="font-family: var(--font-sans); color: var(--color-text-main); font-size: 15px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Resumen de Avance en Terreno</h2>
+            <h2 style="font-family: var(--font-sans); color: var(--sap-blue-dark); font-size: 14px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Resumen de Avance en Terreno</h2>
             <div id="resumenInventario" style="margin-bottom: 15px;"></div>
         </div>
     </div>
 
-    <footer>Renovables para una vida mejor // Multi-Warehouse Hierarchy</footer>
+    <footer>SAP S/4HANA Logistics // Warehouse Management Terminal</footer>
 
     <div id="camaraModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header-tag">ÓPTICA // CÁMARA</div>
+            <div class="modal-header-tag">SAP MII // MÓDULO ÓPTICO</div>
             <h3>Escáner Activo</h3>
-            <div id="reader" style="width: 100%; border-radius: 4px; overflow: hidden; margin: 12px 0; border: 1px solid var(--color-border);"></div>
+            <div id="reader" style="width: 100%; border-radius: 2px; overflow: hidden; margin: 10px 0; border: 1px solid var(--sap-border-dark);"></div>
             <button type="button" class="btn-action secondary" onclick="cerrarEscanearCamara()">Cerrar Cámara</button>
         </div>
     </div>
 
     <div id="alertModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content" style="max-width: 400px;">
-            <div class="modal-header-tag" id="modalTag">SISTEMA // ALERTA</div>
+            <div class="modal-header-tag" id="modalTag">SAP MII // DIÁLOGO DE CONTROL</div>
             <h3 id="modalTitle">Atención</h3>
-            <p id="modalMessage" style="font-size: 14px; color: var(--color-text-secondary); margin-bottom: 18px;"></p>
+            <p id="modalMessage" style="font-size: 13px; color: var(--sap-text-secondary); margin-bottom: 16px;"></p>
             <button type="button" id="modalBtnAceptar" class="btn-action primary-action" onclick="resolverModal(true)">Aceptar / Continuar</button>
             <button type="button" id="modalBtnCancelar" class="btn-action secondary" onclick="resolverModal(false)">Cancelar</button>
         </div>
@@ -421,10 +416,10 @@
 
     <div id="cierreModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content" style="max-width: 450px;">
-            <div class="modal-header-tag">CONFIRMACIÓN // CIERRE</div>
-            <h3>Cierre de Calle</h3>
-            <p id="cierreInfoMeta" style="margin: 8px 0 14px 0; font-family: var(--font-mono); font-size: 13px; color: var(--color-brand); font-weight: 600;"></p>
-            <label for="comentarioCalleInput" style="text-align: left;">Observación de Cierre (Opcional):</label>
+            <div class="modal-header-tag">SAP MII // CONFIRMACIÓN DE CIERRE</div>
+            <h3>Cierre de Posición / Calle</h3>
+            <p id="cierreInfoMeta" style="margin: 8px 0 12px 0; font-family: var(--font-mono); font-size: 12px; color: var(--sap-blue); font-weight: 600;"></p>
+            <label for="comentarioCalleInput" style="text-align: left;">Observación de Auditoría (Opcional):</label>
             <textarea id="comentarioCalleInput" rows="3" placeholder="Ej: 2 paquetes sin código legible..." style="resize: none;"></textarea>
             <button type="button" class="btn-action primary-action" onclick="confirmarCierreCalle()">Confirmar y Cerrar Calle</button>
             <button type="button" class="btn-action secondary" onclick="cerrarModalCierre()">Cancelar</button>
@@ -433,16 +428,16 @@
 
     <div id="detalleModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content">
-            <div class="modal-header-tag">REGISTRO // AUDITORÍA</div>
+            <div class="modal-header-tag">SAP MII // REGISTRO DE POSICIONES</div>
             <h3 id="detalleTitle">Lotes Capturados</h3>
             <div class="modal-body">
                 <table class="detalle-lotes">
                     <thead>
                         <tr>
-                            <th style="width: 35px;">#</th>
+                            <th style="width: 30px;">#</th>
                             <th>Lote</th>
                             <th>SKU</th>
-                            <th style="text-align: center; width: 75px;">Acción</th>
+                            <th style="text-align: center; width: 70px;">Acción</th>
                         </tr>
                     </thead>
                     <tbody id="tablaDetalleBody"></tbody>
@@ -513,14 +508,14 @@
                         datosOperarios = results.data;
                         cargarOperariosSelect();
                         const st = document.getElementById('statusOperarios');
-                        st.style.display = 'block'; st.style.background = 'var(--color-success-bg)'; st.style.color = 'var(--color-success)'; st.style.borderColor = 'var(--color-success-border)';
+                        st.style.display = 'block'; st.style.background = '#E8F5E9'; st.style.color = '#107E3E'; st.style.borderColor = '#C8E6C9';
                         st.innerText = "✓ OPERARIOS SINCRONIZADOS";
                     }
                 });
             } catch (err) {
                 document.getElementById('statusOperarios').innerText = "⚠ Error en operarios.csv";
-                document.getElementById('statusOperarios').style.background = 'var(--color-danger-bg)';
-                document.getElementById('statusOperarios').style.color = 'var(--color-danger)';
+                document.getElementById('statusOperarios').style.background = '#FFEBEE';
+                document.getElementById('statusOperarios').style.color = '#BB0000';
             }
 
             // 2. Cargar Plano Maestro Global
@@ -534,18 +529,17 @@
                         datosPlano = results.data;
                         cargarBodegas();
                         const st = document.getElementById('statusPlano');
-                        st.style.display = 'block'; st.style.background = 'var(--color-success-bg)'; st.style.color = 'var(--color-success)'; st.style.borderColor = 'var(--color-success-border)';
+                        st.style.display = 'block'; st.style.background = '#E8F5E9'; st.style.color = '#107E3E'; st.style.borderColor = '#C8E6C9';
                         st.innerText = "✓ PLANO GENERAL SINCRONIZADO";
                     }
                 });
             } catch (err) {
                 document.getElementById('statusPlano').innerText = "⚠ Falta plano_general.csv en /data/";
-                document.getElementById('statusPlano').style.background = 'var(--color-danger-bg)';
-                document.getElementById('statusPlano').style.color = 'var(--color-danger)';
+                document.getElementById('statusPlano').style.background = '#FFEBEE';
+                document.getElementById('statusPlano').style.color = '#BB0000';
             }
         }
 
-        // Carga estrictamente las BODEGAS PRINCIPALES únicas en el primer selector
         function cargarBodegas() {
             const bodegaSelect = document.getElementById('bodegaSelect');
             bodegaSelect.innerHTML = '<option value="">Seleccione Bodega...</option>';
@@ -567,7 +561,6 @@
             });
         }
 
-        // Al seleccionar la Bodega Principal: carga su stock y filtra sus Sub-Bodegas exclusivas
         async function cambiarBodegaSeleccionada() {
             const bodegaSelect = document.getElementById('bodegaSelect');
             const bodegaElegida = bodegaSelect.value;
@@ -583,12 +576,11 @@
             if (!bodegaElegida) {
                 datosStock = [];
                 document.getElementById('statusStock').innerText = "ℹ Seleccione bodega para cargar stock";
-                document.getElementById('statusStock').style.background = 'var(--bg-element)';
-                document.getElementById('statusStock').style.color = 'var(--color-text-secondary)';
+                document.getElementById('statusStock').style.background = '#ECEFF1';
+                document.getElementById('statusStock').style.color = '#556B82';
                 return;
             }
 
-            // Filtrar únicamente las sub-bodegas que pertenecen a ESTA bodega principal
             const subBodegasUnicas = new Set();
             datosPlano
                 .filter(row => obtenerValorCSV(row, 'bodega', 'Bodega', 'BODEGA') === bodegaElegida)
@@ -603,7 +595,6 @@
                 subBodegaSelect.appendChild(opt);
             });
 
-            // Descarga automática del stock exclusivo de esta bodega principal (ej: stock_tmt1.csv)
             let codigoBodega = bodegaElegida.toLowerCase().trim();
             const urlStock = `./data/stock_${codigoBodega}.csv`;
 
@@ -621,23 +612,22 @@
                     complete: function(results) {
                         datosStock = results.data;
                         const st = document.getElementById('statusStock');
-                        st.style.background = 'var(--color-success-bg)';
-                        st.style.borderColor = 'var(--color-success-border)';
-                        st.style.color = 'var(--color-success)';
+                        st.style.background = '#E8F5E9';
+                        st.style.borderColor = '#C8E6C9';
+                        st.style.color = '#107E3E';
                         st.innerText = `✓ STOCK [${bodegaElegida}] CARGADO`;
                     }
                 });
             } catch (err) {
                 datosStock = [];
                 const st = document.getElementById('statusStock');
-                st.style.background = 'var(--color-danger-bg)';
-                st.style.borderColor = '#FECACA';
-                st.style.color = 'var(--color-danger)';
+                st.style.background = '#FFEBEE';
+                st.style.borderColor = '#FFCDD2';
+                st.style.color = '#BB0000';
                 st.innerText = `⚠ Falta archivo stock_${codigoBodega}.csv en /data/`;
             }
         }
 
-        // Al cambiar Sub-Bodega: Filtra y muestra solo las calles asociadas
         function actualizarCalles() {
             const bodega = document.getElementById('bodegaSelect').value;
             const subBodega = document.getElementById('subBodegaSelect').value;
@@ -741,15 +731,15 @@
                     resumen[c.bodega][c.calle]++;
                 }
 
-                let html = '<div style="background: var(--bg-subtle); padding: 14px; border-radius: var(--radius-tech); border: 1px solid var(--color-border); font-size: 13px; font-family: var(--font-mono);">';
+                let html = '<div style="background: #EDF1F5; padding: 12px; border-radius: 2px; border: 1px solid #BFD0E0; font-size: 12px; font-family: var(--font-mono);">';
                 const bodegas = Object.keys(resumen);
                 if (bodegas.length === 0) {
-                    html += '<span style="color: var(--color-text-muted);">No hay datos capturados aún.</span>';
+                    html += '<span style="color: #556B82;">No hay datos capturados aún.</span>';
                 } else {
                     for (const b of bodegas) {
-                        html += `<div style="margin-top: 6px; color: var(--color-brand); font-weight: 700;">[ BODEGA: ${b} ]</div>`;
+                        html += `<div style="margin-top: 5px; color: #0A6ED1; font-weight: 700;">[ BODEGA: ${b} ]</div>`;
                         for (const c in resumen[b]) {
-                            html += `<div style="margin-left: 14px; margin-top: 4px; color: var(--color-text-main);">&bull; Calle ${c}: <strong>${resumen[b][c]}</strong> lotes</div>`;
+                            html += `<div style="margin-left: 12px; margin-top: 3px; color: #1D2D3E;">&bull; Calle ${c}: <strong>${resumen[b][c]}</strong> lotes</div>`;
                         }
                     }
                 }
@@ -1027,7 +1017,7 @@
             tbody.innerHTML = '';
             
             if (capturasCalleActual.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--color-text-muted); padding: 16px;">Sin lotes.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: #556B82; padding: 14px;">Sin lotes.</td></tr>`;
                 return;
             }
 
