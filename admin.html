@@ -175,10 +175,10 @@
             branch: "main"
         };
 
-        // Inyección automática del token configurado de fábrica
+        // Inyección automática del nuevo token configurado de fábrica
         window.addEventListener('DOMContentLoaded', () => {
             const tokenInput = document.getElementById('tokenInput');
-            tokenInput.value = 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;
+            tokenInput.value = "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";
         });
 
         async function subirArchivoAGitHub() {
@@ -196,7 +196,7 @@
             }
 
             const file = fileInput.files[0];
-            const filename = file.name; // Lee automáticamente el nombre exacto del archivo (ej: stock_tmt1.csv)
+            const filename = file.name; 
 
             statusDiv.className = "status-msg";
             statusDiv.style.display = "block";
@@ -204,12 +204,12 @@
 
             try {
                 const contentBase64 = await toBase64(file);
-                const path = `data/${filename}`; // Guarda automáticamente dentro de la carpeta data/
+                const path = `data/${filename}`; 
                 const apiUrl = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
 
                 let sha = null;
                 const getRes = await fetch(apiUrl, {
-                    headers: { "Authorization": `token ${token}` }
+                    headers: { "Authorization": `Bearer ${token}` }
                 });
                 
                 if (getRes.ok) {
@@ -227,7 +227,7 @@
                 const putRes = await fetch(apiUrl, {
                     method: "PUT",
                     headers: {
-                        "Authorization": `token ${token}`,
+                        "Authorization": `Bearer ${token}`,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify(bodyData)
