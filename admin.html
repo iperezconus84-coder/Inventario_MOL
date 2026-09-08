@@ -175,16 +175,10 @@
             branch: "main"
         };
 
-        // Recordar el token automáticamente en el navegador de este equipo
+        // Inyección automática del token configurado de fábrica
         window.addEventListener('DOMContentLoaded', () => {
-            const savedToken = localStorage.getItem('admin_github_token');
-            if (savedToken) {
-                document.getElementById('tokenInput').value = savedToken;
-            }
-        });
-
-        document.getElementById('tokenInput').addEventListener('input', function() {
-            localStorage.setItem('admin_github_token', this.value.trim());
+            const tokenInput = document.getElementById('tokenInput');
+            tokenInput.value = "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";
         });
 
         async function subirArchivoAGitHub() {
@@ -202,7 +196,7 @@
             }
 
             const file = fileInput.files[0];
-            const filename = file.name; // Toma el nombre exacto del archivo seleccionado (ej: stock_tmt1.csv)
+            const filename = file.name; // Lee automáticamente el nombre exacto del archivo (ej: stock_tmt1.csv)
 
             statusDiv.className = "status-msg";
             statusDiv.style.display = "block";
@@ -210,7 +204,7 @@
 
             try {
                 const contentBase64 = await toBase64(file);
-                const path = `data/${filename}`; // Lo ubica automáticamente dentro de la carpeta data/
+                const path = `data/${filename}`; // Guarda automáticamente dentro de la carpeta data/
                 const apiUrl = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
 
                 let sha = null;
