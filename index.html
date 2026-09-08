@@ -184,10 +184,10 @@
             letter-spacing: 0.5px;
         }
 
-        .form-grid-2 {
+        .form-grid-3 {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
             margin-bottom: 12px;
         }
 
@@ -222,7 +222,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
         }
 
         .hud-chip {
@@ -252,6 +252,20 @@
             background: #E8F4FD;
             border-color: #B3D7FF;
             color: #0A6ED1;
+        }
+
+        .hud-chip.stock-info {
+            grid-column: span 2;
+            background: #E8F5E9;
+            border-color: #C8E6C9;
+            color: #107E3E;
+        }
+
+        .hud-chip.stock-loading {
+            grid-column: span 2;
+            background: #FFF8E1;
+            border-color: #FFE082;
+            color: #F57F17;
         }
 
         /* DISPLAY INDUSTRIAL DE PROGRESO */
@@ -437,7 +451,7 @@
             color: var(--color-success);
             padding: 8px 12px;
             border-radius: var(--radius-tech);
-            margin-bottom: 14px;
+            margin-bottom: 10px;
             font-family: var(--font-mono);
             font-size: 11px;
             text-align: center;
@@ -535,7 +549,7 @@
 
         @media (max-width: 480px) {
             .container { padding: 16px; }
-            .form-grid-2, .hud-grid { grid-template-columns: 1fr; }
+            .form-grid-3, .hud-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -544,7 +558,7 @@
         <!-- Encabezado SAP MII -->
         <header class="app-header">
             <h1>Inventario Proceso</h1>
-            <span class="tech-badge">MII // CLOUD V2.1</span>
+            <span class="tech-badge">SAP MII // CLOUD V2.2</span>
         </header>
         
         <!-- Pestañas de Navegación Segmentadas -->
@@ -557,16 +571,36 @@
         <!-- VISTA 1: CONFIGURACIÓN Y SINCRONIZACIÓN CLOUD -->
         <div id="viewConfig" class="view-section active" role="tabpanel">
             <div class="file-section">
-                <label style="margin-bottom: 8px;">Estado de Sincronización Cloud (GitHub):</label>
-                <div id="statusOperarios" class="status-box" style="display:block; margin-bottom: 8px;">⟳ Sincronizando operarios...</div>
-                <div id="statusStock" class="status-box" style="display:block; margin-bottom: 8px;">⟳ Sincronizando stock...</div>
-                <div id="statusPlano" class="status-box" style="display:block; margin-bottom: 12px;">⟳ Sincronizando plano...</div>
+                <label style="margin-bottom: 8px;">Estado de Datos Maestros (Cloud / Offline):</label>
+                <div id="statusOperarios" class="status-box">⟳ Sincronizando operarios...</div>
+                <div id="statusPlano" class="status-box">⟳ Sincronizando plano de calles...</div>
 
                 <label for="operarioSelect" style="margin-top: 10px;">Operario Activo (Obligatorio):</label>
                 <select id="operarioSelect" onchange="bloquearOperarioConfig()">
-                    <option value="">Cargando operarios desde la nube...</option>
+                    <option value="">Cargando operarios...</option>
                 </select>
+
+                <button type="button" class="btn-action secondary" onclick="sincronizarDatosCloud(true)" style="margin-top: 6px;">
+                    🔄 Forzar Actualización desde GitHub
+                </button>
             </div>
+
+            <!-- RESPALDO MANUAL: Por si otra persona debe cargar un archivo distinto -->
+            <details class="file-section" style="cursor: pointer; margin-bottom: 16px;">
+                <summary style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-brand); text-transform: uppercase;">
+                    + Carga Manual Local (Otras Bodegas / Sin Conexión)
+                </summary>
+                <div style="margin-top: 14px;">
+                    <label for="fileStockManual">Cargar Archivo de Stock Manual:</label>
+                    <input type="file" id="fileStockManual" accept=".csv">
+
+                    <label for="filePlanoManual">Cargar Plano Manual (Opcional):</label>
+                    <input type="file" id="filePlanoManual" accept=".csv">
+
+                    <label for="fileOperariosManual">Cargar Operarios Manual (Opcional):</label>
+                    <input type="file" id="fileOperariosManual" accept=".csv">
+                </div>
+            </details>
 
             <button type="button" class="btn-action secondary" onclick="descargarCSVGlobal()">⬇ Descargar Consolidado Final</button>
             <button type="button" class="btn-action warning" onclick="descargarReporteDiferencias()">⬇ Reporte Diferencias (Pareados / Sobrantes / Faltantes)</button>
@@ -577,32 +611,35 @@
         <div id="viewCaptura" class="view-section" role="tabpanel">
             <!-- Telemetría HUD -->
             <div class="hud-grid">
-                <div id="infoOperarioActivo" class="hud-chip primary">
-                    OP: No seleccionado
-                </div>
-                <div id="infoUltimaCalle" class="hud-chip info">
-                    CALLE: Ninguna
-                </div>
+                <div id="infoOperarioActivo" class="hud-chip primary">OP: No seleccionado</div>
+                <div id="infoUltimaCalle" class="hud-chip info">CALLE: Ninguna</div>
+                <div id="infoStockActivo" class="hud-chip stock-loading">STOCK: Seleccione una Bodega...</div>
             </div>
 
-            <!-- Cuadrícula de Selección Bodega / Calle -->
-            <div class="form-grid-2">
+            <!-- Cuadrícula en Cascada: Bodega -> Sub-Bodega -> Calle -->
+            <div class="form-grid-3">
                 <div>
                     <label for="bodegaSelect">Bodega:</label>
-                    <select id="bodegaSelect" onchange="actualizarCalles()">
-                        <option value="">Seleccione Bodega...</option>
+                    <select id="bodegaSelect" onchange="alCambiarBodega()">
+                        <option value="">Bodega...</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="subBodegaSelect">Sub-Bodega:</label>
+                    <select id="subBodegaSelect" onchange="alCambiarSubBodega()">
+                        <option value="">Sub-Bodega...</option>
                     </select>
                 </div>
                 <div>
                     <label for="calleSelect">Calle:</label>
                     <select id="calleSelect" onchange="configurarCalle()">
-                        <option value="">Seleccione Calle...</option>
+                        <option value="">Calle...</option>
                     </select>
                 </div>
             </div>
 
             <div style="margin-bottom: 12px;">
-                <label for="metaLotes">Meta de Lotes (Editable):</label>
+                <label for="metaLotes">Meta de Lotes (Automática por Plano):</label>
                 <input type="number" id="metaLotes" value="300" min="1" oninput="actualizarProgresoVisual()" style="font-family: var(--font-mono); font-weight: 700;">
             </div>
 
@@ -642,7 +679,7 @@
         SAP MII // Terminal Cloud Operativo
     </footer>
 
-    <!-- Modal para Escáner de Cámara -->
+    <!-- Modales -->
     <div id="camaraModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content" style="max-width: 450px;">
             <div class="modal-header-tag">ÓPTICA // CÁMARA</div>
@@ -652,7 +689,6 @@
         </div>
     </div>
 
-    <!-- Modal para Alertas Generales -->
     <div id="alertModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content" style="max-width: 400px;">
             <div class="modal-header-tag" id="modalTag">SISTEMA // ALERTA</div>
@@ -663,7 +699,6 @@
         </div>
     </div>
 
-    <!-- Modal para Cierre de Calle con Comentario -->
     <div id="cierreModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content" style="max-width: 450px;">
             <div class="modal-header-tag">CONFIRMACIÓN // CIERRE</div>
@@ -676,7 +711,6 @@
         </div>
     </div>
 
-    <!-- Modal para Ver Detalle / Eliminar -->
     <div id="detalleModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header-tag">REGISTRO // AUDITORÍA</div>
@@ -704,15 +738,18 @@
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
     
     <script>
-        // --- 1. BASE DE DATOS LOCAL (IndexedDB vía Dexie.js) ---
+        // --- 1. BASE DE DATOS LOCAL PERSISTENTE (IndexedDB vía Dexie.js) ---
         const db = new Dexie("InventarioProcesoDB");
-        db.version(1).stores({
-            capturas: "++id, operario, bodega, calle, lote, sku, timestamp"
+        db.version(5).stores({
+            capturas: "++id, operario, bodega, sub_bodega, calle, lote, sku, timestamp",
+            maestros: "clave, datos, filename, timestamp",
+            stocks_bodega: "bodega, datos, timestamp"
         });
 
-        // --- 2. ESTADO GLOBAL DE APLICACIÓN ---
+        // --- 2. ESTADO GLOBAL ---
         let datosPlano = [];
-        let datosStock = [];
+        let datosStockActivo = [];
+        let bodegaStockCargada = "";
         let datosOperarios = [];
         let operarioActual = localStorage.getItem('inv_operario') || "";
         let capturasGlobales = [];
@@ -723,18 +760,23 @@
         let html5QrCode = null;
         let audioContextSingleton = null;
 
-        // --- 3. CICLO DE VIDA INICIAL & SINCRONIZACIÓN CLOUD ---
+        const parseConfig = { header: true, skipEmptyLines: 'greedy', dynamicTyping: false, encoding: "ISO-8859-1" };
+
+        // --- 3. CICLO DE VIDA & RESTAURACIÓN OFFLINE ---
         window.addEventListener('DOMContentLoaded', async () => {
             try {
                 capturasGlobales = await db.capturas.toArray();
             } catch (err) {
-                console.error("Error al cargar datos desde IndexedDB:", err);
+                console.error("Error al cargar capturas desde IndexedDB:", err);
             }
 
-            // Sincronizar automáticamente archivos maestros desde la carpeta data/ en GitHub
-            await sincronizarDatosCloud();
+            // 1. Restaurar datos desde memoria interna (offline-first)
+            await restaurarMaestrosLocales();
 
-            // Enrutamiento inicial inteligente
+            // 2. Intentar actualizar desde GitHub en segundo plano si hay red
+            sincronizarDatosCloud(false);
+
+            // 3. Enrutamiento inicial
             if (operarioActual) {
                 document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
                 const opSelect = document.getElementById('operarioSelect');
@@ -751,338 +793,305 @@
             await renderizarResumen();
         });
 
-        async function sincronizarDatosCloud() {
-            const parseConfigCloud = {
-                header: true,
-                skipEmptyLines: 'greedy',
-                dynamicTyping: false,
-                encoding: "ISO-8859-1"
-            };
-
-            // 1. Sincronizar Operarios
+        async function restaurarMaestrosLocales() {
             try {
-                const resOp = await fetch('./data/operarios.csv');
-                if (!resOp.ok) throw new Error("No se pudo descargar operarios.csv");
-                const textOp = await resOp.text();
-                Papa.parse(textOp, {
-                    ...parseConfigCloud,
-                    complete: function(results) {
-                        datosOperarios = results.data;
-                        cargarOperariosSelect();
-                        const statusOp = document.getElementById('statusOperarios');
-                        statusOp.style.display = 'block';
-                        statusOp.style.background = 'var(--color-success-bg)';
-                        statusOp.style.borderColor = 'var(--color-success-border)';
-                        statusOp.style.color = 'var(--color-success)';
-                        statusOp.innerText = "✓ OPERARIOS SINCRONIZADOS (CLOUD)";
-                    }
-                });
-            } catch (err) {
-                console.warn("Aviso cloud operarios:", err);
-                document.getElementById('statusOperarios').innerText = "⚠ Sin conexión o archivo operarios.csv ausente en /data/";
-                document.getElementById('statusOperarios').style.background = 'var(--color-danger-bg)';
-                document.getElementById('statusOperarios').style.color = 'var(--color-danger)';
-            }
-
-            // 2. Sincronizar Stock
-            try {
-                const resStock = await fetch('./data/stock_tmt1.csv');
-                if (!resStock.ok) throw new Error("No se pudo descargar stock_tmt1.csv");
-                const textStock = await resStock.text();
-                Papa.parse(textStock, {
-                    ...parseConfigCloud,
-                    complete: function(results) {
-                        datosStock = results.data;
-                        const statusStock = document.getElementById('statusStock');
-                        statusStock.style.display = 'block';
-                        statusStock.style.background = 'var(--color-success-bg)';
-                        statusStock.style.borderColor = 'var(--color-success-border)';
-                        statusStock.style.color = 'var(--color-success)';
-                        statusStock.innerText = "✓ STOCK SINCRONIZADO (CLOUD)";
-                    }
-                });
-            } catch (err) {
-                console.warn("Aviso cloud stock:", err);
-                document.getElementById('statusStock').innerText = "⚠ Sin conexión o stock_tmt1.csv ausente en /data/";
-                document.getElementById('statusStock').style.background = 'var(--color-danger-bg)';
-                document.getElementById('statusStock').style.color = 'var(--color-danger)';
-            }
-
-            // 3. Sincronizar Plano
-            try {
-                const resPlano = await fetch('./data/plano_tmt1.csv');
-                if (!resPlano.ok) throw new Error("No se pudo descargar plano_tmt1.csv");
-                const textPlano = await resPlano.text();
-                Papa.parse(textPlano, {
-                    ...parseConfigCloud,
-                    complete: function(results) {
-                        datosPlano = results.data;
-                        cargarBodegas();
-                        const statusPlano = document.getElementById('statusPlano');
-                        statusPlano.style.display = 'block';
-                        statusPlano.style.background = 'var(--color-success-bg)';
-                        statusPlano.style.borderColor = 'var(--color-success-border)';
-                        statusPlano.style.color = 'var(--color-success)';
-                        statusPlano.innerText = "✓ PLANO SINCRONIZADO (CLOUD)";
-                    }
-                });
-            } catch (err) {
-                console.warn("Aviso cloud plano:", err);
-                document.getElementById('statusPlano').innerText = "⚠ Sin conexión o plano_tmt1.csv ausente en /data/";
-                document.getElementById('statusPlano').style.background = 'var(--color-danger-bg)';
-                document.getElementById('statusPlano').style.color = 'var(--color-danger)';
-            }
-        }
-
-        // Registro de Service Worker para PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker activo. Alcance:', reg.scope))
-                    .catch(err => console.error('Error al registrar Service Worker:', err));
-            });
-        }
-
-        // --- 4. UTILIDADES: FOCO Y NORMALIZACIÓN CSV ---
-        function enfocarScanner() {
-            setTimeout(() => {
-                const vistaCaptura = document.getElementById('viewCaptura');
-                const input = document.getElementById('scannerInput');
-                if (vistaCaptura && vistaCaptura.classList.contains('active') && input && !input.disabled) {
-                    input.focus();
-                }
-            }, 100);
-        }
-
-        function obtenerValorCSV(fila, ...nombres) {
-            if (!fila) return '';
-            for (const nombre of nombres) {
-                if (fila[nombre] !== undefined && fila[nombre] !== null) {
-                    return String(fila[nombre]).trim();
-                }
-                const lower = nombre.toLowerCase();
-                for (const key in fila) {
-                    if (key.toLowerCase().trim() === lower && fila[key] !== undefined && fila[key] !== null) {
-                        return String(fila[key]).trim();
-                    }
-                }
-            }
-            return '';
-        }
-
-        // --- 5. SISTEMA DE AUDIO INDUSTRIAL ---
-        function emitirSonido(tipo) {
-            try {
-                const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
-                if (!AudioCtxClass) return;
-
-                if (!audioContextSingleton) {
-                    audioContextSingleton = new AudioCtxClass();
-                }
-                if (audioContextSingleton.state === 'suspended') {
-                    audioContextSingleton.resume();
+                const regOp = await db.maestros.get('operarios');
+                if (regOp && regOp.datos) {
+                    datosOperarios = regOp.datos;
+                    cargarOperariosSelect();
+                    actualizarStatusBadge('statusOperarios', `✓ OPERARIOS: ${regOp.datos.length} (OFFLINE)`, 'ok');
                 }
 
-                const ctx = audioContextSingleton;
-                const oscillator = ctx.createOscillator();
-                const gainNode = ctx.createGain();
-                
-                oscillator.type = 'square';
-                gainNode.gain.setValueAtTime(0.25, ctx.currentTime);
-
-                let duracion = 0.15;
-                if (tipo === 'success') {
-                    oscillator.frequency.setValueAtTime(1200, ctx.currentTime);
-                    duracion = 0.12;
-                } else if (tipo === 'error') {
-                    oscillator.frequency.setValueAtTime(300, ctx.currentTime);
-                    duracion = 0.45;
-                } else if (tipo === 'warning') {
-                    oscillator.frequency.setValueAtTime(650, ctx.currentTime);
-                    duracion = 0.25;
+                const regPlano = await db.maestros.get('plano');
+                if (regPlano && regPlano.datos) {
+                    datosPlano = regPlano.datos;
+                    poblarSelectorBodegas();
+                    actualizarStatusBadge('statusPlano', `✓ PLANO: ${regPlano.datos.length} REGISTROS (OFFLINE)`, 'ok');
                 }
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(ctx.destination);
-                
-                oscillator.start();
-                oscillator.stop(ctx.currentTime + duracion);
             } catch (e) {
-                console.warn("AudioContext no disponible:", e);
+                console.warn("Aviso al restaurar caché local:", e);
             }
         }
 
-        // --- 6. INTERFAZ Y RESUMEN DE AVANCE ---
-        function actualizarUIUltimaCalle() {
-            const ultima = localStorage.getItem('inv_ultima_calle');
-            const el = document.getElementById('infoUltimaCalle');
-            if (el) {
-                el.innerText = ultima ? `CALLE: ${ultima}` : "CALLE: Ninguna";
-            }
-        }
-
-        async function renderizarResumen() {
-            try {
-                const capturas = await db.capturas.toArray();
-                const resumen = {};
-                for (let i = 0; i < capturas.length; i++) {
-                    const c = capturas[i];
-                    if (!resumen[c.bodega]) resumen[c.bodega] = {};
-                    if (!resumen[c.bodega][c.calle]) resumen[c.bodega][c.calle] = 0;
-                    resumen[c.bodega][c.calle]++;
-                }
-
-                let html = '<div style="background: var(--bg-subtle); padding: 14px; border-radius: var(--radius-tech); border: 1px solid var(--color-border); font-size: 12px; font-family: var(--font-mono);">';
-                const bodegas = Object.keys(resumen);
-                if (bodegas.length === 0) {
-                    html += '<span style="color: var(--color-text-muted);">No hay datos capturados aún.</span>';
-                } else {
-                    for (const b of bodegas) {
-                        html += `<div style="margin-top: 6px; color: var(--color-brand); font-weight: 700;">[ BODEGA: ${b} ]</div>`;
-                        for (const c in resumen[b]) {
-                            html += `<div style="margin-left: 14px; margin-top: 4px; color: var(--color-text-main);">&bull; Calle ${c}: <strong>${resumen[b][c]}</strong> lotes</div>`;
-                        }
-                    }
-                }
-                html += '</div>';
-                
-                const contenedorResumen = document.getElementById('resumenInventario');
-                if (contenedorResumen) contenedorResumen.innerHTML = html;
-            } catch (err) {
-                console.error("Error al renderizar resumen:", err);
-            }
-        }
-
-        // --- 7. NAVEGACIÓN Y CONFIGURACIÓN ---
-        function cambiarVista(vista) {
-            document.getElementById('viewConfig').classList.remove('active');
-            document.getElementById('viewCaptura').classList.remove('active');
-            document.getElementById('viewAvance').classList.remove('active');
-            
-            document.getElementById('tabConfig').classList.remove('active');
-            document.getElementById('tabCaptura').classList.remove('active');
-            document.getElementById('tabAvance').classList.remove('active');
-
-            if (vista === 'config') {
-                document.getElementById('viewConfig').classList.add('active');
-                document.getElementById('tabConfig').classList.add('active');
-            } else if (vista === 'avance') {
-                document.getElementById('viewAvance').classList.add('active');
-                document.getElementById('tabAvance').classList.add('active');
-                renderizarResumen();
+        function actualizarStatusBadge(elementId, texto, tipo) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.style.display = 'block';
+            el.innerText = texto;
+            if (tipo === 'ok') {
+                el.style.background = 'var(--color-success-bg)';
+                el.style.borderColor = 'var(--color-success-border)';
+                el.style.color = 'var(--color-success)';
             } else {
-                if (!operarioActual) {
-                    alert("Debe seleccionar un operario en la pestaña de Configuración antes de continuar.");
-                    cambiarVista('config');
-                    return;
+                el.style.background = 'var(--color-danger-bg)';
+                el.style.borderColor = '#FFCDD2';
+                el.style.color = 'var(--color-danger)';
+            }
+        }
+
+        // --- 4. SINCRONIZACIÓN AUTOMÁTICA DESDE GITHUB (CLOUD) ---
+        async function sincronizarDatosCloud(mostrarAlerta = false) {
+            const timeParam = `?t=${Date.now()}`;
+            let cargados = 0;
+
+            // 1. Operarios
+            try {
+                const resOp = await fetch(`./data/operarios.csv${timeParam}`);
+                if (resOp.ok) {
+                    const text = await resOp.text();
+                    Papa.parse(text, {
+                        ...parseConfig,
+                        complete: async (results) => {
+                            datosOperarios = results.data;
+                            await db.maestros.put({ clave: 'operarios', datos: datosOperarios, timestamp: new Date().toISOString() });
+                            cargarOperariosSelect();
+                            actualizarStatusBadge('statusOperarios', `✓ OPERARIOS CLOUD (${datosOperarios.length})`, 'ok');
+                        }
+                    });
+                    cargados++;
                 }
-                document.getElementById('viewCaptura').classList.add('active');
-                document.getElementById('tabCaptura').classList.add('active');
-                enfocarScanner();
+            } catch (err) {}
+
+            // 2. Plano
+            try {
+                const resPlano = await fetch(`./data/plano.csv${timeParam}`).catch(() => fetch(`./data/plano_tmt1.csv${timeParam}`));
+                if (resPlano && resPlano.ok) {
+                    const text = await resPlano.text();
+                    Papa.parse(text, {
+                        ...parseConfig,
+                        complete: async (results) => {
+                            datosPlano = results.data;
+                            await db.maestros.put({ clave: 'plano', datos: datosPlano, timestamp: new Date().toISOString() });
+                            poblarSelectorBodegas();
+                            actualizarStatusBadge('statusPlano', `✓ PLANO CLOUD (${datosPlano.length} REGISTROS)`, 'ok');
+                        }
+                    });
+                    cargados++;
+                }
+            } catch (err) {}
+
+            if (mostrarAlerta) {
+                alert(cargados > 0 ? "Datos actualizados desde GitHub exitosamente." : "No se pudo conectar a GitHub. Usando datos guardados en el dispositivo.");
             }
         }
 
-        function cargarOperariosSelect() {
-            const opSelect = document.getElementById('operarioSelect');
-            opSelect.innerHTML = '<option value="">Seleccione Operario...</option>';
-            const operariosUnicos = new Set();
-            
-            datosOperarios.forEach(row => {
-                const op = obtenerValorCSV(row, 'operario', 'Operario', 'OPERARIO', 'nombre', 'Nombre', 'NOMBRE');
-                if (op) operariosUnicos.add(op);
+        // --- 5. CARGA MANUAL DE RESPALDO (OTRAS BODEGAS) ---
+        document.getElementById('fileStockManual').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, {
+                ...parseConfig,
+                complete: async (results) => {
+                    datosStockActivo = results.data;
+                    bodegaStockCargada = "MANUAL";
+                    const chip = document.getElementById('infoStockActivo');
+                    chip.className = "hud-chip stock-info";
+                    chip.innerText = `STOCK MANUAL: ${file.name} (✓ ${datosStockActivo.length})`;
+                    alert(`Stock manual cargado: ${results.data.length} ítems listos para auditar.`);
+                }
+            });
+        });
+
+        document.getElementById('filePlanoManual').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, {
+                ...parseConfig,
+                complete: async (results) => {
+                    datosPlano = results.data;
+                    await db.maestros.put({ clave: 'plano', datos: datosPlano, timestamp: new Date().toISOString() });
+                    poblarSelectorBodegas();
+                    actualizarStatusBadge('statusPlano', `✓ PLANO MANUAL (${datosPlano.length})`, 'ok');
+                    alert("Plano manual cargado con éxito.");
+                }
+            });
+        });
+
+        document.getElementById('fileOperariosManual').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, {
+                ...parseConfig,
+                complete: async (results) => {
+                    datosOperarios = results.data;
+                    await db.maestros.put({ clave: 'operarios', datos: datosOperarios, timestamp: new Date().toISOString() });
+                    cargarOperariosSelect();
+                    actualizarStatusBadge('statusOperarios', `✓ OPERARIOS MANUAL (${datosOperarios.length})`, 'ok');
+                    alert("Operarios manuales cargados.");
+                }
+            });
+        });
+
+        // --- 6. SELECTORES EN CASCADA (BODEGA -> SUB-BODEGA -> CALLE) ---
+        function poblarSelectorBodegas() {
+            const bSelect = document.getElementById('bodegaSelect');
+            const actual = bSelect.value;
+            bSelect.innerHTML = '<option value="">Bodega...</option>';
+            const bodegas = new Set();
+
+            datosPlano.forEach(r => {
+                const b = obtenerValorCSV(r, 'bodega', 'Bodega', 'BODEGA');
+                if (b) bodegas.add(b);
             });
 
-            operariosUnicos.forEach(op => {
-                const opt = document.createElement('option');
-                opt.value = op;
-                opt.textContent = op;
-                opSelect.appendChild(opt);
-            });
-
-            if (operarioActual) {
-                opSelect.value = operarioActual;
-            }
-        }
-
-        function bloquearOperarioConfig() {
-            const opSelect = document.getElementById('operarioSelect');
-            operarioActual = opSelect.value;
-            if (operarioActual) {
-                opSelect.disabled = true;
-                document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
-                localStorage.setItem('inv_operario', operarioActual);
-                alert(`Operario asignado: ${operarioActual}. Campo bloqueado para esta sesión.`);
-            }
-        }
-
-        function cargarBodegas() {
-            const bodegaSelect = document.getElementById('bodegaSelect');
-            bodegaSelect.innerHTML = '<option value="">Seleccione Bodega...</option>';
-            const bodegasUnicas = new Set();
-
-            datosPlano.forEach(row => {
-                const b = obtenerValorCSV(row, 'bodega', 'Bodega', 'BODEGA');
-                if (b) bodegasUnicas.add(b);
-            });
-
-            bodegasUnicas.forEach(b => {
+            bodegas.forEach(b => {
                 const opt = document.createElement('option');
                 opt.value = b;
                 opt.textContent = b;
-                bodegaSelect.appendChild(opt);
+                if (b === actual) opt.selected = true;
+                bSelect.appendChild(opt);
             });
         }
 
-        function actualizarCalles() {
+        async function alCambiarBodega() {
             const bodega = document.getElementById('bodegaSelect').value;
+            const subBodegaSelect = document.getElementById('subBodegaSelect');
             const calleSelect = document.getElementById('calleSelect');
-            calleSelect.innerHTML = '<option value="">Seleccione Calle...</option>';
-            if (!bodega) return;
+            
+            subBodegaSelect.innerHTML = '<option value="">Sub-Bodega...</option>';
+            calleSelect.innerHTML = '<option value="">Calle...</option>';
+            
+            if (!bodega) {
+                document.getElementById('infoStockActivo').className = 'hud-chip stock-loading';
+                document.getElementById('infoStockActivo').innerText = 'STOCK: Seleccione una Bodega...';
+                return;
+            }
 
-            const callesEnBodega = datosPlano.filter(row => obtenerValorCSV(row, 'bodega', 'Bodega', 'BODEGA') === bodega);
-            callesEnBodega.forEach(c => {
-                const nombreCalle = obtenerValorCSV(c, 'calle', 'Calle', 'CALLE');
-                if (nombreCalle) {
+            // Filtrar sub-bodegas
+            const filasBodega = datosPlano.filter(r => obtenerValorCSV(r, 'bodega', 'Bodega') === bodega);
+            const subBodegas = new Set();
+            filasBodega.forEach(r => {
+                const sb = obtenerValorCSV(r, 'sub_bodega', 'subbodega', 'Sub_Bodega', 'zona');
+                if (sb) subBodegas.add(sb);
+            });
+
+            if (subBodegas.size > 0) {
+                subBodegas.forEach(sb => {
                     const opt = document.createElement('option');
-                    opt.value = nombreCalle;
-                    opt.textContent = nombreCalle;
-                    calleSelect.appendChild(opt);
-                }
+                    opt.value = sb;
+                    opt.textContent = sb;
+                    subBodegaSelect.appendChild(opt);
+                });
+            } else {
+                poblarCalles(filasBodega);
+            }
+
+            // CARGAR STOCK DE ESTA BODEGA EN SEGUNDO PLANO
+            cargarStockBodegaEnSegundoPlano(bodega);
+        }
+
+        function alCambiarSubBodega() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const subBodega = document.getElementById('subBodegaSelect').value;
+            const filasFiltradas = datosPlano.filter(r => 
+                obtenerValorCSV(r, 'bodega', 'Bodega') === bodega &&
+                (!subBodega || obtenerValorCSV(r, 'sub_bodega', 'subbodega', 'Sub_Bodega') === subBodega)
+            );
+            poblarCalles(filasFiltradas);
+        }
+
+        function poblarCalles(filas) {
+            const calleSelect = document.getElementById('calleSelect');
+            calleSelect.innerHTML = '<option value="">Calle...</option>';
+            const calles = new Set();
+
+            filas.forEach(r => {
+                const c = obtenerValorCSV(r, 'calle', 'Calle', 'CALLE');
+                if (c) calles.add(c);
+            });
+
+            calles.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                calleSelect.appendChild(opt);
             });
             calleCerradaGuardada = false;
             actualizarBotonesAccion();
         }
 
+        // --- 7. CARGA DINÁMICA DE STOCK POR BODEGA (SEGUNDO PLANO) ---
+        async function cargarStockBodegaEnSegundoPlano(bodega) {
+            const chip = document.getElementById('infoStockActivo');
+            const bodegaKey = bodega.trim().toUpperCase();
+            const bodegaFile = bodega.trim().toLowerCase();
+
+            if (bodegaStockCargada === bodegaKey && datosStockActivo.length > 0) return;
+
+            chip.className = "hud-chip stock-loading";
+            chip.innerText = `STOCK: Cargando ${bodegaKey} en 2° plano...`;
+
+            // 1. Buscar si ya estaba en IndexedDB local
+            try {
+                const cache = await db.stocks_bodega.get(bodegaKey);
+                if (cache && cache.datos && cache.datos.length > 0) {
+                    datosStockActivo = cache.datos;
+                    bodegaStockCargada = bodegaKey;
+                    chip.className = "hud-chip stock-info";
+                    chip.innerText = `STOCK: ${bodegaKey} (✓ ${datosStockActivo.length} ítems - Offline)`;
+                }
+            } catch (e) {}
+
+            // 2. Buscar en GitHub en la carpeta data/
+            const rutas = [
+                `./data/stock_${bodegaFile}.csv?t=${Date.now()}`,
+                `./data/stock_${bodegaFile}.CSV?t=${Date.now()}`
+            ];
+
+            for (const r of rutas) {
+                try {
+                    const res = await fetch(r);
+                    if (res.ok) {
+                        const text = await res.text();
+                        Papa.parse(text, {
+                            ...parseConfig,
+                            complete: async (results) => {
+                                datosStockActivo = results.data;
+                                bodegaStockCargada = bodegaKey;
+                                await db.stocks_bodega.put({ bodega: bodegaKey, datos: results.data, timestamp: new Date().toISOString() });
+                                chip.className = "hud-chip stock-info";
+                                chip.innerText = `STOCK: ${bodegaKey} (✓ ${datosStockActivo.length} ítems)`;
+                            }
+                        });
+                        return;
+                    }
+                } catch (e) {}
+            }
+
+            if (datosStockActivo.length === 0 || bodegaStockCargada !== bodegaKey) {
+                chip.className = "hud-chip stock-loading";
+                chip.innerText = `STOCK: Sin stock para ${bodegaKey} (Use Carga Manual)`;
+            }
+        }
+
+        // --- 8. CONFIGURACIÓN DE CALLE Y METAS ---
         async function configurarCalle() {
             try {
                 const bodega = document.getElementById('bodegaSelect').value;
-                const calleSelect = document.getElementById('calleSelect').value;
+                const subBodega = document.getElementById('subBodegaSelect').value;
+                const calle = document.getElementById('calleSelect').value;
                 
-                if (bodega && calleSelect) {
+                if (bodega && calle) {
                     capturasCalleActual = await db.capturas
                         .where('bodega')
                         .equals(bodega)
-                        .filter(c => c.calle === calleSelect)
+                        .filter(c => c.calle === calle)
                         .toArray();
                 } else {
                     capturasCalleActual = [];
                 }
                 
-                if (capturasCalleActual.length > 0) {
-                    contadorActual = capturasCalleActual.length;
-                    calleCerradaGuardada = true;
-                } else {
-                    contadorActual = 0;
-                    calleCerradaGuardada = false;
-                }
+                contadorActual = capturasCalleActual.length;
+                calleCerradaGuardada = contadorActual > 0;
 
-                if (bodega && calleSelect) {
-                    const registroPlano = datosPlano.find(row => 
-                        obtenerValorCSV(row, 'bodega', 'Bodega', 'BODEGA') === bodega && 
-                        obtenerValorCSV(row, 'calle', 'Calle', 'CALLE') === calleSelect
+                if (bodega && calle) {
+                    const regPlano = datosPlano.find(row => 
+                        obtenerValorCSV(row, 'bodega', 'Bodega') === bodega && 
+                        (!subBodega || obtenerValorCSV(row, 'sub_bodega', 'subbodega', 'Sub_Bodega') === subBodega) &&
+                        obtenerValorCSV(row, 'calle', 'Calle') === calle
                     );
-                    if (registroPlano) {
-                        const cant = obtenerValorCSV(registroPlano, 'cantidad_lotes', 'Cantidad_Lotes', 'CANTIDAD_LOTES');
+                    if (regPlano) {
+                        const cant = obtenerValorCSV(regPlano, 'cantidad_lotes', 'Cantidad_Lotes', 'meta');
                         document.getElementById('metaLotes').value = cant ? parseInt(cant, 10) : 300;
                     }
                 }
@@ -1131,7 +1140,7 @@
             }
         }
 
-        // --- 8. MOTOR DE ESCANEO Y CAPTURA ---
+        // --- 9. MOTOR DE ESCANEO Y CAPTURA ---
         document.getElementById('scannerInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1147,6 +1156,7 @@
                 return;
             }
             const bodega = document.getElementById('bodegaSelect').value;
+            const subBodega = document.getElementById('subBodegaSelect').value;
             const calle = document.getElementById('calleSelect').value;
             const lote = String(valorLote || '').trim();
 
@@ -1162,12 +1172,12 @@
                 return;
             }
 
-            procesarLoteEscaneado(bodega, calle, lote);
+            procesarLoteEscaneado(bodega, subBodega, calle, lote);
         }
 
-        async function procesarLoteEscaneado(bodega, calle, lote) {
+        async function procesarLoteEscaneado(bodega, subBodega, calle, lote) {
             try {
-                // 1. Verificación en la misma calle (memoria)
+                // 1. Verificación misma calle
                 const yaCapturadoCalle = capturasCalleActual.find(c => String(c.lote).trim() === lote);
                 if (yaCapturadoCalle) {
                     emitirSonido('error');
@@ -1177,7 +1187,7 @@
                     return;
                 }
 
-                // 2. Verificación en otras calles (IndexedDB)
+                // 2. Verificación en otras calles
                 const yaCapturadoOtraCalle = await db.capturas
                     .where('lote')
                     .equals(lote)
@@ -1192,25 +1202,25 @@
                     return;
                 }
 
-                verificarStockYLuegoRegistrar(bodega, calle, lote, "NORMAL");
+                verificarStockYLuegoRegistrar(bodega, subBodega, calle, lote, "NORMAL");
             } catch (err) {
                 console.error("Error en validación de lote:", err);
             }
         }
 
-        function verificarStockYLuegoRegistrar(bodega, calle, lote, estadoInicial) {
+        function verificarStockYLuegoRegistrar(bodega, subBodega, calle, lote, estadoInicial) {
             let infoStock = null;
-            if (datosStock.length > 0) {
-                infoStock = datosStock.find(row => obtenerValorCSV(row, 'lote', 'Lote', 'LOTE') === lote);
+            if (datosStockActivo.length > 0) {
+                infoStock = datosStockActivo.find(row => obtenerValorCSV(row, 'lote', 'Lote', 'LOTE') === lote);
             }
 
-            if (!infoStock && datosStock.length > 0) {
+            if (!infoStock && datosStockActivo.length > 0) {
                 emitirSonido('warning');
                 setTimeout(() => {
-                    mostrarModal("Sobrante / No Encontrado", `El lote ${lote} no está en stock. ¿Agregar de todas formas?`, function(confirmado) {
+                    mostrarModal("Sobrante / No Encontrado", `El lote ${lote} no está en el stock activo. ¿Agregar de todas formas?`, function(confirmado) {
                         if (confirmado) {
                             emitirSonido('success');
-                            registrarCaptura(bodega, calle, lote, estadoInicial === "NORMAL" ? "MANUAL_SOBRANTE" : estadoInicial, {});
+                            registrarCaptura(bodega, subBodega, calle, lote, estadoInicial === "NORMAL" ? "MANUAL_SOBRANTE" : estadoInicial, {});
                         } else {
                             enfocarScanner();
                         }
@@ -1226,10 +1236,10 @@
                 volumen: obtenerValorCSV(infoStock, 'volumen', 'Volumen', 'VOLUMEN') 
             } : {};
 
-            registrarCaptura(bodega, calle, lote, estadoInicial, datosExtra);
+            registrarCaptura(bodega, subBodega, calle, lote, estadoInicial, datosExtra);
         }
 
-        async function registrarCaptura(bodega, calle, lote, estado, extra = {}) {
+        async function registrarCaptura(bodega, subBodega, calle, lote, estado, extra = {}) {
             try {
                 const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
                 if (contadorActual >= meta) {
@@ -1239,22 +1249,11 @@
 
                 emitirSonido('success');
                 contadorActual++;
-                
-                if (!extra.sku && datosStock.length > 0) {
-                    const infoStock = datosStock.find(row => obtenerValorCSV(row, 'lote', 'Lote', 'LOTE') === lote);
-                    if (infoStock) {
-                        extra = {
-                            sku: obtenerValorCSV(infoStock, 'sku', 'SKU'),
-                            descripcion: obtenerValorCSV(infoStock, 'descripción', 'descripcion', 'Descripción', 'Descripcion'),
-                            piezas: obtenerValorCSV(infoStock, 'piezas', 'Piezas'),
-                            volumen: obtenerValorCSV(infoStock, 'volumen', 'Volumen')
-                        };
-                    }
-                }
 
                 const nuevaCaptura = { 
                     operario: operarioActual, 
                     bodega: String(bodega), 
+                    sub_bodega: String(subBodega || ''), 
                     calle: String(calle), 
                     lote: String(lote), 
                     sku: extra.sku || '', 
@@ -1280,7 +1279,7 @@
             }
         }
 
-        // --- 9. ESCÁNER POR CÁMARA ---
+        // --- 10. ESCÁNER POR CÁMARA ---
         function abrirEscanearCamara() {
             const bodega = document.getElementById('bodegaSelect').value;
             const calle = document.getElementById('calleSelect').value;
@@ -1290,25 +1289,18 @@
             }
 
             document.getElementById('camaraModal').style.display = 'block';
-            
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
 
             html5QrCode.start(
                 { facingMode: "environment" },
-                {
-                    fps: 10,
-                    qrbox: { width: 250, height: 150 }
-                },
+                { fps: 10, qrbox: { width: 250, height: 150 } },
                 (decodedText) => {
                     cerrarEscanearCamara();
                     procesarEntradaLote(decodedText);
                 },
                 () => {}
             ).catch((err) => {
-                console.error("Error al inicializar cámara:", err);
-                alert("No se pudo iniciar la cámara. Verifique permisos de navegador.");
+                alert("No se pudo iniciar la cámara. Verifique permisos.");
                 document.getElementById('camaraModal').style.display = 'none';
                 enfocarScanner();
             });
@@ -1317,12 +1309,12 @@
         function cerrarEscanearCamara() {
             document.getElementById('camaraModal').style.display = 'none';
             if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().catch(err => console.warn("Aviso al detener cámara:", err));
+                html5QrCode.stop().catch(err => console.warn(err));
             }
             enfocarScanner();
         }
 
-        // --- 10. MODALES Y DIÁLOGOS ---
+        // --- 11. MODALES Y UTILIDADES ---
         function mostrarModal(titulo, mensaje, callback, mostrarCancelar = true) {
             document.getElementById('modalTitle').innerText = titulo;
             document.getElementById('modalMessage').innerText = mensaje;
@@ -1341,7 +1333,6 @@
             enfocarScanner();
         }
 
-        // Modal Detalle / Eliminar
         function abrirModalDetalle() {
             if (!document.getElementById('calleSelect').value) { 
                 alert('Seleccione una calle primero.'); 
@@ -1398,7 +1389,6 @@
                 await renderizarResumen();
             } catch (err) {
                 console.error("Error al eliminar captura:", err);
-                alert("Error al eliminar lote.");
             }
         }
 
@@ -1407,16 +1397,12 @@
             enfocarScanner(); 
         }
 
-        // Modal Cierre de Calle
         function abrirModalCierreCalle() {
             const bodega = document.getElementById('bodegaSelect').value;
             const calle = document.getElementById('calleSelect').value;
             const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
 
-            if (!bodega || !calle) {
-                alert('Seleccione Bodega y Calle primero.');
-                return;
-            }
+            if (!bodega || !calle) { alert('Seleccione Bodega y Calle.'); return; }
             if (contadorActual !== meta) {
                 alert(`No coincide la cantidad de capturas (${contadorActual}) con la meta (${meta}).`);
                 return;
@@ -1463,18 +1449,152 @@
                 alert(`Calle ${calle} cerrada correctamente.`);
             } catch (err) {
                 console.error("Error al cerrar calle:", err);
-                alert("Ocurrió un error al guardar el cierre de la calle.");
             }
         }
 
         function reabrirCalle() {
             calleCerradaGuardada = false;
             actualizarBotonesAccion();
-            alert('Calle reabierta para edición.');
             enfocarScanner();
         }
 
-        // --- 11. EXPORTACIONES CSV CON BOM PARA EXCEL ---
+        function enfocarScanner() {
+            setTimeout(() => {
+                const vistaCaptura = document.getElementById('viewCaptura');
+                const input = document.getElementById('scannerInput');
+                if (vistaCaptura && vistaCaptura.classList.contains('active') && input && !input.disabled) {
+                    input.focus();
+                }
+            }, 100);
+        }
+
+        function obtenerValorCSV(fila, ...nombres) {
+            if (!fila) return '';
+            for (const nombre of nombres) {
+                if (fila[nombre] !== undefined && fila[nombre] !== null) return String(fila[nombre]).trim();
+                const lower = nombre.toLowerCase();
+                for (const key in fila) {
+                    if (key.toLowerCase().trim() === lower && fila[key] !== undefined && fila[key] !== null) {
+                        return String(fila[key]).trim();
+                    }
+                }
+            }
+            return '';
+        }
+
+        function emitirSonido(tipo) {
+            try {
+                const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+                if (!audioContextSingleton) audioContextSingleton = new AudioCtxClass();
+                if (audioContextSingleton.state === 'suspended') audioContextSingleton.resume();
+
+                const ctx = audioContextSingleton;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'square';
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+
+                let dur = 0.12;
+                if (tipo === 'success') osc.frequency.setValueAtTime(1200, ctx.currentTime);
+                else if (tipo === 'error') { osc.frequency.setValueAtTime(300, ctx.currentTime); dur = 0.45; }
+                else if (tipo === 'warning') { osc.frequency.setValueAtTime(650, ctx.currentTime); dur = 0.25; }
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + dur);
+            } catch (e) {}
+        }
+
+        function actualizarUIUltimaCalle() {
+            const u = localStorage.getItem('inv_ultima_calle');
+            const el = document.getElementById('infoUltimaCalle');
+            if (el) el.innerText = u ? `CALLE: ${u}` : "CALLE: Ninguna";
+        }
+
+        async function renderizarResumen() {
+            try {
+                const capturas = await db.capturas.toArray();
+                const resumen = {};
+                for (let i = 0; i < capturas.length; i++) {
+                    const c = capturas[i];
+                    if (!resumen[c.bodega]) resumen[c.bodega] = {};
+                    if (!resumen[c.bodega][c.calle]) resumen[c.bodega][c.calle] = 0;
+                    resumen[c.bodega][c.calle]++;
+                }
+
+                let html = '<div style="background: var(--bg-subtle); padding: 14px; border-radius: var(--radius-tech); border: 1px solid var(--color-border); font-size: 12px; font-family: var(--font-mono);">';
+                const bodegas = Object.keys(resumen);
+                if (bodegas.length === 0) {
+                    html += '<span style="color: var(--color-text-muted);">No hay datos capturados aún.</span>';
+                } else {
+                    for (const b of bodegas) {
+                        html += `<div style="margin-top: 6px; color: var(--color-brand); font-weight: 700;">[ BODEGA: ${b} ]</div>`;
+                        for (const c in resumen[b]) {
+                            html += `<div style="margin-left: 14px; margin-top: 4px; color: var(--color-text-main);">&bull; Calle ${c}: <strong>${resumen[b][c]}</strong> lotes</div>`;
+                        }
+                    }
+                }
+                html += '</div>';
+                
+                const contenedorResumen = document.getElementById('resumenInventario');
+                if (contenedorResumen) contenedorResumen.innerHTML = html;
+            } catch (err) {}
+        }
+
+        function cambiarVista(vista) {
+            ['Config', 'Captura', 'Avance'].forEach(v => {
+                document.getElementById('view' + v).classList.remove('active');
+                document.getElementById('tab' + v).classList.remove('active');
+            });
+            document.getElementById('view' + vista.charAt(0).toUpperCase() + vista.slice(1)).classList.add('active');
+            document.getElementById('tab' + vista.charAt(0).toUpperCase() + vista.slice(1)).classList.add('active');
+
+            if (vista === 'captura') {
+                if (!operarioActual) {
+                    alert("Seleccione un operario en Configuración.");
+                    cambiarVista('config');
+                    return;
+                }
+                enfocarScanner();
+            } else if (vista === 'avance') {
+                renderizarResumen();
+            }
+        }
+
+        function cargarOperariosSelect() {
+            const opSelect = document.getElementById('operarioSelect');
+            opSelect.innerHTML = '<option value="">Seleccione Operario...</option>';
+            const operariosUnicos = new Set();
+            
+            datosOperarios.forEach(row => {
+                const op = obtenerValorCSV(row, 'operario', 'Operario', 'OPERARIO', 'nombre', 'Nombre');
+                if (op) operariosUnicos.add(op);
+            });
+
+            operariosUnicos.forEach(op => {
+                const opt = document.createElement('option');
+                opt.value = op;
+                opt.textContent = op;
+                if (op === operarioActual) opt.selected = true;
+                opSelect.appendChild(opt);
+            });
+
+            if (operarioActual) opSelect.disabled = true;
+        }
+
+        function bloquearOperarioConfig() {
+            const opSelect = document.getElementById('operarioSelect');
+            operarioActual = opSelect.value;
+            if (operarioActual) {
+                opSelect.disabled = true;
+                document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
+                localStorage.setItem('inv_operario', operarioActual);
+                alert(`Operario asignado: ${operarioActual}. Campo bloqueado.`);
+            }
+        }
+
+        // --- 12. DESCARGA EXCEL / CSV ---
         function descargarArchivoCSV(contenidoCSV, nombreArchivo) {
             const blob = new Blob(["\uFEFF" + contenidoCSV], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
@@ -1484,144 +1604,72 @@
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
 
         async function descargarCSVGlobal() {
-            try {
-                const todasLasCapturas = await db.capturas.toArray();
-                if (todasLasCapturas.length === 0) { 
-                    alert('Sin capturas guardadas.'); 
-                    return; 
-                }
-                const csv = Papa.unparse(todasLasCapturas);
-                descargarArchivoCSV(csv, "captura_tmt1_final.csv");
-            } catch (err) {
-                console.error("Error al exportar CSV global:", err);
-                alert("Error al generar el consolidado final.");
-            }
+            const todas = await db.capturas.toArray();
+            if (todas.length === 0) { alert('Sin capturas guardadas.'); return; }
+            descargarArchivoCSV(Papa.unparse(todas), "captura_sap_final.csv");
         }
 
         async function descargarReporteDiferencias() {
-            try {
-                if (datosStock.length === 0) {
-                    alert('El archivo de stock lógico no está disponible en la nube o no se ha cargado.');
-                    return;
-                }
-                const todasLasCapturas = await db.capturas.toArray();
-                if (todasLasCapturas.length === 0) {
-                    alert('No hay capturas registradas para comparar.');
-                    return;
-                }
-
-                const stockMap = new Map();
-                datosStock.forEach(row => {
-                    const loteStock = obtenerValorCSV(row, 'lote', 'Lote', 'LOTE');
-                    if (loteStock) stockMap.set(loteStock, row);
-                });
-
-                const lotesCapturadosMap = new Map();
-                todasLasCapturas.forEach(c => {
-                    const loteStr = String(c.lote).trim();
-                    lotesCapturadosMap.set(loteStr, c);
-                });
-
-                const reporteDiferencias = [];
-
-                todasLasCapturas.forEach(c => {
-                    const loteStr = String(c.lote).trim();
-                    if (stockMap.has(loteStr)) {
-                        const stockInfo = stockMap.get(loteStr);
-                        reporteDiferencias.push({
-                            tipo_diferencia: "PAREADO",
-                            lote: loteStr,
-                            bodega: c.bodega,
-                            calle: c.calle,
-                            sku: c.sku || obtenerValorCSV(stockInfo, 'sku', 'SKU'),
-                            descripcion: c.descripcion || obtenerValorCSV(stockInfo, 'descripción', 'descripcion', 'Descripción'),
-                            piezas: c.piezas !== '' ? c.piezas : obtenerValorCSV(stockInfo, 'piezas', 'Piezas'),
-                            volumen: c.volumen !== '' ? c.volumen : obtenerValorCSV(stockInfo, 'volumen', 'Volumen'),
-                            operario: c.operario
-                        });
-                    } else {
-                        reporteDiferencias.push({
-                            tipo_diferencia: "SOBRANTE",
-                            lote: loteStr,
-                            bodega: c.bodega,
-                            calle: c.calle,
-                            sku: c.sku,
-                            descripcion: c.descripcion,
-                            piezas: c.piezas,
-                            volumen: c.volumen,
-                            operario: c.operario
-                        });
-                    }
-                });
-
-                stockMap.forEach((stockInfo, loteStock) => {
-                    if (!lotesCapturadosMap.has(loteStock)) {
-                        reporteDiferencias.push({
-                            tipo_diferencia: "FALTANTE",
-                            lote: loteStock,
-                            bodega: obtenerValorCSV(stockInfo, 'bodega', 'Bodega', 'BODEGA'),
-                            calle: obtenerValorCSV(stockInfo, 'calle', 'Calle', 'CALLE'),
-                            sku: obtenerValorCSV(stockInfo, 'sku', 'SKU'),
-                            descripcion: obtenerValorCSV(stockInfo, 'descripción', 'descripcion', 'Descripción'),
-                            piezas: obtenerValorCSV(stockInfo, 'piezas', 'Piezas'),
-                            volumen: obtenerValorCSV(stockInfo, 'volumen', 'Volumen'),
-                            operario: "-"
-                        });
-                    }
-                });
-
-                if (reporteDiferencias.length === 0) {
-                    alert('¡Inventario perfecto! No se encontraron diferencias.');
-                    return;
-                }
-
-                const csv = Papa.unparse(reporteDiferencias);
-                descargarArchivoCSV(csv, "reporte_diferencias_inventario.csv");
-            } catch (err) {
-                console.error("Error al exportar reporte de diferencias:", err);
-                alert("Error al generar el reporte de diferencias.");
+            if (datosStockActivo.length === 0) {
+                alert('No hay archivo de stock cargado para comparar en esta bodega.');
+                return;
             }
+            const capturasBodega = await db.capturas.where('bodega').equals(bodegaStockCargada).toArray();
+            if (capturasBodega.length === 0) {
+                alert('No hay capturas registradas para esta bodega.');
+                return;
+            }
+
+            const stockMap = new Map();
+            datosStockActivo.forEach(row => {
+                const l = obtenerValorCSV(row, 'lote', 'Lote');
+                if (l) stockMap.set(l, row);
+            });
+
+            const capturasMap = new Map();
+            capturasBodega.forEach(c => capturasMap.set(String(c.lote).trim(), c));
+
+            const diferencias = [];
+
+            capturasBodega.forEach(c => {
+                const l = String(c.lote).trim();
+                if (stockMap.has(l)) {
+                    const st = stockMap.get(l);
+                    diferencias.push({
+                        tipo: "PAREADO", lote: l, bodega: c.bodega, sub_bodega: c.sub_bodega, calle: c.calle,
+                        sku: c.sku || obtenerValorCSV(st, 'sku', 'SKU'), operario: c.operario
+                    });
+                } else {
+                    diferencias.push({
+                        tipo: "SOBRANTE", lote: l, bodega: c.bodega, sub_bodega: c.sub_bodega, calle: c.calle,
+                        sku: c.sku, operario: c.operario
+                    });
+                }
+            });
+
+            stockMap.forEach((st, l) => {
+                if (!capturasMap.has(l)) {
+                    diferencias.push({
+                        tipo: "FALTANTE", lote: l, bodega: bodegaStockCargada, sub_bodega: "-", calle: "-",
+                        sku: obtenerValorCSV(st, 'sku', 'SKU'), operario: "-"
+                    });
+                }
+            });
+
+            descargarArchivoCSV(Papa.unparse(diferencias), `reporte_diferencias_${bodegaStockCargada.toLowerCase()}.csv`);
         }
 
-        // --- 12. REINICIO DE SISTEMA ---
+        // --- 13. REINICIO DE SISTEMA ---
         function reiniciarSistema() {
-            mostrarModal("¿Reiniciar Sistema?", "Se borrarán todas las capturas de la base de datos local y se limpiarán los datos para iniciar un nuevo inventario.", async function(confirmado) {
-                if (confirmado) {
-                    try {
-                        await db.capturas.clear();
-                        localStorage.removeItem('inv_operario');
-                        localStorage.removeItem('inv_ultima_calle');
-
-                        capturasGlobales = [];
-                        capturasCalleActual = [];
-                        contadorActual = 0;
-                        calleCerradaGuardada = false;
-
-                        operarioActual = "";
-                        const opSelect = document.getElementById('operarioSelect');
-                        if (opSelect) {
-                            opSelect.disabled = false;
-                            opSelect.value = "";
-                        }
-                        document.getElementById('infoOperarioActivo').innerText = "OP: No seleccionado";
-
-                        document.getElementById('bodegaSelect').innerHTML = '<option value="">Seleccione Bodega...</option>';
-                        document.getElementById('calleSelect').innerHTML = '<option value="">Seleccione Calle...</option>';
-                        document.getElementById('metaLotes').value = '300';
-                        
-                        actualizarProgresoVisual();
-                        actualizarUIUltimaCalle();
-                        await renderizarResumen();
-                        alert("Sistema reiniciado con éxito.");
-                        cambiarVista('config');
-                    } catch (err) {
-                        console.error("Error al reiniciar sistema:", err);
-                        alert("Error al limpiar la base de datos.");
-                    }
+            mostrarModal("¿Reiniciar Sistema?", "Se borrarán las capturas y los datos locales de este dispositivo.", async function(conf) {
+                if (conf) {
+                    await db.capturas.clear();
+                    localStorage.removeItem('inv_operario');
+                    localStorage.removeItem('inv_ultima_calle');
+                    location.reload();
                 } else {
                     enfocarScanner();
                 }
