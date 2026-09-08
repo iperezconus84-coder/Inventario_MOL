@@ -19,20 +19,20 @@
             --bg-subtle: #EBF0F4;
             --bg-element: #DCE3EA;
             
-            --color-arauco-dark: #1E293B;    /* Grafito Oscuro Arauco */
+            --color-arauco-dark: #1E293B;
             --color-brand: #005F9E;          /* Azul Corporativo Arauco */
             --color-brand-dark: #0F172A;     /* Navy Profundo Header */
-            --color-brand-light: #E0F0FA;    /* Azul Suave */
+            --color-brand-light: #E0F0FA;
             
-            --color-text-main: #0F172A;      /* Texto Primario */
-            --color-text-secondary: #475569; /* Gris Técnico */
+            --color-text-main: #0F172A;
+            --color-text-secondary: #475569;
             --color-text-muted: #8899A6;    
             
-            --color-border: #CBD5E1;         /* Acero Mate */
+            --color-border: #CBD5E1;
             --color-border-subtle: #E2E8F0;
             --color-border-focus: #005F9E;
             
-            --color-success: #059669;        /* Verde Forestal */
+            --color-success: #059669;
             --color-success-bg: #ECFDF5;
             --color-success-border: #A7F3D0;
             
@@ -96,7 +96,6 @@
             gap: 10px;
         }
 
-        /* Logotipo textual Arauco según imagen */
         .arauco-wordmark {
             font-family: var(--font-logo);
             font-size: 21px;
@@ -135,7 +134,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* SELECTOR DE PESTAÑAS */
+        /* NAVEGACIÓN */
         .nav-tabs {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -180,15 +179,9 @@
             font-weight: 700;
         }
 
-        .view-section {
-            display: none !important;
-        }
+        .view-section { display: none !important; }
+        .view-section.active { display: block !important; }
 
-        .view-section.active {
-            display: block !important;
-        }
-
-        /* FORMULARIOS Y LABELS */
         label {
             font-family: var(--font-sans);
             font-weight: 600;
@@ -233,7 +226,7 @@
             cursor: not-allowed;
         }
 
-        /* HUD & CHIPS TELEMÉTRICOS */
+        /* HUD TELEMÉTRICO */
         .hud-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -258,33 +251,12 @@
             white-space: nowrap;
         }
 
-        .hud-chip.primary {
-            background: var(--color-brand-light);
-            border-color: #BAE6FD;
-            color: var(--color-brand);
-        }
+        .hud-chip.primary { background: var(--color-brand-light); border-color: #BAE6FD; color: var(--color-brand); }
+        .hud-chip.info { background: #EBF5FB; border-color: #B9E2FE; color: #0369A1; }
+        .hud-chip.stock-info { grid-column: span 2; background: #ECFDF5; border-color: #A7F3D0; color: #059669; }
+        .hud-chip.stock-loading { grid-column: span 2; background: #FFFBEB; border-color: #FDE68A; color: #B45309; }
 
-        .hud-chip.info {
-            background: #EBF5FB;
-            border-color: #B9E2FE;
-            color: #0369A1;
-        }
-
-        .hud-chip.stock-info {
-            grid-column: span 2;
-            background: #ECFDF5;
-            border-color: #A7F3D0;
-            color: #059669;
-        }
-
-        .hud-chip.stock-loading {
-            grid-column: span 2;
-            background: #FFFBEB;
-            border-color: #FDE68A;
-            color: #B45309;
-        }
-
-        /* DISPLAY INDUSTRIAL DE PROGRESO */
+        /* PROGRESO INDUSTRIAL */
         .progress-box {
             background: var(--bg-subtle);
             border: 1px solid var(--color-border);
@@ -294,28 +266,9 @@
             position: relative;
         }
 
-        .progress-meta-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-
-        .progress-label-tag {
-            font-family: var(--font-mono);
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--color-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .progress-percent-tag {
-            font-family: var(--font-mono);
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--color-brand);
-        }
+        .progress-meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .progress-label-tag { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; }
+        .progress-percent-tag { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--color-brand); }
 
         .progress {
             font-family: var(--font-mono);
@@ -327,27 +280,10 @@
             margin: 4px 0 10px 0;
         }
 
-        .progress-track {
-            width: 100%;
-            height: 6px;
-            background: var(--bg-element);
-            border-radius: 3px;
-            overflow: hidden;
-        }
+        .progress-track { width: 100%; height: 6px; background: var(--bg-element); border-radius: 3px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; width: 0%; background: var(--color-brand); transition: width 0.2s ease-out; }
 
-        .progress-bar-fill {
-            height: 100%;
-            width: 0%;
-            background: var(--color-brand);
-            transition: width 0.2s ease-out;
-        }
-
-        /* CAMPO DE ESCÁNER */
-        .scanner-container {
-            position: relative;
-            margin-bottom: 16px;
-        }
-
+        .scanner-container { position: relative; margin-bottom: 16px; }
         #scannerInput {
             font-family: var(--font-mono);
             font-size: 15px;
@@ -376,10 +312,10 @@
             pointer-events: none;
         }
 
-        /* BOTONES DE ACCIÓN */
+        /* BOTONES */
         .btn-action {
             width: 100%;
-            padding: 11px 16px;
+            padding: 12px 16px;
             background-color: var(--color-brand-dark);
             color: #FFFFFF;
             border: 1px solid var(--color-brand-dark);
@@ -401,11 +337,7 @@
         .btn-action:hover { background-color: var(--color-brand); }
         .btn-action:active { transform: scale(0.99); }
 
-        .btn-action.primary-action {
-            background-color: var(--color-success);
-            border-color: #047857;
-            color: #FFFFFF;
-        }
+        .btn-action.primary-action { background-color: var(--color-success); border-color: #047857; }
         .btn-action.primary-action:hover { background-color: #047857; }
 
         .btn-action.secondary {
@@ -414,6 +346,13 @@
             border-color: var(--color-border);
         }
         .btn-action.secondary:hover { background-color: var(--bg-subtle); }
+
+        .btn-action.share-btn {
+            background-color: #0369A1;
+            border-color: #0369A1;
+            color: white;
+        }
+        .btn-action.share-btn:hover { background-color: #0284C7; }
 
         .btn-action.camera-btn {
             background-color: var(--color-info);
@@ -424,18 +363,10 @@
         }
         .btn-action.camera-btn:hover { background-color: #0369A1; }
 
-        .btn-action.warning {
-            background-color: var(--color-warning);
-            border-color: #B45309;
-            color: white;
-        }
+        .btn-action.warning { background-color: var(--color-warning); border-color: #B45309; }
         .btn-action.warning:hover { background-color: #B45309; }
 
-        .btn-action.danger {
-            background-color: var(--color-danger);
-            border-color: #B91C1C;
-            color: white;
-        }
+        .btn-action.danger { background-color: var(--color-danger); border-color: #B91C1C; }
         .btn-action.danger:hover { background-color: #B91C1C; }
 
         button.danger-action {
@@ -452,7 +383,6 @@
         }
         button.danger-action:hover { background-color: #FEE2E2; }
 
-        /* SECCIÓN DE ARCHIVOS */
         .file-section {
             background: var(--bg-subtle);
             padding: 16px;
@@ -479,10 +409,7 @@
             display: none;
             position: fixed;
             z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
+            left: 0; top: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.65);
             backdrop-filter: blur(2px);
         }
@@ -527,31 +454,10 @@
             border-radius: var(--radius-tech);
         }
 
-        table.detalle-lotes {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-            font-family: var(--font-mono);
-        }
-
-        table.detalle-lotes th, table.detalle-lotes td {
-            border-bottom: 1px solid var(--color-border-subtle);
-            padding: 9px 12px;
-            text-align: left;
-        }
-
-        table.detalle-lotes th {
-            background-color: var(--bg-subtle);
-            font-weight: 700;
-            font-size: 11px;
-            color: var(--color-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        table.detalle-lotes tr:hover td {
-            background-color: var(--bg-subtle);
-        }
+        table.detalle-lotes { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--font-mono); }
+        table.detalle-lotes th, table.detalle-lotes td { border-bottom: 1px solid var(--color-border-subtle); padding: 9px 12px; text-align: left; }
+        table.detalle-lotes th { background-color: var(--bg-subtle); font-weight: 700; font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; }
+        table.detalle-lotes tr:hover td { background-color: var(--bg-subtle); }
 
         footer {
             text-align: center;
@@ -586,7 +492,7 @@
                 <span class="brand-divider">|</span>
                 <span class="brand-app-title">Inventario Proceso</span>
             </div>
-            <span class="tech-badge">OPERACIONES // V2.3</span>
+            <span class="tech-badge">OPERACIONES // V2.4</span>
         </header>
         
         <!-- Pestañas de Navegación Segmentadas -->
@@ -630,9 +536,16 @@
                 </div>
             </details>
 
-            <button type="button" class="btn-action secondary" onclick="descargarCSVGlobal()">⬇ Descargar Consolidado Final</button>
-            <button type="button" class="btn-action warning" onclick="descargarReporteDiferencias()">⬇ Reporte Diferencias (Pareados / Sobrantes / Faltantes)</button>
-            <button type="button" class="btn-action danger" onclick="reiniciarSistema()">⚠ Reiniciar Sistema / Nuevo Inventario</button>
+            <!-- BOTONES DE EXPORTACIÓN Y COMPARTIR CON QUICK SHARE / WHATSAPP -->
+            <button type="button" class="btn-action share-btn" onclick="descargarCSVGlobal()">
+                📤 Compartir Consolidado (Quick Share / WhatsApp)
+            </button>
+            <button type="button" class="btn-action warning" onclick="descargarReporteDiferencias()">
+                ⚖ Compartir Reporte Diferencias (Excel)
+            </button>
+            <button type="button" class="btn-action danger" onclick="reiniciarSistema()">
+                ⚠ Reiniciar Sistema / Nuevo Inventario
+            </button>
         </div>
 
         <!-- VISTA 2: CAPTURA EN TERRENO -->
@@ -685,7 +598,6 @@
 
             <button type="button" class="btn-action camera-btn" onclick="abrirEscanearCamara()">📷 Escanear con Cámara</button>
             
-            <!-- Campo de Escáner -->
             <div class="scanner-container">
                 <span class="scanner-icon">⌖</span>
                 <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
@@ -798,13 +710,9 @@
                 console.error("Error al cargar capturas desde IndexedDB:", err);
             }
 
-            // 1. Restaurar datos desde memoria interna (offline-first)
             await restaurarMaestrosLocales();
-
-            // 2. Intentar actualizar desde GitHub en segundo plano si hay red
             sincronizarDatosCloud(false);
 
-            // 3. Enrutamiento inicial
             if (operarioActual) {
                 document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
                 const opSelect = document.getElementById('operarioSelect');
@@ -1020,7 +928,6 @@
                 return;
             }
 
-            // Filtrar sub-bodegas
             const filasBodega = datosPlano.filter(r => obtenerValorCSV(r, 'bodega', 'Bodega') === bodega);
             const subBodegas = new Set();
             filasBodega.forEach(r => {
@@ -1039,7 +946,6 @@
                 poblarCalles(filasBodega);
             }
 
-            // CARGAR STOCK DE ESTA BODEGA EN SEGUNDO PLANO
             cargarStockBodegaEnSegundoPlano(bodega);
         }
 
@@ -1659,7 +1565,7 @@
             }
         }
 
-        // --- 12. DESCARGA EXCEL / CSV ---
+        // --- 12. DESCARGA Y COMPARTIR DIRECTO (QUICK SHARE / WHATSAPP / EXCEL) ---
         function descargarArchivoCSV(contenidoCSV, nombreArchivo) {
             const blob = new Blob(["\uFEFF" + contenidoCSV], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
@@ -1672,59 +1578,131 @@
         }
 
         async function descargarCSVGlobal() {
-            const todas = await db.capturas.toArray();
-            if (todas.length === 0) { alert('Sin capturas guardadas.'); return; }
-            descargarArchivoCSV(Papa.unparse(todas), "captura_arauco_final.csv");
+            try {
+                const todas = await db.capturas.toArray();
+                if (todas.length === 0) { 
+                    alert('Sin capturas guardadas.'); 
+                    return; 
+                }
+
+                // Generar nombre automático inteligente: captura_BODEGA_OPERARIO_DDMes_HHMM.csv
+                const ahora = new Date();
+                const dia = String(ahora.getDate()).padStart(2, '0');
+                const mes = ahora.toLocaleString('es-ES', { month: 'short' }).replace('.', '');
+                const hora = String(ahora.getHours()).padStart(2, '0') + String(ahora.getMinutes()).padStart(2, '0');
+                const opLimpio = (operarioActual || 'SinOp').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
+                const bVal = document.getElementById('bodegaSelect').value;
+                const bodegaLimpia = (bVal || (todas[0] && todas[0].bodega) || 'Bodega').replace(/\s+/g, '_');
+                
+                const nombreArchivo = `captura_${bodegaLimpia}_${opLimpio}_${dia}${mes}_${hora}.csv`;
+                const csvString = Papa.unparse(todas);
+                const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+
+                // 1. Intentar compartir con Web Share API (Quick Share / WhatsApp / Correo)
+                if (navigator.canShare) {
+                    const file = new File([blob], nombreArchivo, { type: 'text/csv;charset=utf-8;' });
+                    if (navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: `Inventario Arauco - ${bodegaLimpia}`,
+                                text: `Consolidado de inventario ${operarioActual} en Bodega ${bodegaLimpia}`
+                            });
+                            return; // Compartido exitosamente por Quick Share / WhatsApp
+                        } catch (err) {
+                            if (err.name === 'AbortError') return; // Usuario canceló el diálogo
+                            console.warn("Aviso al compartir:", err);
+                        }
+                    }
+                }
+
+                // 2. Fallback descarga directa tradicional
+                descargarArchivoCSV(csvString, nombreArchivo);
+            } catch (err) {
+                console.error("Error al exportar consolidado:", err);
+                alert("Error al exportar consolidado.");
+            }
         }
 
         async function descargarReporteDiferencias() {
-            if (datosStockActivo.length === 0) {
-                alert('No hay archivo de stock cargado para comparar en esta bodega.');
-                return;
-            }
-            const capturasBodega = await db.capturas.where('bodega').equals(bodegaStockCargada).toArray();
-            if (capturasBodega.length === 0) {
-                alert('No hay capturas registradas para esta bodega.');
-                return;
-            }
-
-            const stockMap = new Map();
-            datosStockActivo.forEach(row => {
-                const l = obtenerValorCSV(row, 'lote', 'Lote');
-                if (l) stockMap.set(l, row);
-            });
-
-            const capturasMap = new Map();
-            capturasBodega.forEach(c => capturasMap.set(String(c.lote).trim(), c));
-
-            const diferencias = [];
-
-            capturasBodega.forEach(c => {
-                const l = String(c.lote).trim();
-                if (stockMap.has(l)) {
-                    const st = stockMap.get(l);
-                    diferencias.push({
-                        tipo: "PAREADO", lote: l, bodega: c.bodega, sub_bodega: c.sub_bodega, calle: c.calle,
-                        sku: c.sku || obtenerValorCSV(st, 'sku', 'SKU'), operario: c.operario
-                    });
-                } else {
-                    diferencias.push({
-                        tipo: "SOBRANTE", lote: l, bodega: c.bodega, sub_bodega: c.sub_bodega, calle: c.calle,
-                        sku: c.sku, operario: c.operario
-                    });
+            try {
+                if (datosStockActivo.length === 0) {
+                    alert('No hay archivo de stock cargado para comparar en esta bodega.');
+                    return;
                 }
-            });
-
-            stockMap.forEach((st, l) => {
-                if (!capturasMap.has(l)) {
-                    diferencias.push({
-                        tipo: "FALTANTE", lote: l, bodega: bodegaStockCargada, sub_bodega: "-", calle: "-",
-                        sku: obtenerValorCSV(st, 'sku', 'SKU'), operario: "-"
-                    });
+                const capturasBodega = await db.capturas.where('bodega').equals(bodegaStockCargada).toArray();
+                if (capturasBodega.length === 0) {
+                    alert('No hay capturas registradas para esta bodega.');
+                    return;
                 }
-            });
 
-            descargarArchivoCSV(Papa.unparse(diferencias), `reporte_diferencias_${bodegaStockCargada.toLowerCase()}.csv`);
+                const stockMap = new Map();
+                datosStockActivo.forEach(row => {
+                    const l = obtenerValorCSV(row, 'lote', 'Lote');
+                    if (l) stockMap.set(l, row);
+                });
+
+                const capturasMap = new Map();
+                capturasBodega.forEach(c => capturasMap.set(String(c.lote).trim(), c));
+
+                const diferencias = [];
+
+                capturasBodega.forEach(c => {
+                    const l = String(c.lote).trim();
+                    if (stockMap.has(l)) {
+                        const st = stockMap.get(l);
+                        diferencias.push({
+                            tipo: "PAREADO", lote: l, bodega: c.bodega, sub_bodega: c.sub_bodega, calle: c.calle,
+                            sku: c.sku || obtenerValorCSV(st, 'sku', 'SKU'), operario: c.operario
+                        });
+                    } else {
+                        diferencias.push({
+                            tipo: "SOBRANTE", lote: l, bodega: c.bodega, sub_bodega: c.sub_bodega, calle: c.calle,
+                            sku: c.sku, operario: c.operario
+                        });
+                    }
+                });
+
+                stockMap.forEach((st, l) => {
+                    if (!capturasMap.has(l)) {
+                        diferencias.push({
+                            tipo: "FALTANTE", lote: l, bodega: bodegaStockCargada, sub_bodega: "-", calle: "-",
+                            sku: obtenerValorCSV(st, 'sku', 'SKU'), operario: "-"
+                        });
+                    }
+                });
+
+                const ahora = new Date();
+                const dia = String(ahora.getDate()).padStart(2, '0');
+                const mes = ahora.toLocaleString('es-ES', { month: 'short' }).replace('.', '');
+                const hora = String(ahora.getHours()).padStart(2, '0') + String(ahora.getMinutes()).padStart(2, '0');
+                const nombreDifs = `diferencias_${bodegaStockCargada.toLowerCase()}_${dia}${mes}_${hora}.csv`;
+                
+                const csvString = Papa.unparse(diferencias);
+                const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+
+                // Compartir directo si es posible
+                if (navigator.canShare) {
+                    const file = new File([blob], nombreDifs, { type: 'text/csv;charset=utf-8;' });
+                    if (navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: `Diferencias Arauco - ${bodegaStockCargada}`,
+                                text: `Reporte de diferencias inventario Bodega ${bodegaStockCargada}`
+                            });
+                            return;
+                        } catch (e) {
+                            if (e.name === 'AbortError') return;
+                        }
+                    }
+                }
+
+                descargarArchivoCSV(csvString, nombreDifs);
+            } catch (err) {
+                console.error("Error al generar diferencias:", err);
+                alert("Error al exportar diferencias.");
+            }
         }
 
         // --- 13. REINICIO DE SISTEMA ---
