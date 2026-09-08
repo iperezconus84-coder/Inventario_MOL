@@ -175,7 +175,7 @@
             branch: "main"
         };
 
-        // Inyección automática del nuevo token configurado de fábrica
+        // Inyección automática del token de fábrica
         window.addEventListener('DOMContentLoaded', () => {
             const tokenInput = document.getElementById('tokenInput');
             tokenInput.value = "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";
@@ -208,8 +208,9 @@
                 const apiUrl = `https://api.github.com/repos/${CONFIG.owner}/${CONFIG.repo}/contents/${path}`;
 
                 let sha = null;
+                // Autenticación correcta con esquema 'token' para PAT clásico
                 const getRes = await fetch(apiUrl, {
-                    headers: { "Authorization": `Bearer ${token}` }
+                    headers: { "Authorization": `token ${token}` }
                 });
                 
                 if (getRes.ok) {
@@ -227,7 +228,7 @@
                 const putRes = await fetch(apiUrl, {
                     method: "PUT",
                     headers: {
-                        "Authorization": `Bearer ${token}`,
+                        "Authorization": `token ${token}`,
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify(bodyData)
