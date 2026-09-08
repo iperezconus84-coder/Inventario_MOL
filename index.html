@@ -119,7 +119,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* SELECTOR DE PESTAÑAS (SEGMENTED SWITCH CORPORATIVO) */
+        /* SELECTOR DE PESTAÑAS */
         .nav-tabs {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
@@ -326,7 +326,7 @@
             transition: width 0.2s ease-out;
         }
 
-        /* CAMPO DE ESCÁNER INDUSTRIAL */
+        /* CAMPO DE ESCÁNER */
         .scanner-container {
             position: relative;
             margin-bottom: 16px;
@@ -558,7 +558,7 @@
         <!-- Encabezado SAP MII -->
         <header class="app-header">
             <h1>Inventario Proceso</h1>
-            <span class="tech-badge">SAP MII // CLOUD V2.2</span>
+            <span class="tech-badge">SAP MII // CLOUD V2.3</span>
         </header>
         
         <!-- Pestañas de Navegación Segmentadas -->
@@ -571,9 +571,9 @@
         <!-- VISTA 1: CONFIGURACIÓN Y SINCRONIZACIÓN CLOUD -->
         <div id="viewConfig" class="view-section active" role="tabpanel">
             <div class="file-section">
-                <label style="margin-bottom: 8px;">Estado de Datos Maestros (Cloud / Offline):</label>
+                <label style="margin-bottom: 8px;">Estado de Datos Maestros (GitHub / Offline):</label>
                 <div id="statusOperarios" class="status-box">⟳ Sincronizando operarios...</div>
-                <div id="statusPlano" class="status-box">⟳ Sincronizando plano de calles...</div>
+                <div id="statusPlano" class="status-box">⟳ Sincronizando plano_general...</div>
 
                 <label for="operarioSelect" style="margin-top: 10px;">Operario Activo (Obligatorio):</label>
                 <select id="operarioSelect" onchange="bloquearOperarioConfig()">
@@ -585,7 +585,7 @@
                 </button>
             </div>
 
-            <!-- RESPALDO MANUAL: Por si otra persona debe cargar un archivo distinto -->
+            <!-- RESPALDO MANUAL: Por si otra persona debe cargar un archivo local -->
             <details class="file-section" style="cursor: pointer; margin-bottom: 16px;">
                 <summary style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-brand); text-transform: uppercase;">
                     + Carga Manual Local (Otras Bodegas / Sin Conexión)
@@ -657,7 +657,7 @@
 
             <button type="button" class="btn-action camera-btn" onclick="abrirEscanearCamara()">📷 Escanear con Cámara</button>
             
-            <!-- Campo de Escáner con Indicador Óptico -->
+            <!-- Campo de Escáner -->
             <div class="scanner-container">
                 <span class="scanner-icon">⌖</span>
                 <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
@@ -836,42 +836,77 @@
 
             // 1. Operarios
             try {
-                const resOp = await fetch(`./data/operarios.csv${timeParam}`);
+                let resOp = await fetch(`./data/operarios.csv${timeParam}`);
+                if (!resOp.ok) resOp = await fetch(`./operarios.csv${timeParam}`);
+
                 if (resOp.ok) {
                     const text = await resOp.text();
-                    Papa.parse(text, {
-                        ...parseConfig,
-                        complete: async (results) => {
-                            datosOperarios = results.data;
-                            await db.maestros.put({ clave: 'operarios', datos: datosOperarios, timestamp: new Date().toISOString() });
-                            cargarOperariosSelect();
-                            actualizarStatusBadge('statusOperarios', `✓ OPERARIOS CLOUD (${datosOperarios.length})`, 'ok');
-                        }
-                    });
-                    cargados++;
+                    if (!text.trim().startsWith("<")) {
+                        Papa.parse(text, {
+                            ...parseConfig,
+                            complete: async (results) => {
+                                if (results.data && results.data.length > 0) {
+                                    datosOperarios = results.data;
+                                    await db.maestros.put({ clave: 'operarios', datos: datosOperarios, timestamp: new Date().toISOString() });
+                                    cargarOperariosSelect();
+                                    actualizarStatusBadge('statusOperarios', `✓ OPERARIOS CLOUD (${datosOperarios.length})`, 'ok');
+                                    cargados++;
+                                }
+                            }
+                        });
+                    } else {
+                        throw new Error("404 en operarios");
+                    }
+                } else {
+                    throw new Error("404 en operarios");
                 }
-            } catch (err) {}
+            } catch (err) {
+                const regOp = await db.maestros.get('operarios');
+                if (!regOp) {
+                    actualizarStatusBadge('statusOperarios', `⚠ Falta operarios.csv en /data/ (Use Carga Manual)`, 'err');
+                }
+            }
 
-            // 2. Plano
+            // 2. Plano General (Apunta primero a plano_general.csv)
             try {
-                const resPlano = await fetch(`./data/plano.csv${timeParam}`).catch(() => fetch(`./data/plano_tmt1.csv${timeParam}`));
-                if (resPlano && resPlano.ok) {
+                let resPlano = await fetch(`./data/plano_general.csv${timeParam}`);
+                if (!resPlano.ok) resPlano = await fetch(`./data/plano.csv${timeParam}`);
+                if (!resPlano.ok) resPlano = await fetch(`./data/plano_tmt1.csv${timeParam}`);
+                if (!resPlano.ok) resPlano = await fetch(`./plano_general.csv${timeParam}`);
+
+                if (resPlano.ok) {
                     const text = await resPlano.text();
-                    Papa.parse(text, {
-                        ...parseConfig,
-                        complete: async (results) => {
-                            datosPlano = results.data;
-                            await db.maestros.put({ clave: 'plano', datos: datosPlano, timestamp: new Date().toISOString() });
-                            poblarSelectorBodegas();
-                            actualizarStatusBadge('statusPlano', `✓ PLANO CLOUD (${datosPlano.length} REGISTROS)`, 'ok');
-                        }
-                    });
-                    cargados++;
+                    if (!text.trim().startsWith("<")) {
+                        Papa.parse(text, {
+                            ...parseConfig,
+                            complete: async (results) => {
+                                if (results.data && results.data.length > 0) {
+                                    datosPlano = results.data;
+                                    await db.maestros.put({ clave: 'plano', datos: datosPlano, timestamp: new Date().toISOString() });
+                                    poblarSelectorBodegas();
+                                    actualizarStatusBadge('statusPlano', `✓ PLANO GENERAL CLOUD (${datosPlano.length} REGISTROS)`, 'ok');
+                                    cargados++;
+                                } else {
+                                    actualizarStatusBadge('statusPlano', `⚠ El archivo plano_general.csv está vacío`, 'err');
+                                }
+                            },
+                            error: () => actualizarStatusBadge('statusPlano', `⚠ Error al leer plano_general.csv`, 'err')
+                        });
+                    } else {
+                        throw new Error("404 en plano");
+                    }
+                } else {
+                    throw new Error("404 en plano");
                 }
-            } catch (err) {}
+            } catch (err) {
+                const regPlano = await db.maestros.get('plano');
+                if (!regPlano) {
+                    actualizarStatusBadge('statusPlano', `⚠ No se encontró plano_general.csv en /data/`, 'err');
+                }
+            }
 
             if (mostrarAlerta) {
-                alert(cargados > 0 ? "Datos actualizados desde GitHub exitosamente." : "No se pudo conectar a GitHub. Usando datos guardados en el dispositivo.");
+                alert(cargados > 0 ? "Datos actualizados desde GitHub exitosamente." : "No se encontraron los archivos en /data/. Verifique los nombres en GitHub o cargue manualmente abajo.");
             }
         }
 
@@ -1035,7 +1070,8 @@
             // 2. Buscar en GitHub en la carpeta data/
             const rutas = [
                 `./data/stock_${bodegaFile}.csv?t=${Date.now()}`,
-                `./data/stock_${bodegaFile}.CSV?t=${Date.now()}`
+                `./data/stock_${bodegaFile}.CSV?t=${Date.now()}`,
+                `./stock_${bodegaFile}.csv?t=${Date.now()}`
             ];
 
             for (const r of rutas) {
@@ -1043,17 +1079,19 @@
                     const res = await fetch(r);
                     if (res.ok) {
                         const text = await res.text();
-                        Papa.parse(text, {
-                            ...parseConfig,
-                            complete: async (results) => {
-                                datosStockActivo = results.data;
-                                bodegaStockCargada = bodegaKey;
-                                await db.stocks_bodega.put({ bodega: bodegaKey, datos: results.data, timestamp: new Date().toISOString() });
-                                chip.className = "hud-chip stock-info";
-                                chip.innerText = `STOCK: ${bodegaKey} (✓ ${datosStockActivo.length} ítems)`;
-                            }
-                        });
-                        return;
+                        if (!text.trim().startsWith("<")) {
+                            Papa.parse(text, {
+                                ...parseConfig,
+                                complete: async (results) => {
+                                    datosStockActivo = results.data;
+                                    bodegaStockCargada = bodegaKey;
+                                    await db.stocks_bodega.put({ bodega: bodegaKey, datos: results.data, timestamp: new Date().toISOString() });
+                                    chip.className = "hud-chip stock-info";
+                                    chip.innerText = `STOCK: ${bodegaKey} (✓ ${datosStockActivo.length} ítems)`;
+                                }
+                            });
+                            return;
+                        }
                     }
                 } catch (e) {}
             }
@@ -1314,7 +1352,7 @@
             enfocarScanner();
         }
 
-        // --- 11. MODALES Y UTILIDADES ---
+        // --- 11. MODALES Y DIÁLOGOS ---
         function mostrarModal(titulo, mensaje, callback, mostrarCancelar = true) {
             document.getElementById('modalTitle').innerText = titulo;
             document.getElementById('modalMessage').innerText = mensaje;
