@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca de Respaldos e Historial IRA | Arauco</title>
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- SheetJS (xlsx) for reading Excel archives -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Chart.js for trend chart -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .arauco-blue { background-color: #005F9E; }
+        .arauco-blue-text { color: #005F9E; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Cabecera Corporativa -->
+    <header class="arauco-blue text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl font-black tracking-tighter lowercase">arauco</span>
+                <span class="border-l border-blue-400 pl-3 text-sm font-medium opacity-90">Operaciones Molduras - Biblioteca Histórica</span>
+            </div>
+            <div class="mt-3 md:mt-0 flex items-center space-x-3 text-xs">
+                <a href="conciliador.html" class="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg font-semibold transition flex items-center gap-1.5 border border-white/20">
+                    ⚙️ Ir al Conciliador Diario
+                </a>
+                <span id="system-status" class="bg-emerald-500 text-white px-2.5 py-1 rounded-full font-semibold">Modo Local Activo</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+        <!-- Panel de Selección de Carpeta Local -->
+        <section class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <h2 class="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wider">📁 Carga Masiva por Carpeta (Escritorio /historico/)</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="seleccionarCarpetaHistoricos()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg text-xs font-bold shadow transition flex items-center justify-center gap-2">
+                        📂 Seleccionar Carpeta "historico"
+                    </button>
+                </div>
+
+                <div class="md:col-span-2 flex items-center gap-2">
+                    <select id="select-historico" onchange="seleccionarCierreDelDesplegable()" class="bg-white border border-slate-300 rounded-lg text-xs px-3 py-2 text-slate-700 font-semibold focus:outline-none focus:border-blue-500 w-full">
+                        <option value="">-- Seleccione un cierre histórico cargado --</option>
+                    </select>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Gráfico Único de Tendencia Acumulativa -->
+        <section class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Evolución Histórica Consolidada - Índice IRA (%)</h3>
+                    <p class="text-[10px] text-slate-500">Tendencia generada automáticamente a partir de los respaldos de tu carpeta.</p>
+                </div>
+            </div>
+            <div class="h-72 flex items-center justify-center">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Visor de Resumen del Cierre Seleccionado -->
+        <section id="detalle-historico-container" class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hidden space-y-4">
+            <div class="border-b border-slate-200 pb-3 flex justify-between items-center">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800">Resumen del Cierre: <span id="lbl-archivo-activo" class="text-blue-600 font-mono">--</span></h3>
+                    <p class="text-xs text-slate-500">Indicadores clave registrados en el momento de la auditoría.</p>
+                </div>
+                <span id="lbl-centro-activo" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">--</span>
+            </div>
+
+            <!-- KPIs del Histórico -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Índice IRA</span>
+                    <p id="hist-ira" class="text-2xl font-black text-slate-800 mt-1">0.0%</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Volumen Pareado</span>
+                    <p id="hist-pareado" class="text-2xl font-black text-emerald-700 mt-1">0 m³</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Sobrantes Terreno</span>
+                    <p id="hist-sobrante" class="text-2xl font-black text-blue-600 mt-1">0 m³</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase">Faltantes Sistema</span>
+                    <p id="hist-faltante" class="text-2xl font-black text-rose-600 mt-1">0 m³</p>
+                </div>
+            </div>
+
+            <!-- Dictamen de ese Cierre -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-1">
+                <span class="text-[10px] font-bold text-slate-400 uppercase block">Dictamen Registrado:</span>
+                <p id="hist-dictamen" class="text-xs text-slate-700 leading-relaxed">Sin datos cargados.</p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-xs text-slate-400">
+        Arauco • Operaciones Molduras • Biblioteca de Respaldos e Historial
+    </footer>
+
+    <!-- Lógica de Lectura de Carpeta Completa -->
+    <script>
+        let trendChartInstance = null;
+        let bibliotecaCierres = []; // Almacena los datos de todos los archivos encontrados
+
+        async function seleccionarCarpetaHistoricos() {
+            try {
+                // Abre el selector nativo de carpetas del sistema operativo
+                const handleDir = await window.showDirectoryPicker();
+                bibliotecaCierres = [];
+                
+                // Recorre recursivamente la carpeta y subcarpetas (ej. /2026/09/)
+                await procesarDirectorio(handleDir, "");
+
+                if (bibliotecaCierres.length === 0) {
+                    alert("No se encontraron archivos Excel (.xlsx) válidos en la carpeta seleccionada.");
+                    return;
+                }
+
+                // Ordenar cronológicamente por fecha
+                bibliotecaCierres.sort((a, b) => new Date(a.fechaOrden) - new Date(b.fechaOrden));
+
+                // Poblar el menú desplegable
+                poblarSelectDesplegable();
+
+                // Dibujar gráfico de tendencias con todos los puntos acumulados
+                renderizarGraficoTendenciaLocal(bibliotecaCierres);
+
+                // Mostrar por defecto el último cierre procesado
+                mostrarDetalleHistorico(bibliotecaCierres[bibliotecaCierres.length - 1]);
+                document.getElementById('select-historico.value') = bibliotecaCierres[bibliotecaCierres.length - 1].path;
+
+                alert(`¡Carpeta procesada con éxito! Se cargaron ${bibliotecaCierres.length} cierres históricos.`);
+
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error(err);
+                    alert("Ocurrió un error al leer la carpeta. Asegúrate de usar un navegador compatible (Chrome/Edge moderno).");
+                }
+            }
+        }
+
+        async function procesarDirectorio(dirHandle, rutaRelativa) {
+            for await (const entry of dirHandle.values()) {
+                if (entry.kind === 'file' && entry.name.endsWith('.xlsx')) {
+                    try {
+                        const file = await entry.getFile();
+                        const buffer = await file.arrayBuffer();
+                        const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+
+                        if (workbook.Sheets["Resumen Ejecutivo"]) {
+                            let resumenJson = XLSX.utils.sheet_to_json(workbook.Sheets["Resumen Ejecutivo"]);
+                            if (resumenJson.length > 0) {
+                                let fila = resumenJson[0];
+                                let iraStr = String(fila.Indice_IRA || "0").replace('%', '').trim();
+                                let iraVal = parseFloat(iraStr);
+
+                                bibliotecaCierres.push({
+                                    nombreArchivo: entry.name,
+                                    path: `${rutaRelativa}/${entry.name}`.replace(/^\//, ''),
+                                    fecha: fila.Fecha_Cierre || 'Reciente',
+                                    fechaOrden: fila.Fecha_Cierre || '2026-01-01',
+                                    centro: fila.Centro || 'GENERAL',
+                                    ira: isNaN(iraVal) ? 0 : iraVal,
+                                    data: fila
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`No se pudo leer el archivo ${entry.name}`, e);
+                    }
+                } else if (entry.kind === 'directory') {
+                    // Entrar en las subcarpetas (ej. 2026, 09, etc.)
+                    const subDirHandle = await dirHandle.getDirectoryHandle(entry.name);
+                    await procesarDirectorio(subDirHandle, `${rutaRelativa}/${entry.name}`);
+                }
+            }
+        }
+
+        function poblarSelectDesplegable() {
+            const select = document.getElementById('select-historico');
+            select.innerHTML = '<option value="">-- Seleccione un cierre histórico --</option>';
+
+            bibliotecaCierres.forEach((item, index) => {
+                let opt = document.createElement('option');
+                opt.value = index;
+                opt.textContent = `${item.fecha} - Centro: ${item.centro} (${item.nombreArchivo})`;
+                select.appendChild(opt);
+            });
+        }
+
+        function seleccionarCierreDelDesplegable() {
+            const index = document.getElementById('select-historico').value;
+            if (index === "") return;
+            mostrarDetalleHistorico(bibliotecaCierres[index]);
+        }
+
+        function renderizarGraficoTendenciaLocal(datos) {
+            let labels = datos.map(d => `${d.fecha} (${d.centro})`);
+            let iras = datos.map(d => d.ira);
+
+            let ctx = document.getElementById('trendChart').getContext('2d');
+            if (trendChartInstance) trendChartInstance.destroy();
+
+            trendChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.length > 0 ? labels : ['Sin Historial Cargado'],
+                    datasets: [{
+                        label: 'Evolución Histórica - Índice IRA (%)',
+                        data: iras.length > 0 ? iras : [0],
+                        borderColor: '#005F9E',
+                        backgroundColor: 'rgba(0, 95, 158, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.25,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#005F9E'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { font: { family: 'Poppins', size: 10 } } },
+                        x: { ticks: { font: { family: 'Poppins', size: 10 } } }
+                    },
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Poppins', size: 10 } } } }
+                }
+            });
+        }
+
+        function mostrarDetalleHistorico(item) {
+            let f = item.data;
+            document.getElementById('detalle-historico-container').classList.remove('hidden');
+            document.getElementById('lbl-archivo-activo').innerText = item.nombreArchivo;
+            document.getElementById('lbl-centro-activo').innerText = f.Centro || 'GENERAL';
+            
+            document.getElementById('hist-ira').innerText = f.Indice_IRA || '0%';
+            document.getElementById('hist-pareado').innerText = f.Volumen_Pareado || '0 m³';
+            document.getElementById('hist-sobrante').innerText = f.Sobrantes_Terreno || '0 m³';
+            document.getElementById('hist-faltante').innerText = f.Faltantes_Sistema || '0 m³';
+
+            document.getElementById('hist-dictamen').innerText = `Inventario cerrado con fecha ${f.Fecha_Cierre || '--'} para el centro ${f.Centro || '--'}. Se registraron ${f.Duplicados || 0} lotes duplicados con un volumen teórico de ${f.Volumen_Teorico || '--'}.`;
+        }
+    </script>
+</body>
+</html>
