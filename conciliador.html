@@ -572,6 +572,7 @@
                                 let firstTerrenoItem = data.items[0];
 
                                 if(data.count > 1) {
+                                    let dupVol = sapMap.has(lote) ? sapMap.get(lote).Volumen : firstTerrenoItem.Volumen;
                                     allDuplicados.push({
                                         Lote: lote,
                                         Count: data.count,
@@ -581,14 +582,16 @@
                                         SKU: firstTerrenoItem.SKU || '',
                                         Descripcion: firstTerrenoItem.Descripcion || '',
                                         Bodega: firstTerrenoItem.Bodega || 'TMT1',
-                                        Volumen: firstTerrenoItem.Volumen || 0
+                                        Volumen: dupVol
                                     });
                                 }
 
                                 if(sapMap.has(lote)) {
                                     let sapItem = sapMap.get(lote);
+                                    // Blindaje: Para pareados, tomamos estrictamente el volumen del maestro SAP
                                     allPareados.push({
                                         ...firstTerrenoItem,
+                                        Volumen: sapItem.Volumen,
                                         Bodega: sapItem.Bodega || firstTerrenoItem.Bodega
                                     });
                                 } else {
