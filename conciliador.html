@@ -78,34 +78,46 @@
     <!-- Contenido Principal -->
     <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
 
-        <!-- Panel de Ingestión Dual (Con Selector Cloud 1 Clic y Terreno) -->
+        <!-- Panel de Ingestión Dual (Con Selector Cloud y Carga Local Manual) -->
         <section id="ingestion-section" class="mb-6 bg-white p-5 rounded-xl border border-slate-200 shadow-sm no-print">
-            <h2 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Ingestión de Archivos (Maestro Cloud vs Terreno)</h2>
+            <h2 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Ingestión de Archivos (Slot 1: Stock Teórico vs Slot 2: Terreno)</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <!-- Slot 1: Stock Teórico Nube (1 Clic) -->
-                <div class="border-2 border-dashed border-slate-300 p-4 rounded-lg hover:border-blue-500 transition bg-slate-50">
-                    <p class="text-xs font-bold text-slate-600 mb-1">Slot 1: Stock Maestro (GitHub /data/)</p>
-                    <div class="flex items-center gap-2 mt-2">
-                        <select id="select-stock-maestro" class="bg-white border border-slate-300 rounded text-xs px-2 py-2 text-slate-700 font-semibold focus:outline-none focus:border-blue-500 w-full">
-                            <option value="stock_tmt1">stock_tmt1.csv (Sustratos / RIP)</option>
-                            <option value="stock_ta04">stock_ta04.csv (Otra Bodega)</option>
+                
+                <!-- Slot 1: Stock Teórico (Automático Nube o Manual Local) -->
+                <div class="border-2 border-dashed border-slate-300 p-4 rounded-lg bg-slate-50 space-y-3">
+                    <p class="text-xs font-bold text-slate-600">Slot 1: Stock Teórico Maestro</p>
+                    
+                    <!-- Opción A: Automático desde Nube -->
+                    <div class="flex items-center gap-2 bg-white p-2 rounded border border-slate-200">
+                        <select id="select-stock-maestro" class="bg-slate-50 border border-slate-300 rounded text-xs px-2 py-1.5 text-slate-700 font-semibold focus:outline-none focus:border-blue-500 w-full">
+                            <option value="stock_tmt1">stock_tmt1.csv (Nube /data/)</option>
+                            <option value="stock_ta04">stock_ta04.csv (Nube /data/)</option>
                         </select>
-                        <button onclick="cargarStockDesdeCloudSeleccionado()" class="arauco-blue hover:opacity-90 text-white px-4 py-2 rounded text-xs font-bold shadow transition whitespace-nowrap">
-                            ⚡ Cargar Nube
+                        <button onclick="cargarStockDesdeCloudSeleccionado()" class="arauco-blue hover:opacity-90 text-white px-3 py-1.5 rounded text-xs font-bold shadow transition whitespace-nowrap">
+                            Cloud
                         </button>
                     </div>
+
+                    <!-- Opción B: Manual Local -->
+                    <div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">O cargar archivo local:</span>
+                        <input type="file" id="file-sap-local" accept=".csv" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 cursor-pointer w-full">
+                    </div>
                 </div>
+
                 <!-- Slot 2: Capturas de Terreno -->
-                <div class="border-2 border-dashed border-slate-300 p-4 rounded-lg text-center hover:border-blue-500 transition bg-slate-50 flex flex-col justify-between">
+                <div class="border-2 border-dashed border-slate-300 p-4 rounded-lg flex flex-col justify-between bg-slate-50">
                     <div>
                         <p class="text-xs font-bold text-slate-600 mb-1">Slot 2: Capturas de Terreno (Múltiples CSV)</p>
                         <input type="file" id="file-terreno" accept=".csv" multiple class="text-xs text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer w-full mt-2">
                     </div>
+                    <p class="text-[10px] text-slate-400 italic">Puedes arrastrar o seleccionar varios archivos de terreno a la vez.</p>
                 </div>
             </div>
-            <div class="mt-3 text-right">
-                <button onclick="runConciliation()" class="arauco-blue hover:opacity-90 text-white px-5 py-2 rounded-lg text-xs font-bold shadow transition">
-                    Cruzar y Actualizar Inventario
+
+            <div class="mt-4 text-right">
+                <button onclick="procesarYConciliarTodo()" class="arauco-blue hover:opacity-90 text-white px-6 py-2.5 rounded-lg text-xs font-bold shadow transition">
+                    Procesar y Cruzar Inventario
                 </button>
             </div>
         </section>
@@ -392,10 +404,67 @@
             return '';
         }
 
-        // --- CARGA DESDE LA NUBE EN 1 CLIC (DESDE EL SELECTOR) ---
+        function procesarDatosMaestrosCSV(csvText, origenNombre) {
+            Papa.parse(csvText, {
+                ...parseConfig,
+                complete: function(resultsSap) {
+                    let parsedSap = resultsSap.data.map(row => {
+                        let lote = findVal(row, ['Lote', 'Package', 'NºLote', 'Codigo', 'LoteSap']);
+                        let sku = findVal(row, ['Material', 'SKU', 'CodigoMat', 'Cod']);
+                        let desc = findVal(row, ['Desc.Mat.', 'Descripcion', 'Desc', 'MaterialDesc']);
+                        
+                        let rawBodega = findVal(row, ['Almacen', 'Bodega', 'Alm', 'Centro']);
+                        let bodega = (rawBodega && !String(rawBodega).toUpperCase().includes('TMT')) ? String(rawBodega).trim() : '0055';
+
+                        let vol = parseNum(findVal(row, ['St.Valorad', 'Volumen', 'Vol', 'Cantidad']));
+                        let pcs = parseNum(findVal(row, ['NºPiezas', 'NÂºPiezas', 'Piezas', 'Pcs']));
+
+                        return {
+                            Lote: String(lote).trim(),
+                            SKU: String(sku).trim(),
+                            Descripcion: String(desc).trim(),
+                            Bodega: bodega,
+                            Volumen: vol,
+                            Piezas: pcs
+                        };
+                    }).filter(item => item.Lote !== '' && item.Lote !== 'undefined' && item.Lote !== 'null');
+                    
+                    // Cálculo ABC automático por volumen
+                    let skuVolumeMap = {};
+                    parsedSap.forEach(item => {
+                        let s = item.SKU || 'GENERAL';
+                        if(!skuVolumeMap[s]) skuVolumeMap[s] = 0;
+                        skuVolumeMap[s] += item.Volumen;
+                    });
+
+                    let sortedSkus = Object.keys(skuVolumeMap).sort((a,b) => skuVolumeMap[b] - skuVolumeMap[a]);
+                    let totalGlobalVol = sortedSkus.reduce((acc, s) => acc + skuVolumeMap[s], 0) || 1;
+                    
+                    let cumulativeVol = 0;
+                    let abcMap = {};
+                    sortedSkus.forEach(s => {
+                        cumulativeVol += skuVolumeMap[s];
+                        let pct = (cumulativeVol / totalGlobalVol) * 100;
+                        if(pct <= 80) abcMap[s] = 'A';
+                        else if(pct <= 95) abcMap[s] = 'B';
+                        else abcMap[s] = 'C';
+                    });
+
+                    rawData.sap = parsedSap.map(item => ({
+                        ...item,
+                        ABC: abcMap[item.SKU || 'GENERAL'] || 'C'
+                    }));
+
+                    document.getElementById('data-indicator').innerText = `Maestro [${origenNombre}] (${rawData.sap.length} reg)`;
+                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros!`);
+                }
+            });
+        }
+
+        // --- OPCIÓN 1: CARGA DESDE LA NUBE (GITHUB) ---
         async function cargarStockDesdeCloudSeleccionado() {
             const selector = document.getElementById('select-stock-maestro');
-            const nombreBase = selector.value; // Ej: stock_tmt1 o stock_ta04
+            const nombreBase = selector.value;
             const statusEl = document.getElementById('data-indicator');
             
             statusEl.innerText = `Cargando ${nombreBase}.csv desde /data/...`;
@@ -406,73 +475,31 @@
                 if (!response.ok) throw new Error(`No se pudo hallar ${nombreBase}.csv en la carpeta data/`);
                 
                 const csvText = await response.text();
-                
-                Papa.parse(csvText, {
-                    ...parseConfig,
-                    complete: function(resultsSap) {
-                        let parsedSap = resultsSap.data.map(row => {
-                            let lote = findVal(row, ['Lote', 'Package', 'NºLote', 'Codigo', 'LoteSap']);
-                            let sku = findVal(row, ['Material', 'SKU', 'CodigoMat', 'Cod']);
-                            let desc = findVal(row, ['Desc.Mat.', 'Descripcion', 'Desc', 'MaterialDesc']);
-                            
-                            let rawBodega = findVal(row, ['Almacen', 'Bodega', 'Alm', 'Centro']);
-                            let bodega = (rawBodega && !String(rawBodega).toUpperCase().includes('TMT')) ? String(rawBodega).trim() : '0055';
-
-                            let vol = parseNum(findVal(row, ['St.Valorad', 'Volumen', 'Vol', 'Cantidad']));
-                            let pcs = parseNum(findVal(row, ['NºPiezas', 'NÂºPiezas', 'Piezas', 'Pcs']));
-
-                            return {
-                                Lote: String(lote).trim(),
-                                SKU: String(sku).trim(),
-                                Descripcion: String(desc).trim(),
-                                Bodega: bodega,
-                                Volumen: vol,
-                                Piezas: pcs
-                            };
-                        }).filter(item => item.Lote !== '' && item.Lote !== 'undefined' && item.Lote !== 'null');
-                        
-                        // Cálculo ABC automático por volumen
-                        let skuVolumeMap = {};
-                        parsedSap.forEach(item => {
-                            let s = item.SKU || 'GENERAL';
-                            if(!skuVolumeMap[s]) skuVolumeMap[s] = 0;
-                            skuVolumeMap[s] += item.Volumen;
-                        });
-
-                        let sortedSkus = Object.keys(skuVolumeMap).sort((a,b) => skuVolumeMap[b] - skuVolumeMap[a]);
-                        let totalGlobalVol = sortedSkus.reduce((acc, s) => acc + skuVolumeMap[s], 0) || 1;
-                        
-                        let cumulativeVol = 0;
-                        let abcMap = {};
-                        sortedSkus.forEach(s => {
-                            cumulativeVol += skuVolumeMap[s];
-                            let pct = (cumulativeVol / totalGlobalVol) * 100;
-                            if(pct <= 80) abcMap[s] = 'A';
-                            else if(pct <= 95) abcMap[s] = 'B';
-                            else abcMap[s] = 'C';
-                        });
-
-                        rawData.sap = parsedSap.map(item => ({
-                            ...item,
-                            ABC: abcMap[item.SKU || 'GENERAL'] || 'C'
-                        }));
-
-                        statusEl.innerText = `Maestro ${nombreBase}.csv cargado (${rawData.sap.length} reg). Seleccione terreno.`;
-                        alert(`¡Archivo ${nombreBase}.csv cargado correctamente (${rawData.sap.length} registros)!`);
-                    }
-                });
+                procesarDatosMaestrosCSV(csvText, `Nube: ${nombreBase}`);
             } catch (err) {
-                console.warn("Error al cargar el stock seleccionado:", err);
+                console.warn("Error al cargar de la nube:", err);
                 statusEl.innerText = "Error cargando stock cloud";
-                alert(`Error: No se encontró el archivo ${nombreBase}.csv en la carpeta data/ de tu repositorio.`);
+                alert(`Error: No se encontró el archivo ${nombreBase}.csv en la carpeta data/ del repositorio.`);
             }
         }
 
-        function runConciliation() {
+        // --- OPCIÓN 2: CARGA MANUAL LOCAL (FILE INPUT) ---
+        document.getElementById('file-sap-local').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                procesarDatosMaestrosCSV(evt.target.result, `Local: ${file.name}`);
+            };
+            reader.readAsText(file, "ISO-8859-1");
+        });
+
+        function procesarYConciliarTodo() {
             const fileTerreno = document.getElementById('file-terreno').files;
 
             if(rawData.sap.length === 0) {
-                alert("Por favor cargue primero el archivo maestro haciendo clic en '⚡ Cargar Nube'.");
+                alert("Por favor cargue primero el stock teórico (ya sea mediante el botón ⚡ Cloud o seleccionando un archivo local).");
                 return;
             }
             if(fileTerreno.length === 0) {
@@ -527,7 +554,6 @@
                             rawData.terreno = terrenoData;
                             populateWarehouseFilter();
                             
-                            // Ejecución del cruce analítico
                             let terrenoCounts = {};
                             rawData.terreno.forEach(item => {
                                 let lote = item.Lote ? String(item.Lote).trim() : '';
@@ -652,7 +678,7 @@
         }
 
         function applyFilters() {
-            runConciliation();
+            procesarYConciliarTodo();
         }
 
         function updateDashboardUI() {
@@ -674,7 +700,7 @@
             
             document.getElementById('kpi-pareado').innerText = `${volPareado.toFixed(2)} m³`;
             document.getElementById('kpi-net-diff').innerText = `${netDiff >= 0 ? '+' : ''}${netDiff.toFixed(2)} m³`;
-            document.getElementById('kpi-abs-diff').innerText =`${absDiff.toFixed(2)} m³`;
+            document.getElementById('kpi-abs-diff').innerText = `${absDiff.toFixed(2)} m³`;
             document.getElementById('kpi-sobrante').innerText = `${volSobrante.toFixed(2)} m³`;
             document.getElementById('kpi-faltante').innerText = `${volFaltante.toFixed(2)} m³`;
             document.getElementById('kpi-duplicados').innerText = globalData.duplicados.length;
@@ -896,6 +922,7 @@
                     currentTab: 'dup'
                 };
 
+                document.getElementById('file-sap-local').value = "";
                 document.getElementById('file-terreno').value = "";
                 document.getElementById('search-input').value = "";
                 document.getElementById('warehouse-filter').innerHTML = '<option value="ALL">Todos</option>';
