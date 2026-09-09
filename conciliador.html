@@ -409,7 +409,8 @@
                         let rawBodega = findVal(row, ['Almacen', 'Bodega', 'Alm', 'Centro', 'Planta', 'Plant']);
                         let bodega = (rawBodega && String(rawBodega).trim() !== '') ? String(rawBodega).trim().toUpperCase() : 'TMT1';
 
-                        let vol = parseNum(findVal(row, ['St.Valorad', 'Volumen', 'Vol', 'Cantidad']));
+                        // PRIORIDAD ABSOLUTA: Extraer estrictamente de St.Valorad (o equivalentes de volumen valorado)
+                        let vol = parseNum(findVal(row, ['St.Valorad', 'StValorad', 'Volumen', 'Vol', 'Cantidad']));
                         let pcs = parseNum(findVal(row, ['NºPiezas', 'NÂºPiezas', 'Piezas', 'Pcs']));
 
                         return {
@@ -448,7 +449,7 @@
                     }));
 
                     document.getElementById('data-indicator').innerText = `Maestro [${origenNombre}] (${rawData.sap.length} reg)`;
-                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros!`);
+                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros (St.Valorad asig.)!`);
                 }
             });
         }
@@ -498,7 +499,8 @@
                             let bodega = (rawBodega && String(rawBodega).trim() !== '') ? String(rawBodega).trim().toUpperCase() : 'TMT1';
 
                             let calle = findVal(row, ['Calle', 'Pasillo', 'Ubicacion', 'Ubic']);
-                            let vol = parseNum(findVal(row, ['Volumen', 'St.Valorad', 'Vol']));
+                            // PRIORIDAD ABSOLUTA: Extraer de St.Valorad en terreno
+                            let vol = parseNum(findVal(row, ['St.Valorad', 'StValorad', 'Volumen', 'Vol']));
                             let pcs = parseNum(findVal(row, ['Piezas', 'NºPiezas', 'NÂºPiezas', 'Pcs']));
                             let operario = findVal(row, ['Operario', 'Usuario', 'User']) || 'Operario Terreno';
                             let hora = findVal(row, ['Hora', 'Time', 'Timestamp']) || '--:--';
@@ -556,7 +558,8 @@
                                         Horas: data.horas.join(', '),
                                         SKU: firstTerrenoItem.SKU || '',
                                         Descripcion: firstTerrenoItem.Descripcion || '',
-                                        Bodega: firstTerrenoItem.Bodega || 'TMT1'
+                                        Bodega: firstTerrenoItem.Bodega || 'TMT1',
+                                        Volumen: firstTerrenoItem.Volumen || 0
                                     });
                                 }
 
@@ -622,7 +625,7 @@
                             updateDashboardUI();
                             renderTableData();
                             updateReportUI();
-                            document.getElementById('data-indicator').innerText = `Procesado OK (${rawData.terreno.length} lecturas)`;
+                            document.getElementById('data-indicator').innerText = `Procesado OK (St.Valorad - ${rawData.terreno.length} lecturas)`;
                         }
                     }
                 });
@@ -753,10 +756,11 @@
                     <th class="p-3">Descripción</th>
                     <th class="p-3">Almacén</th>
                     <th class="p-3">Lecturas</th>
+                    <th class="p-3">Volumen (m³)</th>
                     <th class="p-3">Operarios</th>
                 `;
                 if(dataToRender.length === 0) {
-                    bodyEl.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">No hay registros duplicados para este filtro.</td></tr>`;
+                    bodyEl.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">No hay registros duplicados para este filtro.</td></tr>`;
                     return;
                 }
                 bodyEl.innerHTML = dataToRender.map(i => `
@@ -766,6 +770,7 @@
                         <td class="p-3">${i.Descripcion}</td>
                         <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
                         <td class="p-3"><span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">${i.Count} lecturas</span></td>
+                        <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
                         <td class="p-3">${i.Operarios}</td>
                     </tr>
                 `).join('');
