@@ -116,7 +116,7 @@
                 <div>
                     <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Indicador Clave de Rendimiento</span>
                     <h2 class="text-2xl font-black text-slate-800 mt-1">Índice de Confiabilidad del Inventario (IRA)</h2>
-                    <p class="text-xs text-slate-500 mt-1">Evaluación de cuadratura basada estrictamente en Pareados, Sobrantes y Faltantes.</p>
+                    <p class="text-xs text-slate-500 mt-1">Evaluación de cuadratura basada en el volumen teórico maestro vs físico terreno.</p>
                 </div>
                 <div class="flex items-center gap-6">
                     <div class="text-right">
@@ -397,7 +397,7 @@
             return '';
         }
 
-        // Búsqueda estricta exclusiva para el maestro SAP
+        // Búsqueda estricta exclusiva para el maestro SAP (St.Valorad)
         function getStValoradSap(row) {
             for(let rKey in row) {
                 let cleanKey = rKey.replace(/^\ufeff/, '').trim();
@@ -588,7 +588,7 @@
 
                                 if(sapMap.has(lote)) {
                                     let sapItem = sapMap.get(lote);
-                                    // Blindaje: Para pareados, tomamos estrictamente el volumen del maestro SAP
+                                    // Blindaje: Para pareados, tomamos estrictamente el volumen del maestro SAP (St.Valorad)
                                     allPareados.push({
                                         ...firstTerrenoItem,
                                         Volumen: sapItem.Volumen,
@@ -623,9 +623,8 @@
                                 let volSob = sobB.reduce((acc, i) => acc + i.Volumen, 0);
                                 let volFal = falB.reduce((acc, i) => acc + i.Volumen, 0);
 
-                                let sapCount = sapB.length || 1;
-                                let discCount = falB.length + sobB.length;
-                                let iraB = Math.max(0, ((sapCount - discCount) / sapCount) * 100);
+                                // Cálculo robusto de IRA basado en volúmenes (Pareados / Teórico Maestro)
+                                let iraB = volSap > 0 ? Math.min(100, Math.max(0, (volPar / volSap) * 100)) : 0;
 
                                 whBreakdown[w] = { volSap, volTer, volPar, volSob, volFal, ira: iraB };
                             });
@@ -688,9 +687,8 @@
             let netDiff = totalVolFisico - totalVolSap;
             let absDiff = Math.abs(volSobrante) + Math.abs(volFaltante);
 
-            let totalSapCount = globalData.sap.length || 1;
-            let discrepanciasCount = globalData.faltantes.length + globalData.sobrantes.length;
-            let ira = Math.max(0, ((totalSapCount - discrepanciasCount) / totalSapCount) * 100);
+            // Cálculo robusto de IRA basado estrictamente en el volumen pareado vs teórico maestro
+            let ira = totalVolSap > 0 ? Math.min(100, Math.max(0, (volPareado / totalVolSap) * 100)) : 0;
 
             document.getElementById('kpi-vol-sap').innerText = `Teórico Maestro: ${totalVolSap.toFixed(2)} m³`;
             document.getElementById('kpi-vol-fisico').innerText = `Físico Terreno: ${totalVolFisico.toFixed(2)} m³`;
