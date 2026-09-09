@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Suite de Inventarios | Arauco - Operaciones Molduras</title>
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .arauco-blue { background-color: #005F9E; }
+        .arauco-blue-text { color: #005F9E; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Cabecera Corporativa -->
+    <header class="arauco-blue text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <span class="text-3xl font-black tracking-tighter lowercase">arauco</span>
+                <span class="border-l border-blue-400 pl-3 text-sm font-medium opacity-90">Renovables para una vida mejor</span>
+            </div>
+            <div class="mt-3 md:mt-0 text-xs font-semibold bg-blue-800 px-3 py-1.5 rounded-full shadow-inner">
+                Portal Central • Operaciones Molduras
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal: Tarjetas de Acceso a los Enlaces -->
+    <main class="max-w-6xl mx-auto px-6 py-12 w-full flex-grow">
+        <div class="text-center max-w-2xl mx-auto mb-10">
+            <h1 class="text-3xl font-black text-slate-800 tracking-tight">Suite de Control e Inventarios</h1>
+            <p class="text-xs text-slate-500 mt-2">Seleccione el módulo operativo al que desea ingresar para gestionar los procesos de bodega, conciliación y registros históricos.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Enlace 1: Captura / Principal -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between border-t-4 border-t-blue-600">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800 mt-2">Módulo de Captura e Ingestión</h2>
+                    <p class="text-xs text-slate-500 mt-2 leading-relaxed">Página principal para la carga de archivos de terreno y escaneo de códigos de barra.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-slate-100">
+                    <a href="https://iperezconus84-coder.github.io/Inventario_MOL/" target="_blank" class="block w-full text-center arauco-blue hover:opacity-90 text-white py-2 rounded-xl text-xs font-bold transition shadow-sm">
+                        Ingresar al Módulo →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Enlace 2: Conciliador Ejecutivo -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between border-t-4 border-t-emerald-600">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800 mt-2">Conciliador de Inventario</h2>
+                    <p class="text-xs text-slate-500 mt-2 leading-relaxed">Cruce masivo de stock teórico SAP (St.Valorad) vs terreno, cálculo de IRA y análisis de discrepancias.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-slate-100">
+                    <a href="https://iperezconus84-coder.github.io/Inventario_MOL/conciliador" target="_blank" class="block w-full text-center bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-xl text-xs font-bold transition shadow-sm">
+                        Ingresar al Módulo →
+                    </a>
+                </div>
+            </div>
+
+            <!-- Enlace 3: Histórico -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between border-t-4 border-t-amber-500">
+                <div>
+                    <h2 class="text-base font-bold text-slate-800 mt-2">Repositorio Histórico</h2>
+                    <p class="text-xs text-slate-500 mt-2 leading-relaxed">Directorio de respaldos, cierres anteriores y archivos estandarizados almacenados en la nube.</p>
+                </div>
+                <div class="mt-6 pt-4 border-t border-slate-100">
+                    <a href="https://iperezconus84-coder.github.io/Inventario_MOL/historico" target="_blank" class="block w-full text-center bg-amber-600 hover:bg-amber-700 text-white py-2 rounded-xl text-xs font-bold transition shadow-sm">
+                        Ingresar al Módulo →
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Pie de Página -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
+        Arauco • Operaciones Molduras • Renovables para una vida mejor
+    </footer>
+
+</body>
+</html>
