@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>INVENTARIO PROCESO // ARAUCO</title>
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Tipografías: Poppins (Wordmark Arauco), Inter (UI) y JetBrains Mono (Datos) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Poppins:wght@800;900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Paleta Corporativa Arauco Industrial */
+            --bg-app: #F4F6F8;
+            --bg-surface: #FFFFFF;
+            --bg-subtle: #EBF0F4;
+            --bg-element: #DCE3EA;
+            
+            --color-arauco-dark: #1E293B;
+            --color-brand: #005F9E;     /* Azul Corporativo Arauco */
+            --color-brand-dark: #0F172A;   /* Navy Profundo Header */
+            --color-brand-light: #E0F0FA;
+            
+            --color-text-main: #0F172A;
+            --color-text-secondary: #475569;
+            --color-text-muted: #8899A6;    
+            
+            --color-border: #CBD5E1;
+            --color-border-subtle: #E2E8F0;
+            --color-border-focus: #005F9E;
+            
+            --color-success: #059669;
+            --color-success-bg: #ECFDF5;
+            --color-success-border: #A7F3D0;
+            
+            --color-danger: #DC2626;
+            --color-danger-bg: #FEF2F2;
+            --color-warning: #D97706;
+            --color-info: #0284C7;
+            
+            --radius-tech: 3px;
+            --font-logo: 'Poppins', -apple-system, sans-serif;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background-color: var(--bg-app);
+            color: var(--color-text-main);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 580px;
+            margin: 0 auto;
+            background: var(--bg-surface);
+            padding: 24px;
+            border-radius: var(--radius-tech);
+            border: 1px solid var(--color-border);
+            box-shadow: var(--shadow-card);
+            width: 100%;
+        }
+
+        /* HEADER CORPORATIVO ARAUCO */
+        .app-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--color-brand-dark);
+            color: white;
+            padding: 14px 18px;
+            margin: -24px -24px 20px -24px;
+            border-top-left-radius: var(--radius-tech);
+            border-top-right-radius: var(--radius-tech);
+            border-bottom: 3px solid var(--color-brand);
+        }
+
+        .brand-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .arauco-wordmark {
+            font-family: var(--font-logo);
+            font-size: 21px;
+            font-weight: 900;
+            color: #FFFFFF;
+            text-transform: lowercase;
+            letter-spacing: -0.6px;
+            line-height: 1;
+            user-select: none;
+        }
+
+        .brand-divider {
+            color: rgba(255, 255, 255, 0.35);
+            font-weight: 300;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .brand-app-title {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #F8FAFC;
+        }
+
+        .tech-badge {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #E2E8F0;
+            padding: 4px 8px;
+            border-radius: 2px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* NAVEGACIÓN */
+        .nav-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            background-color: var(--bg-subtle);
+            padding: 4px;
+            border-radius: var(--radius-tech);
+            gap: 4px;
+            margin-bottom: 20px;
+            border: 1px solid var(--color-border);
+        }
+
+        .nav-tabs .nav-tab {
+            all: unset;
+            padding: 10px 4px;
+            background-color: transparent;
+            color: var(--color-text-secondary);
+            font-family: var(--font-mono);
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            border-radius: var(--radius-tech);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .nav-tabs .nav-tab:hover {
+            background-color: var(--bg-element);
+            color: var(--color-text-main);
+        }
+
+        .nav-tabs .nav-tab.active {
+            background-color: var(--bg-surface);
+            color: var(--color-brand);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+            border-bottom: 2px solid var(--color-brand);
+            font-weight: 700;
+        }
+
+        .view-section { display: none !important; }
+        .view-section.active { display: block !important; }
+
+        label {
+            font-family: var(--font-sans);
+            font-weight: 600;
+            color: var(--color-text-secondary);
+            font-size: 11px;
+            margin-bottom: 6px;
+            display: block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 14px;
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-tech);
+            font-size: 13px;
+            font-family: var(--font-sans);
+            background-color: var(--bg-surface);
+            color: var(--color-text-main);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-border-focus);
+            box-shadow: 0 0 0 2px rgba(0, 95, 158, 0.15);
+        }
+
+        select:disabled, input:disabled {
+            background-color: var(--bg-subtle);
+            color: var(--color-text-muted);
+            border-color: var(--color-border-subtle);
+            cursor: not-allowed;
+        }
+
+        /* HUD TELEMÉTRICO */
+        .hud-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .hud-chip {
+            padding: 8px 10px;
+            border-radius: var(--radius-tech);
+            font-family: var(--font-mono);
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--color-border);
+            background: var(--bg-subtle);
+            color: var(--color-text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .hud-chip.primary { background: var(--color-brand-light); border-color: #BAE6FD; color: var(--color-brand); }
+        .hud-chip.info { background: #EBF5FB; border-color: #B9E2FE; color: #0369A1; }
+        .hud-chip.stock-info { grid-column: span 2; background: #ECFDF5; border-color: #A7F3D0; color: #059669; }
+        .hud-chip.stock-loading { grid-column: span 2; background: #FFFBEB; border-color: #FDE68A; color: #B45309; }
+
+        /* PROGRESO INDUSTRIAL */
+        .progress-box {
+            background: var(--bg-subtle);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-tech);
+            padding: 16px;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .progress-meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .progress-label-tag { font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; }
+        .progress-percent-tag { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--color-brand); }
+
+        .progress {
+            font-family: var(--font-mono);
+            font-size: 26px;
+            font-weight: 700;
+            text-align: center;
+            color: var(--color-text-main);
+            letter-spacing: 1px;
+            margin: 4px 0 10px 0;
+        }
+
+        .progress-track { width: 100%; height: 6px; background: var(--bg-element); border-radius: 3px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; width: 0%; background: var(--color-brand); transition: width 0.2s ease-out; }
+
+        .scanner-container { position: relative; margin-bottom: 16px; }
+        #scannerInput {
+            font-family: var(--font-mono);
+            font-size: 15px;
+            font-weight: 600;
+            padding: 12px 12px 12px 38px;
+            margin-bottom: 0;
+            border: 2px solid var(--color-brand);
+            background-color: var(--bg-surface);
+            letter-spacing: 0.5px;
+        }
+
+        #scannerInput:focus {
+            border-color: var(--color-brand-dark);
+            box-shadow: 0 0 0 3px rgba(0, 95, 158, 0.15);
+        }
+
+        .scanner-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--color-brand);
+            font-family: var(--font-mono);
+            font-weight: 700;
+            font-size: 15px;
+            pointer-events: none;
+        }
+
+        /* BOTONES */
+        .btn-action {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: var(--color-brand-dark);
+            color: #FFFFFF;
+            border: 1px solid var(--color-brand-dark);
+            border-radius: var(--radius-tech);
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-action:hover { background-color: var(--color-brand); }
+        .btn-action:active { transform: scale(0.99); }
+
+        .btn-action.primary-action { background-color: var(--color-success); border-color: #047857; }
+        .btn-action.primary-action:hover { background-color: #047857; }
+
+        .btn-action.secondary {
+            background-color: var(--bg-surface);
+            color: var(--color-text-main);
+            border-color: var(--color-border);
+        }
+        .btn-action.secondary:hover { background-color: var(--bg-subtle); }
+
+        .btn-action.share-btn {
+            background-color: #0369A1;
+            border-color: #0369A1;
+            color: white;
+        }
+        .btn-action.share-btn:hover { background-color: #0284C7; }
+
+        .btn-action.camera-btn {
+            background-color: var(--color-info);
+            border-color: #0284C7;
+            color: white;
+            margin-bottom: 12px;
+            margin-top: 0;
+        }
+        .btn-action.camera-btn:hover { background-color: #0369A1; }
+
+        .btn-action.warning { background-color: var(--color-warning); border-color: #B45309; }
+        .btn-action.warning:hover { background-color: #B45309; }
+
+        .btn-action.danger { background-color: var(--color-danger); border-color: #B91C1C; }
+        .btn-action.danger:hover { background-color: #B91C1C; }
+
+        button.danger-action {
+            background-color: var(--color-danger-bg);
+            color: var(--color-danger);
+            border: 1px solid #FECACA;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            padding: 4px 8px;
+            width: auto;
+            margin-top: 0;
+            border-radius: 2px;
+            cursor: pointer;
+        }
+        button.danger-action:hover { background-color: #FEE2E2; }
+
+        .file-section {
+            background: var(--bg-subtle);
+            padding: 16px;
+            border-radius: var(--radius-tech);
+            margin-bottom: 16px;
+            border: 1px solid var(--color-border);
+        }
+
+        .status-box {
+            background: var(--color-success-bg);
+            border: 1px solid var(--color-success-border);
+            color: var(--color-success);
+            padding: 8px 12px;
+            border-radius: var(--radius-tech);
+            margin-bottom: 10px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        /* MODALES */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            background: var(--bg-surface);
+            margin: 10% auto;
+            padding: 24px;
+            width: 90%;
+            max-width: 480px;
+            border-radius: var(--radius-tech);
+            border: 1px solid var(--color-border);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+
+        .modal-header-tag {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--color-brand);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
+
+        .modal-content h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--color-text-main);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .modal-body {
+            overflow-y: auto;
+            max-height: 45vh;
+            margin: 12px 0;
+            border: 1px solid var(--color-border);
+            padding: 0;
+            text-align: left;
+            border-radius: var(--radius-tech);
+        }
+
+        table.detalle-lotes { width: 100%; border-collapse: collapse; font-size: 12px; font-family: var(--font-mono); }
+        table.detalle-lotes th, table.detalle-lotes td { border-bottom: 1px solid var(--color-border-subtle); padding: 9px 12px; text-align: left; }
+        table.detalle-lotes th { background-color: var(--bg-subtle); font-weight: 700; font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; }
+        table.detalle-lotes tr:hover td { background-color: var(--bg-subtle); }
+
+        footer {
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            margin-top: 24px;
+            letter-spacing: 0.5px;
+        }
+
+        footer strong {
+            font-family: var(--font-logo);
+            font-size: 13px;
+            font-weight: 900;
+            color: var(--color-text-main);
+            text-transform: lowercase;
+            letter-spacing: -0.4px;
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 16px; }
+            .form-grid-3, .hud-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Encabezado Corporativo Arauco -->
+        <header class="app-header">
+            <div class="brand-container">
+                <span class="arauco-wordmark">arauco</span>
+                <span class="brand-divider">|</span>
+                <span class="brand-app-title">Inventario Proceso</span>
+            </div>
+            <span class="tech-badge">OPERACIONES // V2.5</span>
+        </header>
+        
+        <!-- Pestañas de Navegación Segmentadas -->
+        <nav class="nav-tabs" role="tablist">
+            <button type="button" id="tabConfig" class="nav-tab active" role="tab" onclick="cambiarVista('config')">01. Config</button>
+            <button type="button" id="tabCaptura" class="nav-tab" role="tab" onclick="cambiarVista('captura')">02. Captura</button>
+            <button type="button" id="tabAvance" class="nav-tab" role="tab" onclick="cambiarVista('avance')">03. Avance</button>
+        </nav>
+
+        <!-- VISTA 1: CONFIGURACIÓN Y SINCRONIZACIÓN CLOUD -->
+        <div id="viewConfig" class="view-section active" role="tabpanel">
+            <div class="file-section">
+                <label style="margin-bottom: 8px;">Estado de Datos Maestros (GitHub / Offline):</label>
+                <div id="statusOperarios" class="status-box">⟳ Sincronizando operarios...</div>
+                <div id="statusPlano" class="status-box">⟳ Sincronizando plano_general...</div>
+
+                <label for="operarioSelect" style="margin-top: 10px;">Operario Activo (Obligatorio):</label>
+                <select id="operarioSelect" onchange="bloquearOperarioConfig()">
+                    <option value="">Cargando operarios...</option>
+                </select>
+
+                <button type="button" class="btn-action secondary" onclick="sincronizarDatosCloud(true)" style="margin-top: 6px;">
+                    🔄 Forzar Actualización desde GitHub
+                </button>
+            </div>
+
+            <!-- RESPALDO MANUAL LOCAL -->
+            <details class="file-section" style="cursor: pointer; margin-bottom: 16px;">
+                <summary style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-brand); text-transform: uppercase;">
+                    + Carga Manual Local (Stock Maestros / Sin Conexión)
+                </summary>
+                <div style="margin-top: 14px;">
+                    <label for="fileStockManual">Cargar Archivo Maestro de Stock (stock_tmt1.csv):</label>
+                    <input type="file" id="fileStockManual" accept=".csv">
+
+                    <label for="filePlanoManual">Cargar Plano Manual (Opcional):</label>
+                    <input type="file" id="filePlanoManual" accept=".csv">
+
+                    <label for="fileOperariosManual">Cargar Operarios Manual (Opcional):</label>
+                    <input type="file" id="fileOperariosManual" accept=".csv">
+                </div>
+            </details>
+
+            <!-- BOTONES DE EXPORTACIÓN Y COMPARTIR CON QUICK SHARE / WHATSAPP -->
+            <button type="button" class="btn-action share-btn" onclick="descargarCSVGlobal()">
+                📤 Compartir Consolidado (Quick Share / WhatsApp)
+            </button>
+            <button type="button" class="btn-action warning" onclick="descargarReporteDiferencias()">
+                ⚖ Compartir Reporte Diferencias (Excel)
+            </button>
+            <button type="button" class="btn-action danger" onclick="reiniciarSistema()">
+                ⚠ Reiniciar Sistema / Nuevo Inventario
+            </button>
+        </div>
+
+        <!-- VISTA 2: CAPTURA EN TERRENO -->
+        <div id="viewCaptura" class="view-section" role="tabpanel">
+            <!-- Telemetría HUD -->
+            <div class="hud-grid">
+                <div id="infoOperarioActivo" class="hud-chip primary">OP: No seleccionado</div>
+                <div id="infoUltimaCalle" class="hud-chip info">CALLE: Ninguna</div>
+                <div id="infoStockActivo" class="hud-chip stock-loading">STOCK: Seleccione una Bodega...</div>
+            </div>
+
+            <!-- Cuadrícula en Cascada: Bodega -> Sub-Bodega -> Calle -->
+            <div class="form-grid-3">
+                <div>
+                    <label for="bodegaSelect">Bodega:</label>
+                    <select id="bodegaSelect" onchange="alCambiarBodega()">
+                        <option value="">Bodega...</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="subBodegaSelect">Sub-Bodega:</label>
+                    <select id="subBodegaSelect" onchange="alCambiarSubBodega()">
+                        <option value="">Sub-Bodega...</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="calleSelect">Calle:</label>
+                    <select id="calleSelect" onchange="configurarCalle()">
+                        <option value="">Calle...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label for="metaLotes">Meta de Lotes (Automática por Plano):</label>
+                <input type="number" id="metaLotes" value="300" min="1" oninput="actualizarProgresoVisual()" style="font-family: var(--font-mono); font-weight: 700;">
+            </div>
+
+            <!-- Display de Progreso Industrial -->
+            <div class="progress-box">
+                <div class="progress-meta-row">
+                    <span class="progress-label-tag">CONTEO DE LOTES</span>
+                    <span class="progress-percent-tag" id="displayPercent">0%</span>
+                </div>
+                <div class="progress" id="displayProgress" aria-live="polite">0 / 300</div>
+                <div class="progress-track">
+                    <div class="progress-bar-fill" id="progressBarFill"></div>
+                </div>
+            </div>
+
+            <button type="button" class="btn-action camera-btn" onclick="abrirEscanearCamara()">📷 Escanear con Cámara</button>
+            
+            <div class="scanner-container">
+                <span class="scanner-icon">⌖</span>
+                <input type="text" id="scannerInput" placeholder="Escanear Lote..." autofocus autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            </div>
+            
+            <button type="button" id="btnVerDetalle" class="btn-action secondary" onclick="abrirModalDetalle()">Ver / Eliminar Lotes Capturados</button>
+            <button type="button" id="btnCerrarCalle" class="btn-action primary-action" onclick="abrirModalCierreCalle()">Cerrar Calle y Guardar</button>
+            <button type="button" id="btnReabrirCalle" class="btn-action warning" onclick="reabrirCalle()" style="display:none;">Reabrir Calle Actual</button>
+        </div>
+
+        <!-- VISTA 3: AVANCE POR CALLE -->
+        <div id="viewAvance" class="view-section" role="tabpanel">
+            <h2 style="font-family: var(--font-sans); color: var(--color-text-main); font-size: 14px; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Resumen de Avance en Terreno</h2>
+            <div id="resumenInventario" style="margin-bottom: 15px;"></div>
+        </div>
+    </div>
+
+    <footer>
+        Renovables para una vida mejor // <strong>arauco</strong>
+    </footer>
+
+    <!-- Modales -->
+    <div id="camaraModal" class="modal" role="dialog" aria-modal="true">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header-tag">ÓPTICA // CÁMARA</div>
+            <h3>Escáner Activo</h3>
+            <div id="reader" style="width: 100%; border-radius: 2px; overflow: hidden; margin: 12px 0; border: 1px solid var(--color-border);"></div>
+            <button type="button" class="btn-action secondary" onclick="cerrarEscanearCamara()">Cerrar Cámara</button>
+        </div>
+    </div>
+
+    <div id="alertModal" class="modal" role="dialog" aria-modal="true">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header-tag" id="modalTag">SISTEMA // ALERTA</div>
+            <h3 id="modalTitle">Atención</h3>
+            <p id="modalMessage" style="font-size: 13px; color: var(--color-text-secondary); margin-bottom: 18px;"></p>
+            <button type="button" id="modalBtnAceptar" class="btn-action primary-action" onclick="resolverModal(true)">Aceptar / Continuar</button>
+            <button type="button" id="modalBtnCancelar" class="btn-action secondary" onclick="resolverModal(false)">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="cierreModal" class="modal" role="dialog" aria-modal="true">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header-tag">CONFIRMACIÓN // CIERRE</div>
+            <h3>Cierre de Calle</h3>
+            <p id="cierreInfoMeta" style="margin: 8px 0 14px 0; font-family: var(--font-mono); font-size: 13px; color: var(--color-brand); font-weight: 600;"></p>
+            <label for="comentarioCalleInput" style="text-align: left;">Observación de Cierre (Opcional):</label>
+            <textarea id="comentarioCalleInput" rows="3" placeholder="Ej: 2 paquetes sin código legible..." style="resize: none;"></textarea>
+            <button type="button" class="btn-action primary-action" onclick="confirmarCierreCalle()">Confirmar y Cerrar Calle</button>
+            <button type="button" class="btn-action secondary" onclick="cerrarModalCierre()">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="detalleModal" class="modal" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header-tag">REGISTRO // AUDITORÍA</div>
+            <h3 id="detalleTitle">Lotes Capturados</h3>
+            <div class="modal-body">
+                <table class="detalle-lotes">
+                    <thead>
+                        <tr>
+                            <th style="width: 35px;">#</th>
+                            <th>Lote</th>
+                            <th>SKU</th>
+                            <th style="text-align: center; width: 75px;">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaDetalleBody"></tbody>
+                </table>
+            </div>
+            <button type="button" class="btn-action secondary" onclick="cerrarModalDetalle()">Cerrar Vista</button>
+        </div>
+    </div>
+
+    <!-- Librerías Externas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+    
+    <script>
+        // --- 1. BASE DE DATOS LOCAL PERSISTENTE (IndexedDB) ---
+        const db = new Dexie("InventarioProcesoDB");
+        db.version(5).stores({
+            capturas: "++id, operario, bodega, sub_bodega, calle, lote, sku, timestamp",
+            maestros: "clave, datos, filename, timestamp",
+            stocks_bodega: "bodega, datos, timestamp"
+        });
+
+        // --- 2. ESTADO GLOBAL ---
+        let datosPlano = [];
+        let datosStockActivo = [];
+        let bodegaStockCargada = "";
+        let datosOperarios = [];
+        let operarioActual = localStorage.getItem('inv_operario') || "";
+        let capturasGlobales = [];
+        let capturasCalleActual = [];
+        let contadorActual = 0;
+        let callbackModal = null;
+        let calleCerradaGuardada = false;
+        let html5QrCode = null;
+        let audioContextSingleton = null;
+
+        const parseConfig = { 
+            header: true, 
+            skipEmptyLines: 'greedy', 
+            dynamicTyping: false, 
+            encoding: "ISO-8859-1",
+            delimiter: "", // Autodetecta si es coma o punto y coma
+            transformHeader: function(header) {
+                // Limpia caracteres invisibles de las cabeceras del CSV
+                return header.replace(/^\ufeff/, '').trim();
+            }
+        };
+
+        // --- 3. CICLO DE VIDA & RESTAURACIÓN OFFLINE ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                capturasGlobales = await db.capturas.toArray();
+            } catch (err) {
+                console.error("Error al cargar capturas desde IndexedDB:", err);
+            }
+
+            await restaurarMaestrosLocales();
+            sincronizarDatosCloud(false);
+
+            if (operarioActual) {
+                document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
+                const opSelect = document.getElementById('operarioSelect');
+                if (opSelect) {
+                    opSelect.value = operarioActual;
+                    opSelect.disabled = true;
+                }
+                cambiarVista('captura');
+            } else {
+                cambiarVista('config');
+            }
+
+            actualizarUIUltimaCalle();
+            await renderizarResumen();
+        });
+
+        async function restaurarMaestrosLocales() {
+            try {
+                const regOp = await db.maestros.get('operarios');
+                if (regOp && regOp.datos) {
+                    datosOperarios = regOp.datos;
+                    cargarOperariosSelect();
+                    actualizarStatusBadge('statusOperarios', `✓ OPERARIOS: ${regOp.datos.length} (OFFLINE)`, 'ok');
+                }
+
+                const regPlano = await db.maestros.get('plano');
+                if (regPlano && regPlano.datos) {
+                    datosPlano = regPlano.datos;
+                    poblarSelectorBodegas();
+                    actualizarStatusBadge('statusPlano', `✓ PLANO: ${regPlano.datos.length} REGISTROS (OFFLINE)`, 'ok');
+                }
+            } catch (e) {
+                console.warn("Aviso al restaurar caché local:", e);
+            }
+        }
+
+        function actualizarStatusBadge(elementId, texto, tipo) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.style.display = 'block';
+            el.innerText = texto;
+            if (tipo === 'ok') {
+                el.style.background = 'var(--color-success-bg)';
+                el.style.borderColor = 'var(--color-success-border)';
+                el.style.color = 'var(--color-success)';
+            } else {
+                el.style.background = 'var(--color-danger-bg)';
+                el.style.borderColor = '#FFCDD2';
+                el.style.color = 'var(--color-danger)';
+            }
+        }
+
+        // --- 4. SINCRONIZACIÓN AUTOMÁTICA DESDE GITHUB (CLOUD) ---
+        async function sincronizarDatosCloud(mostrarAlerta = false) {
+            const timeParam = `?t=${Date.now()}`;
+            let cargados = 0;
+
+            // 1. Operarios
+            try {
+                let resOp = await fetch(`./data/operarios.csv${timeParam}`);
+                if (!resOp.ok) resOp = await fetch(`./operarios.csv${timeParam}`);
+
+                if (resOp.ok) {
+                    const text = await resOp.text();
+                    if (!text.trim().startsWith("<")) {
+                        Papa.parse(text, {
+                            ...parseConfig,
+                            complete: async (results) => {
+                                if (results.data && results.data.length > 0) {
+                                    datosOperarios = results.data;
+                                    await db.maestros.put({ clave: 'operarios', datos: datosOperarios, timestamp: new Date().toISOString() });
+                                    cargarOperariosSelect();
+                                    actualizarStatusBadge('statusOperarios', `✓ OPERARIOS CLOUD (${datosOperarios.length})`, 'ok');
+                                    cargados++;
+                                }
+                            }
+                        });
+                    } else {
+                        throw new Error("404 en operarios");
+                    }
+                } else {
+                    throw new Error("404 en operarios");
+                }
+            } catch (err) {
+                const regOp = await db.maestros.get('operarios');
+                if (!regOp) {
+                    actualizarStatusBadge('statusOperarios', `⚠ Falta operarios.csv en /data/ (Use Carga Manual)`, 'err');
+                }
+            }
+
+            // 2. Plano General
+            try {
+                let resPlano = await fetch(`./data/plano_general.csv${timeParam}`);
+                if (!resPlano.ok) resPlano = await fetch(`./data/plano.csv${timeParam}`);
+                if (!resPlano.ok) resPlano = await fetch(`./data/plano_tmt1.csv${timeParam}`);
+                if (!resPlano.ok) resPlano = await fetch(`./plano_general.csv${timeParam}`);
+
+                if (resPlano.ok) {
+                    const text = await resPlano.text();
+                    if (!text.trim().startsWith("<")) {
+                        Papa.parse(text, {
+                            ...parseConfig,
+                            complete: async (results) => {
+                                if (results.data && results.data.length > 0) {
+                                    datosPlano = results.data;
+                                    await db.maestros.put({ clave: 'plano', datos: datosPlano, timestamp: new Date().toISOString() });
+                                    poblarSelectorBodegas();
+                                    actualizarStatusBadge('statusPlano', `✓ PLANO GENERAL CLOUD (${datosPlano.length} REGISTROS)`, 'ok');
+                                    cargados++;
+                                } else {
+                                    actualizarStatusBadge('statusPlano', `⚠ El archivo plano_general.csv está vacío`, 'err');
+                                }
+                            },
+                            error: () => actualizarStatusBadge('statusPlano', `⚠ Error al leer plano_general.csv`, 'err')
+                        });
+                    } else {
+                        throw new Error("404 en plano");
+                    }
+                } else {
+                    throw new Error("404 en plano");
+                }
+            } catch (err) {
+                const regPlano = await db.maestros.get('plano');
+                if (!regPlano) {
+                    actualizarStatusBadge('statusPlano', `⚠ No se encontró plano_general.csv en /data/`, 'err');
+                }
+            }
+
+            if (mostrarAlerta) {
+                alert(cargados > 0 ? "Datos actualizados desde GitHub exitosamente." : "No se encontraron los archivos en /data/. Verifique los nombres en GitHub o cargue manualmente abajo.");
+            }
+        }
+
+        // --- 5. CARGA MANUAL DE RESPALDO (STOCK UNIFICADO stock_tmt1.csv) ---
+        document.getElementById('fileStockManual').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, {
+                ...parseConfig,
+                complete: async (results) => {
+                    datosStockActivo = results.data;
+                    bodegaStockCargada = "MANUAL";
+                    const chip = document.getElementById('infoStockActivo');
+                    chip.className = "hud-chip stock-info";
+                    chip.innerText = `STOCK: ${file.name} (✓ ${datosStockActivo.length})`;
+                    alert(`Archivo maestro de stock cargado: ${results.data.length} ítems listos para auditar.`);
+                }
+            });
+        });
+
+        document.getElementById('filePlanoManual').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, {
+                ...parseConfig,
+                complete: async (results) => {
+                    datosPlano = results.data;
+                    await db.maestros.put({ clave: 'plano', datos: datosPlano, timestamp: new Date().toISOString() });
+                    poblarSelectorBodegas();
+                    actualizarStatusBadge('statusPlano', `✓ PLANO MANUAL (${datosPlano.length})`, 'ok');
+                    alert("Plano manual cargado con éxito.");
+                }
+            });
+        });
+
+        document.getElementById('fileOperariosManual').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            Papa.parse(file, {
+                ...parseConfig,
+                complete: async (results) => {
+                    datosOperarios = results.data;
+                    await db.maestros.put({ clave: 'operarios', datos: datosOperarios, timestamp: new Date().toISOString() });
+                    cargarOperariosSelect();
+                    actualizarStatusBadge('statusOperarios', `✓ OPERARIOS MANUAL (${datosOperarios.length})`, 'ok');
+                    alert("Operarios manuales cargados.");
+                }
+            });
+        });
+
+        // --- 6. SELECTORES EN CASCADA (BODEGA -> SUB-BODEGA -> CALLE) ---
+        function poblarSelectorBodegas() {
+            const bSelect = document.getElementById('bodegaSelect');
+            const actual = bSelect.value;
+            bSelect.innerHTML = '<option value="">Bodega...</option>';
+            const bodegas = new Set();
+
+            datosPlano.forEach(r => {
+                const b = obtenerValorCSV(r, 'bodega', 'Bodega', 'BODEGA');
+                if (b) bodegas.add(b);
+            });
+
+            bodegas.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b;
+                opt.textContent = b;
+                if (b === actual) opt.selected = true;
+                bSelect.appendChild(opt);
+            });
+        }
+
+        async function alCambiarBodega() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const subBodegaSelect = document.getElementById('subBodegaSelect');
+            const calleSelect = document.getElementById('calleSelect');
+            
+            subBodegaSelect.innerHTML = '<option value="">Sub-Bodega...</option>';
+            calleSelect.innerHTML = '<option value="">Calle...</option>';
+            
+            if (!bodega) {
+                document.getElementById('infoStockActivo').className = 'hud-chip stock-loading';
+                document.getElementById('infoStockActivo').innerText = 'STOCK: Seleccione una Bodega...';
+                return;
+            }
+
+            const filasBodega = datosPlano.filter(r => obtenerValorCSV(r, 'bodega', 'Bodega') === bodega);
+            const subBodegas = new Set();
+            filasBodega.forEach(r => {
+                const sb = obtenerValorCSV(r, 'sub_bodega', 'subbodega', 'Sub_Bodega', 'zona');
+                if (sb) subBodegas.add(sb);
+            });
+
+            if (subBodegas.size > 0) {
+                subBodegas.forEach(sb => {
+                    const opt = document.createElement('option');
+                    opt.value = sb;
+                    opt.textContent = sb;
+                    subBodegaSelect.appendChild(opt);
+                });
+            } else {
+                poblarCalles(filasBodega);
+            }
+
+            cargarStockBodegaEnSegundoPlano(bodega);
+        }
+
+        function alCambiarSubBodega() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const subBodega = document.getElementById('subBodegaSelect').value;
+            const filasFiltradas = datosPlano.filter(r => 
+                obtenerValorCSV(r, 'bodega', 'Bodega') === bodega &&
+                (!subBodega || obtenerValorCSV(r, 'sub_bodega', 'subbodega', 'Sub_Bodega') === subBodega)
+            );
+            poblarCalles(filasFiltradas);
+        }
+
+        function poblarCalles(filas) {
+            const calleSelect = document.getElementById('calleSelect');
+            calleSelect.innerHTML = '<option value="">Calle...</option>';
+            const calles = new Set();
+
+            filas.forEach(r => {
+                const c = obtenerValorCSV(r, 'calle', 'Calle', 'CALLE');
+                if (c) calles.add(c);
+            });
+
+            calles.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c;
+                opt.textContent = c;
+                calleSelect.appendChild(opt);
+            });
+            calleCerradaGuardada = false;
+            actualizarBotonesAccion();
+        }
+
+        // --- 7. CARGA DINÁMICA DE STOCK UNIVERSAL (stock_tmt1.csv) ---
+        async function cargarStockBodegaEnSegundoPlano(bodega) {
+            const chip = document.getElementById('infoStockActivo');
+            const bodegaKey = bodega.trim().toUpperCase();
+            const bodegaFile = bodega.trim().toLowerCase();
+
+            if (bodegaStockCargada === bodegaKey && datosStockActivo.length > 0) return;
+
+            chip.className = "hud-chip stock-loading";
+            chip.innerText = `STOCK: Cargando maestro stock_tmt1.csv...`;
+
+            // 1. Buscar si ya estaba en IndexedDB local
+            try {
+                const cache = await db.stocks_bodega.get(bodegaKey);
+                if (cache && cache.datos && cache.datos.length > 0) {
+                    datosStockActivo = cache.datos;
+                    bodegaStockCargada = bodegaKey;
+                    chip.className = "hud-chip stock-info";
+                    chip.innerText = `STOCK: stock_tmt1 (${datosStockActivo.length} ítems - Offline)`;
+                }
+            } catch (e) {}
+
+            // 2. Rutas prioritarias: busca primero stock_tmt1.csv universal, luego respaldos específicos por bodega
+            const rutas = [
+                `./data/stock_tmt1.csv?t=${Date.now()}`,
+                `./stock_tmt1.csv?t=${Date.now()}`,
+                `./data/stock_${bodegaFile}.csv?t=${Date.now()}`
+            ];
+
+            for (const r of rutas) {
+                try {
+                    const res = await fetch(r);
+                    if (res.ok) {
+                        const text = await res.text();
+                        if (!text.trim().startsWith("<")) {
+                            Papa.parse(text, {
+                                ...parseConfig,
+                                complete: async (results) => {
+                                    datosStockActivo = results.data;
+                                    bodegaStockCargada = bodegaKey;
+                                    await db.stocks_bodega.put({ bodega: bodegaKey, datos: results.data, timestamp: new Date().toISOString() });
+                                    chip.className = "hud-chip stock-info";
+                                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems)`;
+                                }
+                            });
+                            return;
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            if (datosStockActivo.length === 0 || bodegaStockCargada !== bodegaKey) {
+                chip.className = "hud-chip stock-loading";
+                chip.innerText = `STOCK: stock_tmt1 no hallado (Use Carga Manual)`;
+            }
+        }
+
+        // --- 8. CONFIGURACIÓN DE CALLE Y METAS ---
+        async function configurarCalle() {
+            try {
+                const bodega = document.getElementById('bodegaSelect').value;
+                const subBodega = document.getElementById('subBodegaSelect').value;
+                const calle = document.getElementById('calleSelect').value;
+                
+                if (bodega && calle) {
+                    capturasCalleActual = await db.capturas
+                        .where('bodega')
+                        .equals(bodega)
+                        .filter(c => c.calle === calle)
+                        .toArray();
+                } else {
+                    capturasCalleActual = [];
+                }
+                
+                contadorActual = capturasCalleActual.length;
+                calleCerradaGuardada = contadorActual > 0;
+
+                if (bodega && calle) {
+                    const regPlano = datosPlano.find(row => 
+                        obtenerValorCSV(row, 'bodega', 'Bodega') === bodega && 
+                        (!subBodega || obtenerValorCSV(row, 'sub_bodega', 'subbodega', 'Sub_Bodega') === subBodega) &&
+                        obtenerValorCSV(row, 'calle', 'Calle') === calle
+                    );
+                    if (regPlano) {
+                        const cant = obtenerValorCSV(regPlano, 'cantidad_lotes', 'Cantidad_Lotes', 'meta');
+                        document.getElementById('metaLotes').value = cant ? parseInt(cant, 10) : 300;
+                    }
+                }
+                actualizarProgresoVisual();
+                actualizarBotonesAccion();
+            } catch (err) {
+                console.error("Error al configurar calle:", err);
+            }
+        }
+
+        function actualizarProgresoVisual() {
+            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
+            document.getElementById('displayProgress').innerText = `${contadorActual} / ${meta}`;
+            
+            const pct = meta > 0 ? Math.min(100, Math.round((contadorActual / meta) * 100)) : 0;
+            document.getElementById('displayPercent').innerText = `${pct}%`;
+            
+            const fillEl = document.getElementById('progressBarFill');
+            if (fillEl) fillEl.style.width = `${pct}%`;
+
+            actualizarBotonesAccion();
+        }
+
+        function actualizarBotonesAccion() {
+            const btnCerrar = document.getElementById('btnCerrarCalle');
+            const btnReabrir = document.getElementById('btnReabrirCalle');
+            const inputScanner = document.getElementById('scannerInput');
+            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
+
+            if (calleCerradaGuardada) {
+                btnCerrar.style.display = 'none';
+                btnReabrir.style.display = 'inline-flex';
+                inputScanner.disabled = true;
+                inputScanner.placeholder = "Calle cerrada. Pulse Reabrir.";
+            } else if (contadorActual >= meta && meta > 0) {
+                btnCerrar.style.display = 'inline-flex';
+                btnReabrir.style.display = 'none';
+                inputScanner.disabled = true;
+                inputScanner.placeholder = "Meta alcanzada. Amplíe meta para continuar.";
+            } else {
+                btnCerrar.style.display = 'inline-flex';
+                btnReabrir.style.display = 'none';
+                inputScanner.disabled = false;
+                inputScanner.placeholder = "Escanear Lote...";
+            }
+        }
+
+        // --- 9. MOTOR DE ESCANEO Y CAPTURA ---
+        document.getElementById('scannerInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                procesarEntradaLote(this.value);
+                this.value = '';
+            }
+        });
+
+        function procesarEntradaLote(valorLote) {
+            if (!operarioActual) {
+                alert("Error: No hay un operario asignado.");
+                cambiarVista('config');
+                return;
+            }
+            const bodega = document.getElementById('bodegaSelect').value;
+            const subBodega = document.getElementById('subBodegaSelect').value;
+            const calle = document.getElementById('calleSelect').value;
+            const lote = String(valorLote || '').trim();
+
+            if (!bodega || !calle) { 
+                alert('Seleccione Bodega y Calle primero.'); 
+                return; 
+            }
+            if (lote === '') return;
+
+            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
+            if (contadorActual >= meta) {
+                alert(`Se ha alcanzado la meta de ${meta} lotes para esta calle. Amplíe la cantidad de forma manual si desea capturar más.`);
+                return;
+            }
+
+            procesarLoteEscaneado(bodega, subBodega, calle, lote);
+        }
+
+        async function procesarLoteEscaneado(bodega, subBodega, calle, lote) {
+            try {
+                // 1. Verificación misma calle
+                const yaCapturadoCalle = capturasCalleActual.find(c => String(c.lote).trim() === lote);
+                if (yaCapturadoCalle) {
+                    emitirSonido('error');
+                    setTimeout(() => {
+                        mostrarModal("¡BLOQUEO: LOTE DUPLICADO!", `El lote ${lote} ya fue escaneado en esta misma calle. La captura ha sido bloqueada.`, function() {}, false);
+                    }, 50);
+                    return;
+                }
+
+                // 2. Verificación en otras calles
+                const yaCapturadoOtraCalle = await db.capturas
+                    .where('lote')
+                    .equals(lote)
+                    .filter(c => c.calle !== calle)
+                    .first();
+
+                if (yaCapturadoOtraCalle) {
+                    emitirSonido('error');
+                    setTimeout(() => {
+                        mostrarModal("¡BLOQUEO: LOTE EN OTRA CALLE!", `El lote ${lote} ya fue registrado previamente en la calle ${yaCapturadoOtraCalle.calle}. La captura ha sido bloqueada.`, function() {}, false);
+                    }, 50);
+                    return;
+                }
+
+                verificarStockYLuegoRegistrar(bodega, subBodega, calle, lote, "NORMAL");
+            } catch (err) {
+                console.error("Error al validar lote:", err);
+            }
+        }
+
+        function verificarStockYLuegoRegistrar(bodega, subBodega, calle, lote, estadoInicial) {
+            let infoStock = null;
+            if (datosStockActivo.length > 0) {
+                infoStock = datosStockActivo.find(row => obtenerValorCSV(row, 'lote', 'Lote', 'LOTE') === lote);
+            }
+
+            if (!infoStock && datosStockActivo.length > 0) {
+                emitirSonido('warning');
+                setTimeout(() => {
+                    mostrarModal("Sobrante / No Encontrado", `El lote ${lote} no está en el stock activo. ¿Agregar de todas formas?`, function(confirmado) {
+                        if (confirmado) {
+                            emitirSonido('success');
+                            registrarCaptura(bodega, subBodega, calle, lote, estadoInicial === "NORMAL" ? "MANUAL_SOBRANTE" : estadoInicial, {});
+                        } else {
+                            enfocarScanner();
+                        }
+                    }, true);
+                }, 50);
+                return;
+            }
+
+            const datosExtra = infoStock ? { 
+                sku: obtenerValorCSV(infoStock, 'sku', 'SKU'), 
+                descripcion: obtenerValorCSV(infoStock, 'descripción', 'descripcion', 'Descripción', 'Descripcion', 'DESCRIPCION'), 
+                piezas: obtenerValorCSV(infoStock, 'piezas', 'Piezas', 'PIEZAS'), 
+                volumen: obtenerValorCSV(infoStock, 'volumen', 'Volumen', 'VOLUMEN') 
+            } : {};
+
+            registrarCaptura(bodega, subBodega, calle, lote, estadoInicial, datosExtra);
+        }
+
+        async function registrarCaptura(bodega, subBodega, calle, lote, estado, extra = {}) {
+            try {
+                const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
+                if (contadorActual >= meta) {
+                    alert(`No se pueden registrar más lotes. Se alcanzó la meta de ${meta}.`);
+                    return;
+                }
+
+                emitirSonido('success');
+                contadorActual++;
+
+                const nuevaCaptura = { 
+                    operario: operarioActual, 
+                    bodega: String(bodega), 
+                    sub_bodega: String(subBodega || ''), 
+                    calle: String(calle), 
+                    lote: String(lote), 
+                    sku: extra.sku || '', 
+                    descripcion: extra.descripcion || '', 
+                    piezas: extra.piezas || '', 
+                    volumen: extra.volumen || '', 
+                    estado_captura: estado, 
+                    comentario_calle: "", 
+                    timestamp: new Date().toISOString() 
+                };
+
+                const newId = await db.capturas.add(nuevaCaptura);
+                nuevaCaptura.id = newId;
+                capturasCalleActual.push(nuevaCaptura);
+                capturasGlobales.push(nuevaCaptura);
+
+                actualizarProgresoVisual();
+                await renderizarResumen();
+                enfocarScanner();
+            } catch (err) {
+                console.error("Error al guardar captura:", err);
+                alert("Error al registrar captura en almacenamiento local.");
+            }
+        }
+
+        // --- 10. ESCÁNER POR CÁMARA ---
+        function abrirEscanearCamara() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const calle = document.getElementById('calleSelect').value;
+            if (!bodega || !calle) {
+                alert('Seleccione Bodega y Calle primero.');
+                return;
+            }
+
+            document.getElementById('camaraModal').style.display = 'block';
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 150 } },
+                (decodedText) => {
+                    cerrarEscanearCamara();
+                    procesarEntradaLote(decodedText);
+                },
+                () => {}
+            ).catch((err) => {
+                alert("No se pudo iniciar la cámara. Verifique permisos.");
+                document.getElementById('camaraModal').style.display = 'none';
+                enfocarScanner();
+            });
+        }
+
+        function cerrarEscanearCamara() {
+            document.getElementById('camaraModal').style.display = 'none';
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().catch(err => console.warn(err));
+            }
+            enfocarScanner();
+        }
+
+        // --- 11. MODALES Y DIÁLOGOS ---
+        function mostrarModal(titulo, mensaje, callback, mostrarCancelar = true) {
+            document.getElementById('modalTitle').innerText = titulo;
+            document.getElementById('modalMessage').innerText = mensaje;
+            document.getElementById('modalBtnCancelar').style.display = mostrarCancelar ? 'inline-flex' : 'none';
+            document.getElementById('alertModal').style.display = 'block';
+            callbackModal = callback;
+        }
+
+        function resolverModal(confirmado) {
+            document.getElementById('alertModal').style.display = 'none';
+            if (callbackModal) { 
+                const cb = callbackModal; 
+                callbackModal = null; 
+                cb(confirmado); 
+            }
+            enfocarScanner();
+        }
+
+        function abrirModalDetalle() {
+            if (!document.getElementById('calleSelect').value) { 
+                alert('Seleccione una calle primero.'); 
+                return; 
+            }
+            renderizarTablaDetalle();
+            document.getElementById('detalleModal').style.display = 'block';
+        }
+
+        function renderizarTablaDetalle() {
+            const calle = document.getElementById('calleSelect').value;
+            document.getElementById('detalleTitle').innerText = `Lotes en: ${calle} (${contadorActual})`;
+            const tbody = document.getElementById('tablaDetalleBody');
+            tbody.innerHTML = '';
+            
+            if (capturasCalleActual.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--color-text-muted); padding: 16px;">No hay lotes capturados.</td></tr>`;
+                return;
+            }
+
+            const fragmento = document.createDocumentFragment();
+            capturasCalleActual.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td><strong>${item.lote}</strong></td>
+                    <td>${item.sku || '-'}</td>
+                    <td style="text-align:center;">
+                        <button type="button" class="danger-action" onclick="eliminarCaptura(${item.id})">✕ Borrar</button>
+                    </td>
+                `;
+                fragmento.appendChild(tr);
+            });
+            tbody.appendChild(fragmento);
+        }
+
+        async function eliminarCaptura(idRegistro) {
+            try {
+                await db.capturas.delete(idRegistro);
+                const bodega = document.getElementById('bodegaSelect').value;
+                const calle = document.getElementById('calleSelect').value;
+                
+                capturasCalleActual = await db.capturas
+                    .where('bodega')
+                    .equals(bodega)
+                    .filter(c => c.calle === calle)
+                    .toArray();
+
+                contadorActual = capturasCalleActual.length;
+                capturasGlobales = await db.capturas.toArray();
+                
+                actualizarProgresoVisual();
+                renderizarTablaDetalle();
+                await renderizarResumen();
+            } catch (err) {
+                console.error("Error al eliminar captura:", err);
+            }
+        }
+
+        function cerrarModalDetalle() { 
+            document.getElementById('detalleModal').style.display = 'none'; 
+            enfocarScanner(); 
+        }
+
+        function abrirModalCierreCalle() {
+            const bodega = document.getElementById('bodegaSelect').value;
+            const calle = document.getElementById('calleSelect').value;
+            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
+
+            if (!bodega || !calle) { alert('Seleccione Bodega y Calle.'); return; }
+            if (contadorActual !== meta) {
+                alert(`No coincide la cantidad de capturas (${contadorActual}) con la meta (${meta}).`);
+                return;
+            }
+
+            document.getElementById('cierreInfoMeta').innerText = `CALLE: ${calle} // LOTES: ${contadorActual} / META: ${meta}`;
+            document.getElementById('comentarioCalleInput').value = '';
+            document.getElementById('cierreModal').style.display = 'block';
+        }
+
+        function cerrarModalCierre() {
+            document.getElementById('cierreModal').style.display = 'none';
+            enfocarScanner();
+        }
+
+        async function confirmarCierreCalle() {
+            try {
+                const comentario = document.getElementById('comentarioCalleInput').value.trim();
+                const bodega = document.getElementById('bodegaSelect').value;
+                const calle = document.getElementById('calleSelect').value;
+
+                const ids = capturasCalleActual.map(c => c.id);
+                await db.transaction('rw', db.capturas, async () => {
+                    for (const id of ids) {
+                        await db.capturas.update(id, { comentario_calle: comentario });
+                    }
+                });
+
+                capturasCalleActual = await db.capturas
+                    .where('bodega')
+                    .equals(bodega)
+                    .filter(c => c.calle === calle)
+                    .toArray();
+
+                capturasGlobales = await db.capturas.toArray();
+                calleCerradaGuardada = true;
+                
+                localStorage.setItem('inv_ultima_calle', `${bodega} - ${calle}`);
+                actualizarUIUltimaCalle();
+
+                cerrarModalCierre();
+                actualizarBotonesAccion();
+                await renderizarResumen();
+                alert(`Calle ${calle} cerrada correctamente.`);
+            } catch (err) {
+                console.error("Error al cerrar calle:", err);
+            }
+        }
+
+        function reabrirCalle() {
+            calleCerradaGuardada = false;
+            actualizarBotonesAccion();
+            enfocarScanner();
+        }
+
+        function enfocarScanner() {
+            setTimeout(() => {
+                const vistaCaptura = document.getElementById('viewCaptura');
+                const input = document.getElementById('scannerInput');
+                if (vistaCaptura && vistaCaptura.classList.contains('active') && input && !input.disabled) {
+                    input.focus();
+                }
+            }, 100);
+        }
+
+        function obtenerValorCSV(fila, ...nombres) {
+            if (!fila) return '';
+            for (const nombre of nombres) {
+                if (fila[nombre] !== undefined && fila[nombre] !== null) return String(fila[nombre]).trim();
+                const lower = nombre.toLowerCase();
+                for (const key in fila) {
+                    if (key.toLowerCase().trim() === lower && fila[key] !== undefined && fila[key] !== null) {
+                        return String(fila[key]).trim();
+                    }
+                }
+            }
+            return '';
+        }
+
+        function emitirSonido(tipo) {
+            try {
+                const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+                if (!audioContextSingleton) audioContextSingleton = new AudioCtxClass();
+                if (audioContextSingleton.state === 'suspended') audioContextSingleton.resume();
+
+                const ctx = audioContextSingleton;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'square';
+                gain.gain.setValueAtTime(0.2, ctx.currentTime);
+
+                let dur = 0.12;
+                if (tipo === 'success') osc.frequency.setValueAtTime(1200, ctx.currentTime);
+                else if (tipo === 'error') { osc.frequency.setValueAtTime(300, ctx.currentTime); dur = 0.45; }
+                else if (tipo === 'warning') { osc.frequency.setValueAtTime(650, ctx.currentTime); dur = 0.25; }
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + dur);
+            } catch (e) {}
+        }
+
+        function actualizarUIUltimaCalle() {
+            const u = localStorage.getItem('inv_ultima_calle');
+            const el = document.getElementById('infoUltimaCalle');
+            if (el) el.innerText = u ? `CALLE: ${u}` : "CALLE: Ninguna";
+        }
+
+        async function renderizarResumen() {
+            try {
+                const capturas = await db.capturas.toArray();
+                const resumen = {};
+                for (let i = 0; i < capturas.length; i++) {
+                    const c = capturas[i];
+                    if (!resumen[c.bodega]) resumen[c.bodega] = {};
+                    if (!resumen[c.bodega][c.calle]) resumen[c.bodega][c.calle] = 0;
+                    resumen[c.bodega][c.calle]++;
+                }
+
+                let html = '<div style="background: var(--bg-subtle); padding: 14px; border-radius: var(--radius-tech); border: 1px solid var(--color-border); font-size: 12px; font-family: var(--font-mono);">';
+                const bodegas = Object.keys(resumen);
+                if (bodegas.length === 0) {
+                    html += '<span style="color: var(--color-text-muted);">No hay datos capturados aún.</span>';
+                } else {
+                    for (const b of bodegas) {
+                        html += `<div style="margin-top: 6px; color: var(--color-brand); font-weight: 700;">[ BODEGA: ${b} ]</div>`;
+                        for (const c in resumen[b]) {
+                            html += `<div style="margin-left: 14px; margin-top: 4px; color: var(--color-text-main);">&bull; Calle ${c}: <strong>${resumen[b][c]}</strong> lotes</div>`;
+                        }
+                    }
+                }
+                html += '</div>';
+                
+                const contenedorResumen = document.getElementById('resumenInventario');
+                if (contenedorResumen) contenedorResumen.innerHTML = html;
+            } catch (err) {}
+        }
+
+        function cambiarVista(vista) {
+            ['Config', 'Captura', 'Avance'].forEach(v => {
+                document.getElementById('view' + v).classList.remove('active');
+                document.getElementById('tab' + v).classList.remove('active');
+            });
+            document.getElementById('view' + vista.charAt(0).toUpperCase() + vista.slice(1)).classList.add('active');
+            document.getElementById('tab' + vista.charAt(0).toUpperCase() + vista.slice(1)).classList.add('active');
+
+            if (vista === 'captura') {
+                if (!operarioActual) {
+                    alert("Seleccione un operario en Configuración.");
+                    cambiarVista('config');
+                    return;
+                }
+                enfocarScanner();
+            } else if (vista === 'avance') {
+                renderizarResumen();
+            }
+        }
+
+        function cargarOperariosSelect() {
+            const opSelect = document.getElementById('operarioSelect');
+            opSelect.innerHTML = '<option value="">Seleccione Operario...</option>';
+            const operariosUnicos = new Set();
+            
+            datosOperarios.forEach(row => {
+                const op = obtenerValorCSV(row, 'operario', 'Operario', 'OPERARIO', 'nombre', 'Nombre');
+                if (op) operariosUnicos.add(op);
+            });
+
+            operariosUnicos.forEach(op => {
+                const opt = document.createElement('option');
+                opt.value = op;
+                opt.textContent = op;
+                if (op === operarioActual) opt.selected = true;
+                opSelect.appendChild(opt);
+            });
+
+            if (operarioActual) opSelect.disabled = true;
+        }
+
+        function bloquearOperarioConfig() {
+            const opSelect = document.getElementById('operarioSelect');
+            operarioActual = opSelect.value;
+            if (operarioActual) {
+                opSelect.disabled = true;
+                document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
+                localStorage.setItem('inv_operario', operarioActual);
+                alert(`Operario asignado: ${operarioActual}. Campo bloqueado.`);
+            }
+        }
+
+        // --- 12. DESCARGA Y COMPARTIR DIRECTO (QUICK SHARE / WHATSAPP / EXCEL) ---
+        function descargarArchivoCSV(contenidoCSV, nombreArchivo) {
+            const blob = new Blob(["\uFEFF" + contenidoCSV], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.setAttribute("download", nombreArchivo);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        async function descargarCSVGlobal() {
+            try {
+                const todas = await db.capturas.toArray();
+                if (todas.length === 0) { 
+                    alert('Sin capturas guardadas.'); 
+                    return; 
+                }
+
+                const ahora = new Date();
+                const dia = String(ahora.getDate()).padStart(2, '0');
+                const mes = ahora.toLocaleString('es-ES', { month: 'short' }).replace('.', '');
+                const hora = String(ahora.getHours()).padStart(2, '0') + String(ahora.getMinutes()).padStart(2, '0');
+                const opLimpio = (operarioActual || 'SinOp').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, '_');
+                const bVal = document.getElementById('bodegaSelect').value;
+                const bodegaLimpia = (bVal || (todas[0] && todas[0].bodega) || 'Bodega').replace(/\s+/g, '_');
+                
+                const nombreArchivo = `captura_${bodegaLimpia}_${opLimpio}_${dia}${mes}_${hora}.csv`;
+                const csvString = Papa.unparse(todas);
+                const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+
+                if (navigator.canShare) {
+                    const file = new File([blob], nombreArchivo, { type: 'text/csv;charset=utf-8;' });
+                    if (navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: `Inventario Arauco - ${bodegaLimpia}`,
+                                text: `Consolidado de inventario ${operarioActual} en Bodega ${bodegaLimpia}`
+                            });
+                            return; 
+                        } catch (err) {
+                            if (err.name === 'AbortError') return; 
+                            console.warn("Aviso al compartir:", err);
+                        }
+                    }
+                }
+
+                descargarArchivoCSV(csvString, nombreArchivo);
+            } catch (err) {
+                console.error("Error al exportar consolidado:", err);
+                alert("Error al exportar consolidado.");
+            }
+        }
+
+        async function descargarReporteDiferencias() {
+            try {
+                if (datosStockActivo.length === 0) {
+                    alert('No hay archivo de stock cargado para comparar en esta bodega.');
+                    return;
+                }
+                const capturasBodega = await db.capturas.where('bodega').equals(bodegaStockCargada).toArray();
+                if (capturasBodega.length === 0) {
+                    alert('No hay capturas registradas para esta bodega.');
+                    return;
+                }
+
+                const stockMap = new Map();
+                datosStockActivo.forEach(row => {
+                    const l = obtenerValorCSV(row, 'lote', 'Lote');
+                    if (l) stockMap.set(l, row);
+                });
+
+                const capturasMap = new Map();
+                capturasBodega.forEach(c => capturasMap.set(String(c.lote).trim(), c));
+
+                const diferencias = [];
+
+                capturasBodega.forEach(c => {
+                    const l = String(c.lote).trim();
+                    if (stockMap.has(l)) {
+                        const st = stockMap.get(l);
+                        diferencias.push({
+                            tipo: "PAREADO", lote: l, bodega: c.bodega, sub_bodega: c.sub_bodega, calle: c.calle,
+                            sku: c.sku || obtenerValorCSV(st, 'sku', 'SKU'), operario: c.operario
+                        });
+                    } else {
+                        diferencias.push({
+                            tipo: "SOBRANTE", lote: l, bodega: c.bodega, sub_bodega: c.sub_bodega, calle: c.calle,
+                            sku: c.sku, operario: c.operario
+                        });
+                    }
+                });
+
+                stockMap.forEach((st, l) => {
+                    if (!capturasMap.has(l)) {
+                        diferencias.push({
+                            tipo: "FALTANTE", lote: l, bodega: bodegaStockCargada, sub_bodega: "-", calle: "-",
+                            sku: obtenerValorCSV(st, 'sku', 'SKU'), operario: "-"
+                        });
+                    }
+                });
+
+                const ahora = new Date();
+                const dia = String(ahora.getDate()).padStart(2, '0');
+                const mes = ahora.toLocaleString('es-ES', { month: 'short' }).replace('.', '');
+                const hora = String(ahora.getHours()).padStart(2, '0') + String(ahora.getMinutes()).padStart(2, '0');
+                const nombreDifs = `diferencias_${bodegaStockCargada.toLowerCase()}_${dia}${mes}_${hora}.csv`;
+                
+                const csvString = Papa.unparse(diferencias);
+                const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
+
+                if (navigator.canShare) {
+                    const file = new File([blob], nombreDifs, { type: 'text/csv;charset=utf-8;' });
+                    if (navigator.canShare({ files: [file] })) {
+                        try {
+                            await navigator.share({
+                                files: [file],
+                                title: `Diferencias Arauco - ${bodegaStockCargada}`,
+                                text: `Reporte de diferencias inventario Bodega ${bodegaStockCargada}`
+                            });
+                            return;
+                        } catch (e) {
+                            if (e.name === 'AbortError') return;
+                        }
+                    }
+                }
+
+                descargarArchivoCSV(csvString, nombreDifs);
+            } catch (err) {
+                console.error("Error al generar diferencias:", err);
+                alert("Error al exportar diferencias.");
+            }
+        }
+
+        // --- 13. REINICIO DE SISTEMA ---
+        function reiniciarSistema() {
+            mostrarModal("¿Reiniciar Sistema?", "Se borrarán las capturas y los datos locales de este dispositivo.", async function(conf) {
+                if (conf) {
+                    await db.capturas.clear();
+                    localStorage.removeItem('inv_operario');
+                    localStorage.removeItem('inv_ultima_calle');
+                    location.reload();
+                } else {
+                    enfocarScanner();
+                }
+            }, true);
+        }
+    </script>
+</body>
+</html>
