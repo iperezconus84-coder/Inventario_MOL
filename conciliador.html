@@ -208,7 +208,6 @@
                         <button onclick="switchTab('fal')" id="tab-fal" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900">➖ Faltantes (<span id="count-fal">0</span>)</button>
                         <button onclick="switchTab('ok')" id="tab-ok" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900">✅ Pareados (<span id="count-ok">0</span>)</button>
                     </div>
-                    <!-- Botón para exportar únicamente la tabla activa actual -->
                     <button onclick="exportarTablaActivaExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Exporta a Excel los datos que estás viendo actualmente en esta pestaña">
                         📊 Exportar Vista
                     </button>
@@ -407,8 +406,8 @@
                         let sku = findVal(row, ['Material', 'SKU', 'CodigoMat', 'Cod']);
                         let desc = findVal(row, ['Desc.Mat.', 'Descripcion', 'Desc', 'MaterialDesc']);
                         
-                        let rawBodega = findVal(row, ['Almacen', 'Bodega', 'Alm', 'Centro']);
-                        let bodega = (rawBodega && !String(rawBodega).toUpperCase().includes('TMT')) ? String(rawBodega).trim() : '0055';
+                        let rawBodega = findVal(row, ['Almacen', 'Bodega', 'Alm', 'Centro', 'Planta', 'Plant']);
+                        let bodega = (rawBodega && String(rawBodega).trim() !== '') ? String(rawBodega).trim().toUpperCase() : 'TMT1';
 
                         let vol = parseNum(findVal(row, ['St.Valorad', 'Volumen', 'Vol', 'Cantidad']));
                         let pcs = parseNum(findVal(row, ['NºPiezas', 'NÂºPiezas', 'Piezas', 'Pcs']));
@@ -495,8 +494,8 @@
                             let sku = findVal(row, ['SKU', 'Material', 'CodigoMat', 'Cod']);
                             let desc = findVal(row, ['Descripcion', 'Desc.Mat.', 'Desc']);
                             
-                            let rawBodega = findVal(row, ['Bodega', 'Almacen', 'Alm']);
-                            let bodega = (rawBodega && !String(rawBodega).toUpperCase().includes('TMT')) ? String(rawBodega).trim() : '0055';
+                            let rawBodega = findVal(row, ['Bodega', 'Almacen', 'Alm', 'Centro', 'Planta', 'Plant']);
+                            let bodega = (rawBodega && String(rawBodega).trim() !== '') ? String(rawBodega).trim().toUpperCase() : 'TMT1';
 
                             let calle = findVal(row, ['Calle', 'Pasillo', 'Ubicacion', 'Ubic']);
                             let vol = parseNum(findVal(row, ['Volumen', 'St.Valorad', 'Vol']));
@@ -557,7 +556,7 @@
                                         Horas: data.horas.join(', '),
                                         SKU: firstTerrenoItem.SKU || '',
                                         Descripcion: firstTerrenoItem.Descripcion || '',
-                                        Bodega: firstTerrenoItem.Bodega || '0055'
+                                        Bodega: firstTerrenoItem.Bodega || 'TMT1'
                                     });
                                 }
 
@@ -580,15 +579,15 @@
 
                             let whBreakdown = {};
                             let allWarehouses = new Set();
-                            rawData.sap.forEach(i => allWarehouses.add(i.Bodega || '0055'));
-                            rawData.terreno.forEach(i => allWarehouses.add(i.Bodega || '0055'));
+                            rawData.sap.forEach(i => allWarehouses.add(i.Bodega || 'TMT1'));
+                            rawData.terreno.forEach(i => allWarehouses.add(i.Bodega || 'TMT1'));
 
                             allWarehouses.forEach(w => {
-                                let sapB = rawData.sap.filter(i => (i.Bodega || '0055') === w);
-                                let terB = rawData.terreno.filter(i => (i.Bodega || '0055') === w);
-                                let parB = allPareados.filter(i => (i.Bodega || '0055') === w);
-                                let sobB = allSobrantes.filter(i => (i.Bodega || '0055') === w);
-                                let falB = allFaltantes.filter(i => (i.Bodega || '0055') === w);
+                                let sapB = rawData.sap.filter(i => (i.Bodega || 'TMT1') === w);
+                                let terB = rawData.terreno.filter(i => (i.Bodega || 'TMT1') === w);
+                                let parB = allPareados.filter(i => (i.Bodega || 'TMT1') === w);
+                                let sobB = allSobrantes.filter(i => (i.Bodega || 'TMT1') === w);
+                                let falB = allFaltantes.filter(i => (i.Bodega || 'TMT1') === w);
 
                                 let volSap = sapB.reduce((acc, i) => acc + i.Volumen, 0);
                                 let volTer = terB.reduce((acc, i) => acc + i.Volumen, 0);
@@ -802,7 +801,6 @@
             renderTableData();
         }
 
-        // Función para exportar exactamente los datos que están activos y filtrados en la pestaña de auditoría
         function exportarTablaActivaExcel() {
             let tab = globalData.currentTab;
             let query = document.getElementById('search-input').value.toLowerCase();
