@@ -59,11 +59,8 @@
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2 justify-center">
-                <button onclick="exportarCierreHistoricoLocal()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Genera el archivo estandarizado para guardar en tu carpeta /historicos/">
+                <button onclick="exportarCierreHistoricoLocal()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Genera el archivo estandarizado para guardar en tu carpeta local del escritorio /historico/">
                     📂 Guardar Cierre Local
-                </button>
-                <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
-                    📊 Exportar XLSX
                 </button>
                 <button onclick="enviarCorreoEjecutivo()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                     📧 Correo Ejecutivo
@@ -868,46 +865,7 @@
             }).join('');
         }
 
-        function exportToExcel() {
-            if (rawData.sap.length === 0) {
-                alert("Por favor cargue y procese los archivos de inventario primero.");
-                return;
-            }
-
-            let wb = XLSX.utils.book_new();
-
-            let summaryData = Object.keys(globalData.warehouseBreakdown).map(w => {
-                let d = globalData.warehouseBreakdown[w];
-                return {
-                    Almacen: w,
-                    Vol_Teorico_m3: Number(d.volSap.toFixed(3)),
-                    Vol_Terreno_m3: Number(d.volTer.toFixed(3)),
-                    Pareados_m3: Number(d.volPar.toFixed(3)),
-                    Sobrantes_m3: Number(d.volSob.toFixed(3)),
-                    Faltantes_m3: Number(d.volFal.toFixed(3)),
-                    IRA_Porcentaje: Number(d.ira.toFixed(1))
-                };
-            });
-            let wsSummary = XLSX.utils.json_to_sheet(summaryData);
-            XLSX.utils.book_append_sheet(wb, wsSummary, "Resumen por Almacen");
-
-            let wsPareados = XLSX.utils.json_to_sheet(globalData.pareados);
-            XLSX.utils.book_append_sheet(wb, wsPareados, "Pareados OK");
-
-            let wsSobrantes = XLSX.utils.json_to_sheet(globalData.sobrantes);
-            XLSX.utils.book_append_sheet(wb, wsSobrantes, "Sobrantes");
-
-            let wsFaltantes = XLSX.utils.json_to_sheet(globalData.faltantes);
-            XLSX.utils.book_append_sheet(wb, wsFaltantes, "Faltantes");
-
-            let wsDuplicados = XLSX.utils.json_to_sheet(globalData.duplicados);
-            XLSX.utils.book_append_sheet(wb, wsDuplicados, "Duplicados Terreno");
-
-            let fechaStr = new Date().toISOString().slice(0,10);
-            XLSX.writeFile(wb, `Conciliacion_Inventario_Molduras_${fechaStr}.xlsx`);
-        }
-
-        // Función clave para generar el archivo estandarizado listo para guardar en /historicos/
+        // Función adaptada para exportar el cierre con la nomenclatura que lee la biblioteca local
         function exportarCierreHistoricoLocal() {
             if (rawData.sap.length === 0 || globalData.pareados.length === 0) {
                 alert("No hay datos de inventario procesados para exportar.");
@@ -939,7 +897,7 @@
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.duplicados), "Duplicados");
 
             XLSX.writeFile(wb, `Cierre_Inventario_${centroNombre}_${fechaStr}.xlsx`);
-            alert(`Cierre generado con éxito. Guárdalo en tu estructura local /historicos/AÑO/MES/ para subirlo a GitHub.`);
+            alert(`Cierre generado con éxito. Guárdalo directamente en tu carpeta del escritorio (ej. historico/2026/09/).`);
         }
 
         function finalizarYLimpiar() {
