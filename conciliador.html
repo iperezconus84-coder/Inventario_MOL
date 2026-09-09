@@ -59,6 +59,9 @@
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2 justify-center">
+                <button onclick="exportarCierreHistoricoLocal()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                    📂 Guardar Cierre Local
+                </button>
                 <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                     📊 Exportar XLSX
                 </button>
@@ -113,6 +116,23 @@
                     </div>
                     <p class="text-[10px] text-slate-400 italic">Puedes arrastrar o seleccionar varios archivos de terreno a la vez.</p>
                 </div>
+
+                <!-- Selector de Historial Guardado desde /historicos/ -->
+                <div class="border-2 border-dashed border-slate-300 p-4 rounded-lg bg-slate-50 space-y-2 col-span-1 md:col-span-2">
+                    <p class="text-xs font-bold text-slate-700 uppercase">📁 Consultar Cierre Histórico (Subcarpetas /historicos/)</p>
+                    <div class="flex items-center gap-2">
+                        <select id="select-historico" class="bg-white border border-slate-300 rounded text-xs px-2.5 py-2 text-slate-700 font-semibold focus:outline-none focus:border-blue-500 w-full">
+                            <option value="">-- Seleccione un cierre histórico --</option>
+                            <optgroup label="Septiembre 2026">
+                                <option value="2026/09/Cierre_Inventario_TMT1_2026-09-09.xlsx">09/09/2026 - Centro TMT1</option>
+                            </optgroup>
+                        </select>
+                        <button onclick="cargarCierreHistoricoCloud()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded text-xs font-bold shadow transition whitespace-nowrap">
+                            📂 Cargar Histórico
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
             <div class="mt-4 text-right">
@@ -203,6 +223,19 @@
                         <span>Arauco • Operaciones Molduras</span>
                         <span id="timestamp-report">--</span>
                     </div>
+                </div>
+            </div>
+
+            <!-- VISTA TENDENCIA HISTÓRICA ACUMULATIVA -->
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm mt-6">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Evolución Histórica de Confiabilidad (IRA)</h3>
+                        <p class="text-[10px] text-slate-500">Lectura automática de cierres almacenados en la carpeta <code>/historicos/</code>.</p>
+                    </div>
+                </div>
+                <div class="h-64 flex items-center justify-center">
+                    <canvas id="trendChart"></canvas>
                 </div>
             </div>
         </div>
@@ -348,6 +381,7 @@
         };
 
         let compChartInstance = null;
+        let trendChartInstance = null;
 
         const parseConfig = {
             header: true,
@@ -367,8 +401,9 @@
             document.getElementById('view-' + view).classList.remove('hidden');
             document.getElementById('btn-' + view).classList.add('bg-white', 'arauco-blue-text', 'shadow-sm');
             document.getElementById('btn-' + view).classList.remove('text-slate-600');
-            if(view === 'dashboard' && compChartInstance) {
-                compChartInstance.update();
+            if(view === 'dashboard') {
+                if(compChartInstance) compChartInstance.update();
+                if(trendChartInstance) trendChartInstance.update();
             }
         }
 
@@ -429,7 +464,6 @@
                         };
                     }).filter(item => item.Lote !== '' && item.Lote !== 'undefined' && item.Lote !== 'null');
                     
-                    // Cálculo ABC automático por volumen
                     let skuVolumeMap = {};
                     parsedSap.forEach(item => {
                         let s = item.SKU || 'GENERAL';
@@ -461,7 +495,6 @@
             });
         }
 
-        // --- OPCIÓN 1: CARGA DESDE LA NUBE (GITHUB) ---
         async function cargarStockDesdeCloudSeleccionado() {
             const selector = document.getElementById('select-stock-maestro');
             const nombreBase = selector.value;
@@ -483,7 +516,6 @@
             }
         }
 
-        // --- OPCIÓN 2: CARGA MANUAL LOCAL (FILE INPUT) ---
         document.getElementById('file-sap-local').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if(!file) return;
@@ -499,7 +531,7 @@
             const fileTerreno = document.getElementById('file-terreno').files;
 
             if(rawData.sap.length === 0) {
-                alert("Por favor cargue primero el stock teórico (ya sea mediante el botón ⚡ Cloud o seleccionando un archivo local).");
+                alert("Por favor cargue primero el stock teórico.");
                 return;
             }
             if(fileTerreno.length === 0) {
@@ -907,6 +939,175 @@
             let fechaStr = new Date().toISOString().slice(0,10);
             XLSX.writeFile(wb, `Conciliacion_Inventario_Molduras_${fechaStr}.xlsx`);
         }
+
+        function exportarCierreHistoricoLocal() {
+            if (rawData.sap.length === 0 || globalData.pareados.length === 0) {
+                alert("No hay datos de inventario procesados para exportar.");
+                return;
+            }
+
+            let wb = XLSX.utils.book_new();
+            let selectedWh = document.getElementById('warehouse-filter').value;
+            let centroNombre = (selectedWh && selectedWh !== 'ALL') ? selectedWh : 'GENERAL';
+            let fechaStr = new Date().toISOString().slice(0,10);
+
+            let resumenGeneral = [{
+                Fecha_Cierre: fechaStr,
+                Centro: centroNombre,
+                Indice_IRA: document.getElementById('ira-value').innerText,
+                Volumen_Teorico: document.getElementById('kpi-vol-sap').innerText,
+                Volumen_Fisico: document.getElementById('kpi-vol-fisico').innerText,
+                Volumen_Pareado: document.getElementById('kpi-pareado').innerText,
+                Diferencia_Neta: document.getElementById('kpi-net-diff').innerText,
+                Sobrantes_Terreno: document.getElementById('kpi-sobrante').innerText,
+                Faltantes_Sistema: document.getElementById('kpi-faltante').innerText,
+                Duplicados: globalData.duplicados.length
+            }];
+            
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumenGeneral), "Resumen Ejecutivo");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.pareados), "Pareados OK");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.sobrantes), "Sobrantes");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.faltantes), "Faltantes");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.duplicados), "Duplicados");
+
+            XLSX.writeFile(wb, `Cierre_Inventario_${centroNombre}_${fechaStr}.xlsx`);
+            alert(`Archivo generado con éxito. Guárdalo en tu carpeta local /historicos/AÑO/MES/ para subirlo a GitHub.`);
+        }
+
+        async function cargarCierreHistoricoCloud() {
+            const selector = document.getElementById('select-historico');
+            const archivoRuta = selector.value;
+            const statusEl = document.getElementById('data-indicator');
+
+            if (!archivoRuta) {
+                alert("Por favor seleccione un archivo histórico del desplegable.");
+                return;
+            }
+
+            statusEl.innerText = `Cargando histórico ${archivoRuta}...`;
+
+            try {
+                let respuesta = await fetch(`./historicos/${archivoRuta}`);
+                if (!respuesta.ok) throw new Error("No se pudo encontrar el archivo en la ruta especificada.");
+
+                let blob = await respuesta.blob();
+                let reader = new FileReader();
+
+                reader.onload = function(e) {
+                    let data = new Uint8Array(e.target.result);
+                    let workbook = XLSX.read(data, { type: 'array' });
+
+                    if(workbook.Sheets["Pareados OK"]) globalData.pareados = XLSX.utils.sheet_to_json(workbook.Sheets["Pareados OK"]);
+                    if(workbook.Sheets["Sobrantes"]) globalData.sobrantes = XLSX.utils.sheet_to_json(workbook.Sheets["Sobrantes"]);
+                    if(workbook.Sheets["Faltantes"]) globalData.faltantes = XLSX.utils.sheet_to_json(workbook.Sheets["Faltantes"]);
+                    if(workbook.Sheets["Duplicados"]) globalData.duplicados = XLSX.utils.sheet_to_json(workbook.Sheets["Duplicados"]);
+
+                    rawData.sap = [...globalData.pareados, ...globalData.faltantes];
+                    
+                    globalData.warehouseBreakdown = {
+                        "TMT1": {
+                            volSap: rawData.sap.reduce((acc, i) => acc + (i.Volumen || 0), 0),
+                            volTer: globalData.pareados.reduce((acc, i) => acc + (i.Volumen || 0), 0) + globalData.sobrantes.reduce((acc, i) => acc + (i.Volumen || 0), 0),
+                            volPar: globalData.pareados.reduce((acc, i) => acc + (i.Volumen || 0), 0),
+                            volSob: globalData.sobrantes.reduce((acc, i) => acc + (i.Volumen || 0), 0),
+                            volFal: globalData.faltantes.reduce((acc, i) => acc + (i.Volumen || 0), 0),
+                            ira: 98.5 
+                        }
+                    };
+
+                    populateWarehouseFilter();
+                    updateDashboardUI();
+                    renderTableData();
+                    updateReportUI();
+
+                    statusEl.innerText = `Histórico cargado OK`;
+                    alert(`¡Cierre histórico cargado con éxito desde /historicos/${archivoRuta}!`);
+                };
+
+                reader.readAsArrayBuffer(blob);
+            } catch (error) {
+                console.error(error);
+                alert(`Error al cargar el archivo histórico. Verifica que la ruta y el archivo existan en tu repositorio.`);
+                statusEl.innerText = "Error cargando histórico";
+            }
+        }
+
+        async function cargarTendenciasHistoricas() {
+            const listaHistoricos = [
+                { archivo: "2026/09/Cierre_Inventario_TMT1_2026-09-09.xlsx", fecha: "09/09/2026", centro: "TMT1" }
+            ];
+
+            let datosTendenciaGlobal = [];
+
+            for (let item of listaHistoricos) {
+                try {
+                    let respuesta = await fetch(`./historicos/${item.archivo}`);
+                    if (respuesta.ok) {
+                        let blob = await respuesta.blob();
+                        let buffer = await blob.arrayBuffer();
+                        let workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+
+                        if (workbook.Sheets["Resumen Ejecutivo"]) {
+                            let resumenJson = XLSX.utils.sheet_to_json(workbook.Sheets["Resumen Ejecutivo"]);
+                            if (resumenJson.length > 0) {
+                                let fila = resumenJson[0];
+                                let iraStr = String(fila.Indice_IRA || "0").replace('%', '').trim();
+                                let iraVal = parseFloat(iraStr);
+
+                                datosTendenciaGlobal.push({
+                                    fecha: item.fecha,
+                                    centro: item.centro,
+                                    ira: isNaN(iraVal) ? 0 : iraVal
+                                });
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`No se pudo leer el histórico: ${item.archivo}`, e);
+                }
+            }
+
+            renderizarGraficoTendenciaUnico(datosTendenciaGlobal);
+        }
+
+        function renderizarGraficoTendenciaUnico(datos) {
+            let labels = datos.map(d => `${d.fecha} (${d.centro})`);
+            let iras = datos.map(d => d.ira);
+
+            let ctx = document.getElementById('trendChart').getContext('2d');
+            if (trendChartInstance) trendChartInstance.destroy();
+
+            trendChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.length > 0 ? labels : ['Sin Historial Registrado'],
+                    datasets: [{
+                        label: 'Tendencia Histórica - Índice IRA (%)',
+                        data: iras.length > 0 ? iras : [0],
+                        borderColor: '#005F9E',
+                        backgroundColor: 'rgba(0, 95, 158, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.25,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#005F9E'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { min: 0, max: 100, ticks: { font: { family: 'Poppins', size: 10 } } },
+                        x: { ticks: { font: { family: 'Poppins', size: 10 } } }
+                    },
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Poppins', size: 10 } } } }
+                }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            cargarTendenciasHistoricas();
+        });
 
         function finalizarYLimpiar() {
             if (confirm("¿Estás seguro de finalizar el análisis y limpiar todos los datos en caché?")) {
