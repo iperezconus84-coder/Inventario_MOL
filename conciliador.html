@@ -380,8 +380,8 @@
 
         function parseNum(val) {
             if(!val) return 0;
-            let clean = String(val).trim().replace(/\./g, '').replace(',', '.');
-            let num = parseFloat(clean);
+            let s = String(val).trim().replace(/\s+/g, '').replace(',', '.');
+            let num = parseFloat(s);
             return isNaN(num) ? 0 : num;
         }
 
@@ -397,6 +397,17 @@
             return '';
         }
 
+        // EXTRACCIÓN ESTRICTA Y QUIRÚRGICA: ÚNICAMENTE busca St.Valorad sin respaldos genéricos
+        function getStValoradExacto(row) {
+            for(let rKey in row) {
+                let cleanKey = rKey.replace(/^\ufeff/, '').trim();
+                if(cleanKey.toLowerCase() === 'st.valorad' || cleanKey.toLowerCase() === 'stvalorad') {
+                    return parseNum(row[rKey]);
+                }
+            }
+            return 0;
+        }
+
         function procesarDatosMaestrosCSV(csvText, origenNombre) {
             Papa.parse(csvText, {
                 ...parseConfig,
@@ -409,8 +420,8 @@
                         let rawBodega = findVal(row, ['Almacen', 'Bodega', 'Alm', 'Centro', 'Planta', 'Plant']);
                         let bodega = (rawBodega && String(rawBodega).trim() !== '') ? String(rawBodega).trim().toUpperCase() : 'TMT1';
 
-                        // PRIORIDAD ABSOLUTA: Extraer estrictamente de St.Valorad (o equivalentes de volumen valorado)
-                        let vol = parseNum(findVal(row, ['St.Valorad', 'StValorad', 'Volumen', 'Vol', 'Cantidad']));
+                        // EXTRACCIÓN EXCLUSIVA Y DIRECTA DE ST.VALORAD
+                        let vol = getStValoradExacto(row);
                         let pcs = parseNum(findVal(row, ['NºPiezas', 'NÂºPiezas', 'Piezas', 'Pcs']));
 
                         return {
@@ -449,7 +460,7 @@
                     }));
 
                     document.getElementById('data-indicator').innerText = `Maestro [${origenNombre}] (${rawData.sap.length} reg)`;
-                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros (St.Valorad asig.)!`);
+                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros usando estrictamente [St.Valorad]!`);
                 }
             });
         }
@@ -499,8 +510,8 @@
                             let bodega = (rawBodega && String(rawBodega).trim() !== '') ? String(rawBodega).trim().toUpperCase() : 'TMT1';
 
                             let calle = findVal(row, ['Calle', 'Pasillo', 'Ubicacion', 'Ubic']);
-                            // PRIORIDAD ABSOLUTA: Extraer de St.Valorad en terreno
-                            let vol = parseNum(findVal(row, ['St.Valorad', 'StValorad', 'Volumen', 'Vol']));
+                            // EXTRACCIÓN EXCLUSIVA Y DIRECTA DE ST.VALORAD EN TERRENO
+                            let vol = getStValoradExacto(row);
                             let pcs = parseNum(findVal(row, ['Piezas', 'NºPiezas', 'NÂºPiezas', 'Pcs']));
                             let operario = findVal(row, ['Operario', 'Usuario', 'User']) || 'Operario Terreno';
                             let hora = findVal(row, ['Hora', 'Time', 'Timestamp']) || '--:--';
