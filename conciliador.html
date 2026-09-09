@@ -78,29 +78,18 @@
     <!-- Contenido Principal -->
     <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full">
 
-        <!-- Panel de Ingestión Dual -->
+        <!-- Panel de Ingestión Dual (Solo Carga Manual Local) -->
         <section id="ingestion-section" class="mb-6 bg-white p-5 rounded-xl border border-slate-200 shadow-sm no-print">
             <h2 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Ingestión de Archivos (Slot 1: Stock Teórico vs Slot 2: Terreno)</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
-                <!-- Slot 1: Stock Teórico (Automático Nube o Manual Local) -->
+                <!-- Slot 1: Stock Teórico (Solo Carga Manual Local) -->
                 <div class="border-2 border-dashed border-slate-300 p-4 rounded-lg bg-slate-50 space-y-3">
-                    <p class="text-xs font-bold text-slate-600">Slot 1: Stock Teórico Maestro</p>
-                    
-                    <div class="flex items-center gap-2 bg-white p-2 rounded border border-slate-200">
-                        <select id="select-stock-maestro" class="bg-slate-50 border border-slate-300 rounded text-xs px-2 py-1.5 text-slate-700 font-semibold focus:outline-none focus:border-blue-500 w-full">
-                            <option value="stock_tmt1">stock_tmt1.csv (Nube /data/)</option>
-                            <option value="stock_ta04">stock_ta04.csv (Nube /data/)</option>
-                        </select>
-                        <button onclick="cargarStockDesdeCloudSeleccionado()" class="arauco-blue hover:opacity-90 text-white px-3 py-1.5 rounded text-xs font-bold shadow transition whitespace-nowrap">
-                            Cloud
-                        </button>
-                    </div>
-
+                    <p class="text-xs font-bold text-slate-600">Slot 1: Stock Teórico Maestro (CSV)</p>
                     <div>
-                        <span class="text-[10px] font-bold text-slate-400 uppercase block mb-1">O cargar archivo local:</span>
-                        <input type="file" id="file-sap-local" accept=".csv" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 cursor-pointer w-full">
+                        <input type="file" id="file-sap-local" accept=".csv" class="text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-slate-200 file:text-slate-700 hover:file:bg-slate-300 cursor-pointer w-full">
                     </div>
+                    <p class="text-[10px] text-slate-400 italic">Selecciona tu archivo maestro de stock teórico exportado.</p>
                 </div>
 
                 <!-- Slot 2: Capturas de Terreno -->
@@ -457,27 +446,6 @@
                     alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros!`);
                 }
             });
-        }
-
-        async function cargarStockDesdeCloudSeleccionado() {
-            const selector = document.getElementById('select-stock-maestro');
-            const nombreBase = selector.value;
-            const statusEl = document.getElementById('data-indicator');
-            
-            statusEl.innerText = `Cargando ${nombreBase}.csv desde /data/...`;
-            
-            try {
-                const urlArchivo = `./data/${nombreBase}.csv?t=${Date.now()}`;
-                const response = await fetch(urlArchivo);
-                if (!response.ok) throw new Error(`No se pudo hallar ${nombreBase}.csv en la carpeta data/`);
-                
-                const csvText = await response.text();
-                procesarDatosMaestrosCSV(csvText, `Nube: ${nombreBase}`);
-            } catch (err) {
-                console.warn("Error al cargar de la nube:", err);
-                statusEl.innerText = "Error cargando stock cloud";
-                alert(`Error: No se encontró el archivo ${nombreBase}.csv en la carpeta data/ del repositorio.`);
-            }
         }
 
         document.getElementById('file-sap-local').addEventListener('change', function(e) {
@@ -865,7 +833,6 @@
             }).join('');
         }
 
-        // Función adaptada para exportar el cierre con la nomenclatura que lee la biblioteca local
         function exportarCierreHistoricoLocal() {
             if (rawData.sap.length === 0 || globalData.pareados.length === 0) {
                 alert("No hay datos de inventario procesados para exportar.");
