@@ -20,8 +20,8 @@
             --bg-element: #DCE3EA;
             
             --color-arauco-dark: #1E293B;
-            --color-brand: #005F9E;          /* Azul Corporativo Arauco */
-            --color-brand-dark: #0F172A;     /* Navy Profundo Header */
+            --color-brand: #005F9E;     /* Azul Corporativo Arauco */
+            --color-brand-dark: #0F172A;   /* Navy Profundo Header */
             --color-brand-light: #E0F0FA;
             
             --color-text-main: #0F172A;
@@ -492,7 +492,7 @@
                 <span class="brand-divider">|</span>
                 <span class="brand-app-title">Inventario Proceso</span>
             </div>
-            <span class="tech-badge">OPERACIONES // V2.4</span>
+            <span class="tech-badge">OPERACIONES // V2.5</span>
         </header>
         
         <!-- Pestañas de Navegación Segmentadas -->
@@ -522,10 +522,10 @@
             <!-- RESPALDO MANUAL LOCAL -->
             <details class="file-section" style="cursor: pointer; margin-bottom: 16px;">
                 <summary style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-brand); text-transform: uppercase;">
-                    + Carga Manual Local (Otras Bodegas / Sin Conexión)
+                    + Carga Manual Local (Stock Maestros / Sin Conexión)
                 </summary>
                 <div style="margin-top: 14px;">
-                    <label for="fileStockManual">Cargar Archivo de Stock Manual:</label>
+                    <label for="fileStockManual">Cargar Archivo Maestro de Stock (stock_tmt1.csv):</label>
                     <input type="file" id="fileStockManual" accept=".csv">
 
                     <label for="filePlanoManual">Cargar Plano Manual (Opcional):</label>
@@ -700,7 +700,17 @@
         let html5QrCode = null;
         let audioContextSingleton = null;
 
-        const parseConfig = { header: true, skipEmptyLines: 'greedy', dynamicTyping: false, encoding: "ISO-8859-1" };
+        const parseConfig = { 
+            header: true, 
+            skipEmptyLines: 'greedy', 
+            dynamicTyping: false, 
+            encoding: "ISO-8859-1",
+            delimiter: "", // Autodetecta si es coma o punto y coma
+            transformHeader: function(header) {
+                // Limpia caracteres invisibles de las cabeceras del CSV
+                return header.replace(/^\ufeff/, '').trim();
+            }
+        };
 
         // --- 3. CICLO DE VIDA & RESTAURACIÓN OFFLINE ---
         window.addEventListener('DOMContentLoaded', async () => {
@@ -803,7 +813,7 @@
                 }
             }
 
-            // 2. Plano General (Apunta primero a plano_general.csv)
+            // 2. Plano General
             try {
                 let resPlano = await fetch(`./data/plano_general.csv${timeParam}`);
                 if (!resPlano.ok) resPlano = await fetch(`./data/plano.csv${timeParam}`);
@@ -846,7 +856,7 @@
             }
         }
 
-        // --- 5. CARGA MANUAL DE RESPALDO (OTRAS BODEGAS) ---
+        // --- 5. CARGA MANUAL DE RESPALDO (STOCK UNIFICADO stock_tmt1.csv) ---
         document.getElementById('fileStockManual').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -857,8 +867,8 @@
                     bodegaStockCargada = "MANUAL";
                     const chip = document.getElementById('infoStockActivo');
                     chip.className = "hud-chip stock-info";
-                    chip.innerText = `STOCK MANUAL: ${file.name} (✓ ${datosStockActivo.length})`;
-                    alert(`Stock manual cargado: ${results.data.length} ítems listos para auditar.`);
+                    chip.innerText = `STOCK: ${file.name} (✓ ${datosStockActivo.length})`;
+                    alert(`Archivo maestro de stock cargado: ${results.data.length} ítems listos para auditar.`);
                 }
             });
         });
@@ -979,7 +989,7 @@
             actualizarBotonesAccion();
         }
 
-        // --- 7. CARGA DINÁMICA DE STOCK POR BODEGA (SEGUNDO PLANO) ---
+        // --- 7. CARGA DINÁMICA DE STOCK UNIVERSAL (stock_tmt1.csv) ---
         async function cargarStockBodegaEnSegundoPlano(bodega) {
             const chip = document.getElementById('infoStockActivo');
             const bodegaKey = bodega.trim().toUpperCase();
@@ -988,7 +998,7 @@
             if (bodegaStockCargada === bodegaKey && datosStockActivo.length > 0) return;
 
             chip.className = "hud-chip stock-loading";
-            chip.innerText = `STOCK: Cargando ${bodegaKey} en 2° plano...`;
+            chip.innerText = `STOCK: Cargando maestro stock_tmt1.csv...`;
 
             // 1. Buscar si ya estaba en IndexedDB local
             try {
@@ -997,15 +1007,15 @@
                     datosStockActivo = cache.datos;
                     bodegaStockCargada = bodegaKey;
                     chip.className = "hud-chip stock-info";
-                    chip.innerText = `STOCK: ${bodegaKey} (✓ ${datosStockActivo.length} ítems - Offline)`;
+                    chip.innerText = `STOCK: stock_tmt1 (${datosStockActivo.length} ítems - Offline)`;
                 }
             } catch (e) {}
 
-            // 2. Buscar en GitHub en la carpeta data/
+            // 2. Rutas prioritarias: busca primero stock_tmt1.csv universal, luego respaldos específicos por bodega
             const rutas = [
-                `./data/stock_${bodegaFile}.csv?t=${Date.now()}`,
-                `./data/stock_${bodegaFile}.CSV?t=${Date.now()}`,
-                `./stock_${bodegaFile}.csv?t=${Date.now()}`
+                `./data/stock_tmt1.csv?t=${Date.now()}`,
+                `./stock_tmt1.csv?t=${Date.now()}`,
+                `./data/stock_${bodegaFile}.csv?t=${Date.now()}`
             ];
 
             for (const r of rutas) {
@@ -1021,7 +1031,7 @@
                                     bodegaStockCargada = bodegaKey;
                                     await db.stocks_bodega.put({ bodega: bodegaKey, datos: results.data, timestamp: new Date().toISOString() });
                                     chip.className = "hud-chip stock-info";
-                                    chip.innerText = `STOCK: ${bodegaKey} (✓ ${datosStockActivo.length} ítems)`;
+                                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems)`;
                                 }
                             });
                             return;
@@ -1032,7 +1042,7 @@
 
             if (datosStockActivo.length === 0 || bodegaStockCargada !== bodegaKey) {
                 chip.className = "hud-chip stock-loading";
-                chip.innerText = `STOCK: Sin stock para ${bodegaKey} (Use Carga Manual)`;
+                chip.innerText = `STOCK: stock_tmt1 no hallado (Use Carga Manual)`;
             }
         }
 
@@ -1175,7 +1185,7 @@
 
                 verificarStockYLuegoRegistrar(bodega, subBodega, calle, lote, "NORMAL");
             } catch (err) {
-                console.error("Error en validación de lote:", err);
+                console.error("Error al validar lote:", err);
             }
         }
 
@@ -1585,7 +1595,6 @@
                     return; 
                 }
 
-                // Generar nombre automático inteligente: captura_BODEGA_OPERARIO_DDMes_HHMM.csv
                 const ahora = new Date();
                 const dia = String(ahora.getDate()).padStart(2, '0');
                 const mes = ahora.toLocaleString('es-ES', { month: 'short' }).replace('.', '');
@@ -1598,7 +1607,6 @@
                 const csvString = Papa.unparse(todas);
                 const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
 
-                // 1. Intentar compartir con Web Share API (Quick Share / WhatsApp / Correo)
                 if (navigator.canShare) {
                     const file = new File([blob], nombreArchivo, { type: 'text/csv;charset=utf-8;' });
                     if (navigator.canShare({ files: [file] })) {
@@ -1608,15 +1616,14 @@
                                 title: `Inventario Arauco - ${bodegaLimpia}`,
                                 text: `Consolidado de inventario ${operarioActual} en Bodega ${bodegaLimpia}`
                             });
-                            return; // Compartido exitosamente por Quick Share / WhatsApp
+                            return; 
                         } catch (err) {
-                            if (err.name === 'AbortError') return; // Usuario canceló el diálogo
+                            if (err.name === 'AbortError') return; 
                             console.warn("Aviso al compartir:", err);
                         }
                     }
                 }
 
-                // 2. Fallback descarga directa tradicional
                 descargarArchivoCSV(csvString, nombreArchivo);
             } catch (err) {
                 console.error("Error al exportar consolidado:", err);
@@ -1681,7 +1688,6 @@
                 const csvString = Papa.unparse(diferencias);
                 const blob = new Blob(["\uFEFF" + csvString], { type: 'text/csv;charset=utf-8;' });
 
-                // Compartir directo si es posible
                 if (navigator.canShare) {
                     const file = new File([blob], nombreDifs, { type: 'text/csv;charset=utf-8;' });
                     if (navigator.canShare({ files: [file] })) {
