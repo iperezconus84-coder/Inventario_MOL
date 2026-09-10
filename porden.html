@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditoría de Terreno con Evidencia Local | Arauco</title>
+    <!-- Google Fonts: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- SheetJS (xlsx) for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .arauco-blue { background-color: #005F9E; }
+        .arauco-blue-text { color: #005F9E; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Cabecera Móvil Compacta -->
+    <header class="arauco-blue text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+            <div>
+                <span class="text-2xl font-black tracking-tighter lowercase">arauco</span>
+                <span class="block text-[10px] uppercase tracking-wider opacity-80">Terreno Móvil • Guardado Local</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span id="data-status-badge" class="bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">Sin Plano</span>
+                <button onclick="reiniciarTodo()" class="bg-rose-700 hover:bg-rose-800 text-white p-1.5 rounded-lg text-xs" title="Reiniciar">
+                    🔄
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal Adaptado a Terreno -->
+    <main class="max-w-md mx-auto px-4 py-4 flex-grow w-full space-y-4">
+
+        <!-- PASO 1: Ingestión del Plano -->
+        <section id="section-upload" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">1. Cargar Plano de Bodegas</h2>
+            <div class="border-2 border-dashed border-slate-300 p-3 rounded-lg bg-slate-50 text-center space-y-2">
+                <input type="file" id="file-plano" accept=".csv" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 w-full cursor-pointer">
+                <button onclick="procesarPlano()" class="arauco-blue text-white w-full py-2 rounded-lg text-xs font-bold shadow cursor-pointer">
+                    Cargar Plano General
+                </button>
+            </div>
+        </section>
+
+        <!-- DASHBOARD RESUMEN RÁPIDO GENERAL -->
+        <section id="section-kpis" class="hidden grid grid-cols-3 gap-2 text-center">
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <span class="block text-[9px] font-bold text-slate-400 uppercase">Revisadas</span>
+                <span id="kpi-rev" class="text-lg font-black text-slate-800">0</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <span class="block text-[9px] font-bold text-slate-400 uppercase">Cumplen</span>
+                <span id="kpi-ok" class="text-lg font-black text-emerald-600">0</span>
+            </div>
+            <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                <span class="block text-[9px] font-bold text-slate-400 uppercase">No Cumplen</span>
+                <span id="kpi-fail" class="text-lg font-black text-rose-600">0</span>
+            </div>
+        </section>
+
+        <!-- PASO 2: Selector por Listas Desplegables de Calle -->
+        <section id="section-selector" class="hidden bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">2. Selección de Ubicación en Terreno</h2>
+            
+            <div class="space-y-2 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-500 mb-1">Bodega:</label>
+                    <select id="select-bodega" onchange="cambiarBodega()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-slate-700">
+                        <option value="">Seleccione Bodega...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-500 mb-1">Sub-bodega:</label>
+                    <select id="select-subbodega" onchange="cambiarSubBodega()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-slate-700">
+                        <option value="">Seleccione Sub-bodega...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-500 mb-1">Calle / Pasillo:</label>
+                    <select id="select-calle" onchange="seleccionarCalle()" class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 font-semibold text-blue-700 font-bold">
+                        <option value="">Seleccione Calle...</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- PASO 3: Vista de Auditoría de la Calle Seleccionada -->
+        <section id="section-detalle-calle" class="hidden bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <div>
+                    <h3 id="det-titulo-calle" class="text-sm font-black text-blue-700">Calle: --</h3>
+                    <p id="det-sub-info" class="text-[10px] text-slate-400">Bodega / Sub-bodega</p>
+                </div>
+                <div id="det-badge-estado">
+                    <span class="bg-amber-100 text-amber-800 px-2 py-1 rounded text-[10px] font-bold">Pendiente</span>
+                </div>
+            </div>
+
+            <!-- Cantidad de Paquetes / Lotes Físicos en la Calle -->
+            <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 flex justify-between items-center text-xs">
+                <span class="font-bold text-slate-700">Nº de Paquetes / Lotes en Calle:</span>
+                <input type="number" id="input-total-lotes" onchange="guardarDatosCalle()" class="w-20 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 text-sm" value="0">
+            </div>
+
+            <!-- Checklist con casillas (Desmarcados por defecto) -->
+            <div class="space-y-2 text-xs">
+                <span class="block font-bold text-slate-700 uppercase text-[10px] tracking-wider">Requisitos de Calidad (Marcar lo que CUMPLE):</span>
+                
+                <label class="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200 cursor-pointer">
+                    <input type="checkbox" id="chk-filos" onchange="guardarDatosCalle()" class="w-5 h-5 text-blue-600 rounded">
+                    <span class="font-medium text-slate-700">Espacio entre filos (Cumple)</span>
+                </label>
+                <label class="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200 cursor-pointer">
+                    <input type="checkbox" id="chk-acopios" onchange="guardarDatosCalle()" class="w-5 h-5 text-blue-600 rounded">
+                    <span class="font-medium text-slate-700">Estabilidad de acopios (Cumple)</span>
+                </label>
+                <label class="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200 cursor-pointer">
+                    <input type="checkbox" id="chk-etiquetas" onchange="guardarDatosCalle()" class="w-5 h-5 text-blue-600 rounded">
+                    <span class="font-medium text-slate-700">Correcto etiquetado (Cumple)</span>
+                </label>
+                <label class="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200 cursor-pointer">
+                    <input type="checkbox" id="chk-mezcla" onchange="guardarDatosCalle()" class="w-5 h-5 text-blue-600 rounded">
+                    <span class="font-medium text-slate-700">Ausencia de mezcla de productos (Cumple)</span>
+                </label>
+            </div>
+
+            <!-- Campo de Comentarios / Observaciones -->
+            <div class="space-y-1 text-xs">
+                <label class="block font-bold text-slate-700 uppercase text-[10px] tracking-wider">Comentarios u Observaciones:</label>
+                <textarea id="input-comentario" oninput="guardarDatosCalle()" rows="2" placeholder="Ej: Faltan etiquetas en el paquete inferior..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-slate-700 text-xs focus:outline-none focus:border-blue-500"></textarea>
+            </div>
+
+            <!-- Activación Directa de la Cámara y Guardado Local Automático -->
+            <div class="space-y-2 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
+                <label class="block font-bold text-slate-700 uppercase text-[10px] tracking-wider mb-1">Evidencia Fotográfica de Terreno:</label>
+                <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="capturarYGuardarFotoLocal(event)" class="hidden">
+                
+                <button onclick="document.getElementById('camera-input').click()" class="bg-slate-800 hover:bg-slate-900 text-white w-full py-2 rounded-lg font-bold text-xs shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                    📷 Activar Cámara y Guardar Foto Local
+                </button>
+                <div id="preview-foto" class="mt-2 flex flex-col items-center justify-center gap-1"></div>
+            </div>
+
+            <button onclick="cerrarRevisionCalle()" class="arauco-blue hover:opacity-90 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow transition cursor-pointer">
+                ✓ Guardar y Concluir Revisión de Calle
+            </button>
+        </section>
+
+        <!-- PASO 4: Botón para Ver Resumen Ejecutivo -->
+        <section id="section-export" class="hidden pt-2 space-y-2">
+            <button onclick="mostrarResumenEjecutivo()" class="bg-emerald-600 hover:bg-emerald-700 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                📊 Ver Resumen Ejecutivo y Exportar Excel
+            </button>
+        </section>
+
+        <!-- PASO 5: Vista de Resumen Ejecutivo en Pantalla -->
+        <section id="section-resumen-exec" class="hidden bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="text-sm font-black text-slate-900">Resumen Ejecutivo de Auditoría</h3>
+                <button onclick="volverAuditoria()" class="bg-slate-200 text-slate-700 px-2 py-1 rounded text-xs font-semibold">← Volver</button>
+            </div>
+
+            <!-- Totales Globales -->
+            <div class="grid grid-cols-3 gap-2 text-center bg-slate-50 p-3 rounded-lg border">
+                <div>
+                    <span class="block text-[9px] font-bold text-slate-400 uppercase">Auditadas</span>
+                    <span id="exec-tot-rev" class="text-base font-black">0</span>
+                </div>
+                <div>
+                    <span class="block text-[9px] font-bold text-slate-400 uppercase">Cumplen</span>
+                    <span id="exec-tot-ok" class="text-base font-black text-emerald-600">0</span>
+                </div>
+                <div>
+                    <span class="block text-[9px] font-bold text-slate-400 uppercase">No Cumplen</span>
+                    <span id="exec-tot-fail" class="text-base font-black text-rose-600">0</span>
+                </div>
+            </div>
+
+            <!-- Desglose por Bodega y Sub-bodega (Solo Revisadas) -->
+            <div class="space-y-3">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Cumplimiento por Ubicación</h4>
+                <div id="exec-desglose-container" class="space-y-2 text-xs">
+                    <!-- Inyectado por JS -->
+                </div>
+            </div>
+
+            <button onclick="exportarExcelEjecutivo()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                📥 Descargar Excel con Resumen Ejecutivo
+            </button>
+        </section>
+
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 py-3 text-center text-[10px] text-slate-400">
+        Arauco • Operaciones Molduras • Terreno Móvil
+    </footer>
+
+    <!-- Lógica JavaScript -->
+    <script>
+        let planoGlobal = [];
+        let estadoAuditoria = {}; 
+        let calleSeleccionadaKey = null;
+        let bodegaActual = '';
+        let subBodegaActual = '';
+        let calleActual = '';
+
+        const parseConfig = {
+            header: true,
+            skipEmptyLines: true,
+            delimiter: "",
+            transformHeader: function(header) {
+                return header.replace(/^\ufeff/, '').trim();
+            }
+        };
+
+        function procesarPlano() {
+            let fileInput = document.getElementById('file-plano').files[0];
+            if(!fileInput) {
+                alert("Selecciona primero el archivo plano_general.csv");
+                return;
+            }
+
+            let reader = new FileReader();
+            reader.onload = function(evt) {
+                Papa.parse(evt.target.result, {
+                    ...parseConfig,
+                    complete: function(res) {
+                        planoGlobal = res.data.map((row, index) => {
+                            let bodega = row['Bodega'] || 'TMT1';
+                            let subBodega = row['Sub_bodega'] || row['Sub_Bodega'] || 'GENERAL';
+                            let calle = row['Calle'] || '-';
+                            
+                            let pkts = 0;
+                            for(let rKey in row) {
+                                if(rKey.toLowerCase().includes('pqt') || rKey.toLowerCase().includes('cant') || rKey.toLowerCase().includes('nº')) {
+                                    let val = parseInt(row[rKey]);
+                                    if(!isNaN(val) && val >= 0) pkts = val;
+                                }
+                            }
+
+                            return {
+                                id: index,
+                                bodega: String(bodega).trim().toUpperCase(),
+                                subBodega: String(subBodega).trim(),
+                                calle: String(calle).trim(),
+                                paquetesTeoricos: pkts
+                            };
+                        }).filter(item => item.calle !== '-' && item.calle !== '');
+
+                        if(planoGlobal.length === 0) {
+                            alert("El archivo no contiene registros válidos de calles.");
+                            return;
+                        }
+
+                        planoGlobal.forEach(item => {
+                            let key = `${item.bodega}_${item.subBodega}_${item.calle}`;
+                            if(!estadoAuditoria[key]) {
+                                estadoAuditoria[key] = {
+                                    totalLotes: item.paquetesTeoricos,
+                                    filos: false,      
+                                    acopios: false,
+                                    etiquetas: false,
+                                    mezcla: false,
+                                    comentario: '',
+                                    fotoRegistrada: false,
+                                    revisado: false
+                                };
+                            }
+                        });
+
+                        document.getElementById('data-status-badge').innerText = `${planoGlobal.length} calles`;
+                        document.getElementById('section-upload').classList.add('hidden');
+                        document.getElementById('section-kpis').classList.remove('hidden');
+                        document.getElementById('section-selector').classList.remove('hidden');
+                        document.getElementById('section-export').classList.remove('hidden');
+
+                        poblarBodegas();
+                        actualizarKPIs();
+                        alert(`¡Plano estructurado! Se cargaron ${planoGlobal.length} pasillos.`);
+                    }
+                });
+            };
+            reader.readAsText(fileInput, "ISO-8859-1");
+        }
+
+        function poblarBodegas() {
+            let bodegas = [...new Set(planoGlobal.map(i => i.bodega))].sort();
+            let select = document.getElementById('select-bodega');
+            select.innerHTML = '<option value="">Seleccione Bodega...</option>';
+            bodegas.forEach(b => {
+                select.innerHTML += `<option value="${b}">Bodega ${b}</option>`;
+            });
+            document.getElementById('select-subbodega').innerHTML = '<option value="">Seleccione Sub-bodega...</option>';
+            document.getElementById('select-calle').innerHTML = '<option value="">Seleccione Calle...</option>';
+        }
+
+        function cambiarBodega() {
+            bodegaActual = document.getElementById('select-bodega').value;
+            let subSelect = document.getElementById('select-subbodega');
+            subSelect.innerHTML = '<option value="">Seleccione Sub-bodega...</option>';
+            document.getElementById('select-calle').innerHTML = '<option value="">Seleccione Calle...</option>';
+            document.getElementById('section-detalle-calle').classList.add('hidden');
+
+            if(!bodegaActual) return;
+
+            let subBodegas = [...new Set(planoGlobal.filter(i => i.bodega === bodegaActual).map(i => i.subBodega))].sort();
+            subBodegas.forEach(sb => {
+                subSelect.innerHTML += `<option value="${sb}">${sb}</option>`;
+            });
+        }
+
+        function cambiarSubBodega() {
+            bodegaActual = document.getElementById('select-bodega').value;
+            subBodegaActual = document.getElementById('select-subbodega').value;
+            let calleSelect = document.getElementById('select-calle');
+            calleSelect.innerHTML = '<option value="">Seleccione Calle...</option>';
+            document.getElementById('section-detalle-calle').classList.add('hidden');
+
+            if(!subBodegaActual) return;
+
+            let calles = planoGlobal.filter(i => i.bodega === bodegaActual && i.subBodega === subBodegaActual);
+            calles.forEach(c => {
+                let key = `${c.bodega}_${c.subBodega}_${c.calle}`;
+                let rev = estadoAuditoria[key].revisado ? ' [Revisada]' : '';
+                calleSelect.innerHTML += `<option value="${c.calle}">Calle ${c.calle}${rev}</option>`;
+            });
+        }
+
+        function seleccionarCalle() {
+            bodegaActual = document.getElementById('select-bodega').value;
+            subBodegaActual = document.getElementById('select-subbodega').value;
+            calleActual = document.getElementById('select-calle').value;
+
+            if(!calleActual) {
+                document.getElementById('section-detalle-calle').classList.add('hidden');
+                return;
+            }
+
+            calleSeleccionadaKey = `${bodegaActual}_${subBodegaActual}_${calleActual}`;
+            let st = estadoAuditoria[calleSeleccionadaKey];
+
+            document.getElementById('det-titulo-calle').innerText = `Calle: ${calleActual}`;
+            document.getElementById('det-sub-info').innerText = `${bodegaActual} / ${subBodegaActual}`;
+            
+            document.getElementById('input-total-lotes').value = st.totalLotes;
+            document.getElementById('chk-filos').checked = st.filos;
+            document.getElementById('chk-acopios').checked = st.acopios;
+            document.getElementById('chk-etiquetas').checked = st.etiquetas;
+            document.getElementById('chk-mezcla').checked = st.mezcla;
+            document.getElementById('input-comentario').value = st.comentario || '';
+            
+            mostrarEstadoFoto(st.fotoRegistrada);
+            actualizarBadgeEstado(st);
+            document.getElementById('section-detalle-calle').classList.remove('hidden');
+        }
+
+        function guardarDatosCalle() {
+            if(!calleSeleccionadaKey) return;
+
+            let st = estadoAuditoria[calleSeleccionadaKey];
+            st.totalLotes = parseInt(document.getElementById('input-total-lotes').value) || 0;
+            st.filos = document.getElementById('chk-filos').checked;
+            st.acopios = document.getElementById('chk-acopios').checked;
+            st.etiquetas = document.getElementById('chk-etiquetas').checked;
+            st.mezcla = document.getElementById('chk-mezcla').checked;
+            st.comentario = document.getElementById('input-comentario').value;
+        }
+
+        function capturarYGuardarFotoLocal(event) {
+            let file = event.target.files[0];
+            if(!file || !calleSeleccionadaKey) return;
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let base64Data = e.target.result;
+                let st = estadoAuditoria[calleSeleccionadaKey];
+                st.fotoRegistrada = true;
+
+                let nombreArchivo = `Bodega_${bodegaActual}_${subBodegaActual}_Calle_${calleActual}_Evidencia.jpg`;
+                let link = document.createElement('a');
+                link.href = base64Data;
+                link.download = nombreArchivo;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                mostrarEstadoFoto(true);
+                alert(`¡Foto guardada localmente como "${nombreArchivo}"!`);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function mostrarEstadoFoto(registrada) {
+            let preview = document.getElementById('preview-foto');
+            if(registrada) {
+                preview.innerHTML = `<span class="text-emerald-600 font-bold text-[10px]">✓ Foto capturada y guardada en dispositivo</span>`;
+            } else {
+                preview.innerHTML = `<span class="text-slate-400 text-[10px]">Sin foto registrada</span>`;
+            }
+        }
+
+        function cerrarRevisionCalle() {
+            if(!calleSeleccionadaKey) return;
+            guardarDatosCalle();
+
+            let st = estadoAuditoria[calleSeleccionadaKey];
+            st.revisado = true;
+
+            actualizarBadgeEstado(st);
+            actualizarKPIs();
+            cambiarSubBodega(); 
+            alert("¡Revisión de calle guardada con éxito!");
+        }
+
+        function actualizarBadgeEstado(st) {
+            let badgeContainer = document.getElementById('det-badge-estado');
+            if(!st.revisado) {
+                badgeContainer.innerHTML = `<span class="bg-amber-100 text-amber-800 px-2 py-1 rounded text-[10px] font-bold">Pendiente</span>`;
+            } else {
+                let calleCumple = st.filos && st.acopios && st.etiquetas && st.mezcla;
+                if(calleCumple) {
+                    badgeContainer.innerHTML = `<span class="bg-emerald-100 text-emerald-800 px-2 py-1 rounded text-[10px] font-bold">CUMPLE</span>`;
+                } else {
+                    badgeContainer.innerHTML = `<span class="bg-rose-100 text-rose-800 px-2 py-1 rounded text-[10px] font-bold">NO CUMPLE</span>`;
+                }
+            }
+        }
+
+        function actualizarKPIs() {
+            let revCount = 0;
+            let cumplenCount = 0;
+
+            Object.values(estadoAuditoria).forEach(st => {
+                if(st.revisado) {
+                    revCount++;
+                    if(st.filos && st.acopios && st.etiquetas && st.mezcla) {
+                        cumplenCount++;
+                    }
+                }
+            });
+
+            let noCumplenCount = revCount - cumplenCount;
+
+            document.getElementById('kpi-rev').innerText = revCount;
+            document.getElementById('kpi-ok').innerText = cumplenCount;
+            document.getElementById('kpi-fail').innerText = noCumplenCount;
+        }
+
+        function mostrarResumenEjecutivo() {
+            let revs = Object.values(estadoAuditoria).filter(st => st.revisado);
+            if(revs.length === 0) {
+                alert("No hay calles revisadas para mostrar el resumen.");
+                return;
+            }
+
+            let cumplen = revs.filter(st => st.filos && st.acopios && st.etiquetas && st.mezcla).length;
+            let noCumplen = revs.length - cumplen;
+
+            document.getElementById('exec-tot-rev').innerText = revs.length;
+            document.getElementById('exec-tot-ok').innerText = cumplen;
+            document.getElementById('exec-tot-fail').innerText = noCumplen;
+
+            let desgloseHTML = '';
+            let bodegas = [...new Set(planoGlobal.map(i => i.bodega))].sort();
+
+            bodegas.forEach(b => {
+                let itemsBodega = planoGlobal.filter(i => i.bodega === b);
+                let revBodega = itemsBodega.filter(i => estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`].revisado);
+                
+                if(revBodega.length === 0) return; // Omitir bodegas sin revisar
+
+                let okBodega = revBodega.filter(i => {
+                    let st = estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`];
+                    return st.filos && st.acopios && st.etiquetas && st.mezcla;
+                });
+                let pctBodega = ((okBodega.length / revBodega.length) * 100).toFixed(1);
+
+                desgloseHTML += `
+                    <div class="bg-slate-50 p-2.5 rounded-lg border space-y-1">
+                        <div class="flex justify-between font-bold text-slate-800 border-b pb-1">
+                            <span>Bodega ${b}</span>
+                            <span class="text-blue-600">${pctBodega}% Cumplimiento (${revBodega.length} rev.)</span>
+                        </div>
+                `;
+
+                let subBodegas = [...new Set(itemsBodega.map(i => i.subBodega))].sort();
+                subBodegas.forEach(sb => {
+                    let itemsSb = itemsBodega.filter(i => i.subBodega === sb);
+                    let revSb = itemsSb.filter(i => estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`].revisado);
+                    
+                    if(revSb.length === 0) return; // Omitir sub-bodegas sin revisar
+
+                    let okSb = revSb.filter(i => {
+                        let st = estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`];
+                        return st.filos && st.acopios && st.etiquetas && st.mezcla;
+                    });
+                    let pctSb = ((okSb.length / revSb.length) * 100).toFixed(1);
+
+                    desgloseHTML += `
+                        <div class="flex justify-between text-slate-600 pl-2 text-[11px]">
+                            <span>↳ Sub-bodega: ${sb} (${revSb.length} rev.)</span>
+                            <span class="font-semibold">${pctSb}%</span>
+                        </div>
+                    `;
+                });
+
+                desgloseHTML += `</div>`;
+            });
+
+            document.getElementById('exec-desglose-container').innerHTML = desgloseHTML;
+
+            document.getElementById('section-selector').classList.add('hidden');
+            document.getElementById('section-detalle-calle').classList.add('hidden');
+            document.getElementById('section-export').classList.add('hidden');
+            document.getElementById('section-kpis').classList.add('hidden');
+            document.getElementById('section-resumen-exec').classList.remove('hidden');
+        }
+
+        function volverAuditoria() {
+            document.getElementById('section-resumen-exec').classList.add('hidden');
+            document.getElementById('section-kpis').classList.remove('hidden');
+            document.getElementById('section-selector').classList.remove('hidden');
+            document.getElementById('section-export').classList.remove('hidden');
+        }
+
+        function exportarExcelEjecutivo() {
+            let callesRevisadas = planoGlobal.filter(i => {
+                let st = estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`];
+                return st && st.revisado;
+            });
+
+            if(callesRevisadas.length === 0) {
+                alert("No hay datos revisados para exportar.");
+                return;
+            }
+
+            let detalle = callesRevisadas.map(i => {
+                let key = `${i.bodega}_${i.subBodega}_${i.calle}`;
+                let st = estadoAuditoria[key];
+                
+                let cumpleItems = st.filos && st.acopios && st.etiquetas && st.mezcla;
+                let estadoFinal = cumpleItems ? 'Cumple' : 'No Cumple';
+
+                return {
+                    Bodega: i.bodega,
+                    Sub_Bodega: i.subBodega,
+                    Calle: i.calle,
+                    Total_Paquetes: st.totalLotes,
+                    Espacio_Filos: st.filos ? 'Cumple' : 'No Cumple',
+                    Estabilidad_Acopios: st.acopios ? 'Cumple' : 'No Cumple',
+                    Correcto_Etiquetado: st.etiquetas ? 'Cumple' : 'No Cumple',
+                    Ausencia_Mezcla: st.mezcla ? 'Cumple' : 'No Cumple',
+                    Observaciones: st.comentario,
+                    Evidencia_Fotografica: st.fotoRegistrada ? 'Guardada en Dispositivo' : 'Sin Foto',
+                    Resultado_Calle: estadoFinal
+                };
+            });
+
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detalle), "Detalle Auditoria Real");
+
+            XLSX.writeFile(wb, `Resumen_Auditoria_Terreno_${new Date().toISOString().slice(0,10)}.xlsx`);
+            alert("¡Excel exportado con éxito!");
+
+            reiniciarTodoForzado();
+        }
+
+        function reiniciarTodoForzado() {
+            planoGlobal = [];
+            estadoAuditoria = {};
+            calleSeleccionadaKey = null;
+            bodegaActual = '';
+            subBodegaActual = '';
+            calleActual = '';
+            document.getElementById('file-plano').value = "";
+            document.getElementById('section-upload').classList.remove('hidden');
+            document.getElementById('section-kpis').classList.add('hidden');
+            document.getElementById('section-selector').classList.add('hidden');
+            document.getElementById('section-detalle-calle').classList.add('hidden');
+            document.getElementById('section-export').classList.add('hidden');
+            document.getElementById('section-resumen-exec').classList.add('hidden');
+            document.getElementById('data-status-badge').innerText = "Sin Plano";
+        }
+
+        function reiniciarTodo() {
+            if(confirm("¿Desea reiniciar la auditoría?")) {
+                reiniciarTodoForzado();
+            }
+        }
+    </script>
+</body>
+</html>

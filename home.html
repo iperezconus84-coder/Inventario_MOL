@@ -1,0 +1,94 @@
+<!DOCTYPE html><html lang="es"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Inventarios - Molduras</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* Estilos propios porque con Tailwind a veces me enredo con los gradientes largos */
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+        .marca-arauco { background-color: #005F9E; }
+    </style></head><body class="text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Header principal -->
+    <header class="marca-arauco text-white shadow">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl font-bold lowercase">arauco</span>
+                <span class="text-xs opacity-80 border-l border-white/30 pl-2 hidden sm:inline">Molduras</span>
+            </div>
+            <!-- Aquí incorporamos IMOL en la etiqueta del header -->
+            <span class="text-xs bg-sky-900 px-2.5 py-1 rounded font-mono tracking-wider">IMOL · Portal Interno</span>
+        </div>
+    </header>
+
+    <!-- Contenido -->
+    <main class="max-w-5xl mx-auto px-4 py-8 w-full flex-grow">
+        
+        <div class="text-center mb-8 bg-white/95 p-4 rounded-xl shadow">
+            <h1 class="text-2xl font-bold text-slate-800">Suite de Control e Inventarios</h1>
+            <p class="text-xs text-slate-500 mt-1">Seleccione módulo de trabajo</p>
+        </div>
+
+        <!-- Grid de Módulos (ahora de 4 tarjetas) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            
+            <!-- Card 1 -->
+            <div class="bg-white p-5 rounded-lg shadow border-t-4 border-blue-600 flex flex-col justify-between">
+                <div>
+                    <h2 class="font-bold text-slate-800 text-sm">Captura e Ingestión</h2>
+                    <p class="text-xs text-slate-500 mt-1">Carga de archivos de terreno y códigos de barra.</p>
+                </div>
+                <a href="https://iperezconus84-coder.github.io/Inventario_MOL/" target="_blank" class="mt-4 block text-center marca-arauco text-white py-2 rounded text-xs font-semibold hover:opacity-90">
+                    Ingresar
+                </a>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="bg-white p-5 rounded-lg shadow border-t-4 border-emerald-600 flex flex-col justify-between">
+                <div>
+                    <h2 class="font-bold text-slate-800 text-sm">Conciliador</h2>
+                    <p class="text-xs text-slate-500 mt-1">Cruce SAP vs terreno y cálculo de IRA.</p>
+                </div>
+                <a href="https://iperezconus84-coder.github.io/Inventario_MOL/conciliador" target="_blank" class="mt-4 block text-center bg-emerald-600 text-white py-2 rounded text-xs font-semibold hover:bg-emerald-700">
+                    Ingresar
+                </a>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="bg-white p-5 rounded-lg shadow border-t-4 border-amber-500 flex flex-col justify-between">
+                <div>
+                    <h2 class="font-bold text-slate-800 text-sm">Histórico</h2>
+                    <p class="text-xs text-slate-500 mt-1">Respaldos y cierres anteriores en la nube.</p>
+                </div>
+                <a href="https://iperezconus84-coder.github.io/Inventario_MOL/historico" target="_blank" class="mt-4 block text-center bg-amber-600 text-white py-2 rounded text-xs font-semibold hover:bg-amber-700">
+                    Ingresar
+                </a>
+            </div>
+
+            <!-- Card 4 (Políticas de orden) -->
+            <div class="bg-white p-5 rounded-lg shadow border-t-4 border-indigo-600 flex flex-col justify-between">
+                <div>
+                    <h2 class="font-bold text-slate-800 text-sm">Políticas de orden</h2>
+                    <p class="text-xs text-slate-500 mt-1">Revisión física del stock. Cumplimiento de estándar de orden</p>
+                </div>
+                <a href="https://iperezconus84-coder.github.io/Inventario_MOL/porden" target="_blank" class="mt-4 block text-center bg-indigo-600 text-white py-2 rounded text-xs font-semibold hover:bg-indigo-700">
+                    Ingresar
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer con el sello IMOL -->
+    <footer class="bg-white/90 py-3 text-center text-xs text-slate-500 border-t flex justify-center items-center gap-2">
+        <span>Arauco - Operaciones Molduras</span>
+        <span class="text-slate-300">|</span>
+        <span class="font-semibold text-slate-600">IMOL Suite</span>
+    </footer></body></html>
