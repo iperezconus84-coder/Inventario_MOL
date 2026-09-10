@@ -23,7 +23,8 @@
                 <span class="text-2xl font-bold lowercase">arauco</span>
                 <span class="text-xs opacity-80 border-l border-white/30 pl-2 hidden sm:inline">Molduras</span>
             </div>
-            <span class="text-xs bg-sky-900 px-2.5 py-1 rounded">Portal Interno</span>
+            <!-- Aquí incorporamos IMOL en la etiqueta del header -->
+            <span class="text-xs bg-sky-900 px-2.5 py-1 rounded font-mono tracking-wider">IMOL · Portal Interno</span>
         </div>
     </header>
 
@@ -35,7 +36,7 @@
             <p class="text-xs text-slate-500 mt-1">Seleccione módulo de trabajo</p>
         </div>
 
-        <!-- TODO: Revisar si podemos automatizar esto con un loop si pasamos a React después -->
+        <!-- Grid de Módulos (ahora de 4 tarjetas) -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             
             <!-- Card 1 -->
@@ -85,6 +86,9 @@
         </div>
     </main>
 
-    <footer class="bg-white/90 py-3 text-center text-xs text-slate-500 border-t">
-        Arauco - Operaciones Molduras
+    <!-- Footer con el sello IMOL -->
+    <footer class="bg-white/90 py-3 text-center text-xs text-slate-500 border-t flex justify-center items-center gap-2">
+        <span>Arauco - Operaciones Molduras</span>
+        <span class="text-slate-300">|</span>
+        <span class="font-semibold text-slate-600">IMOL Suite</span>
     </footer></body></html>
