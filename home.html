@@ -12,9 +12,18 @@
         body { font-family: 'Poppins', sans-serif; }
         .arauco-blue { background-color: #005F9E; }
         .arauco-blue-text { color: #005F9E; }
+        
+        /* Estilos personalizados para el fondo de pinar con capa oscura */
+        .pine-forest-bg {
+            background-image: linear-gradient(rgba(10, 25, 47, 0.65), rgba(10, 25, 47, 0.75)), 
+                              url('https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col justify-between">
+<body class="pine-forest-bg text-slate-800 min-h-screen flex flex-col justify-between">
 
     <!-- Cabecera Corporativa -->
     <header class="arauco-blue text-white shadow-md">
@@ -31,15 +40,15 @@
 
     <!-- Contenido Principal: Tarjetas de Acceso a los Enlaces -->
     <main class="max-w-6xl mx-auto px-6 py-12 w-full flex-grow">
-        <div class="text-center max-w-2xl mx-auto mb-10">
+        <div class="text-center max-w-2xl mx-auto mb-10 bg-white/90 backdrop-blur-sm p-6 rounded-3xl shadow-lg border border-white/20">
             <h1 class="text-3xl font-black text-slate-800 tracking-tight">Suite de Control e Inventarios</h1>
-            <p class="text-xs text-slate-500 mt-2">Seleccione el módulo operativo al que desea ingresar para gestionar los procesos de bodega, conciliación y registros históricos.</p>
+            <p class="text-xs text-slate-600 mt-2">Seleccione el módulo operativo al que desea ingresar para gestionar los procesos de bodega, conciliación y registros históricos.</p>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             
             <!-- Enlace 1: Captura / Principal -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between border-t-4 border-t-blue-600">
+            <div class="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 shadow-md hover:shadow-lg transition flex flex-col justify-between border-t-4 border-t-blue-600">
                 <div>
                     <h2 class="text-base font-bold text-slate-800 mt-2">Módulo de Captura e Ingestión</h2>
                     <p class="text-xs text-slate-500 mt-2 leading-relaxed">Página principal para la carga de archivos de terreno y escaneo de códigos de barra.</p>
@@ -52,7 +61,7 @@
             </div>
 
             <!-- Enlace 2: Conciliador Ejecutivo -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between border-t-4 border-t-emerald-600">
+            <div class="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 shadow-md hover:shadow-lg transition flex flex-col justify-between border-t-4 border-t-emerald-600">
                 <div>
                     <h2 class="text-base font-bold text-slate-800 mt-2">Conciliador de Inventario</h2>
                     <p class="text-xs text-slate-500 mt-2 leading-relaxed">Cruce masivo de stock teórico SAP (St.Valorad) vs terreno, cálculo de IRA y análisis de discrepancias.</p>
@@ -65,7 +74,7 @@
             </div>
 
             <!-- Enlace 3: Histórico -->
-            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between border-t-4 border-t-amber-500">
+            <div class="bg-white/95 backdrop-blur-sm p-6 rounded-2xl border border-slate-200 shadow-md hover:shadow-lg transition flex flex-col justify-between border-t-4 border-t-amber-500">
                 <div>
                     <h2 class="text-base font-bold text-slate-800 mt-2">Repositorio Histórico</h2>
                     <p class="text-xs text-slate-500 mt-2 leading-relaxed">Directorio de respaldos, cierres anteriores y archivos estandarizados almacenados en la nube.</p>
@@ -81,7 +90,7 @@
     </main>
 
     <!-- Pie de Página -->
-    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-400">
+    <footer class="bg-white/90 backdrop-blur-sm border-t border-slate-200 py-4 text-center text-xs text-slate-600 font-medium">
         Arauco • Operaciones Molduras • Renovables para una vida mejor
     </footer>
 
