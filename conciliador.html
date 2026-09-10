@@ -199,7 +199,7 @@
         <div id="view-audit" class="hidden space-y-4">
             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col xl:flex-row justify-between items-center gap-3">
                 <div class="flex items-center space-x-2 w-full xl:w-auto">
-                    <input type="text" id="search-input" onkeyup="filterTables()" placeholder="Buscar por Lote, SKU o Descripción..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-full xl:w-80 focus:outline-none focus:border-blue-500">
+                    <input type="text" id="search-input" onkeyup="filterTables()" placeholder="Buscar por Lote, SKU, Descripción o Subbodega..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-full xl:w-80 focus:outline-none focus:border-blue-500">
                 </div>
                 <div class="flex flex-wrap items-center gap-2 justify-center">
                     <div class="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-lg">
@@ -221,7 +221,7 @@
                             <tr class="bg-slate-100 text-slate-600 border-b border-slate-200 font-bold" id="table-headers"></tr>
                         </thead>
                         <tbody id="table-body" class="divide-y divide-slate-100 text-slate-700">
-                            <tr><td colspan="7" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>
+                            <tr><td colspan="8" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -431,6 +431,9 @@
                         let rawBodega = findVal(row, ['Almacen', 'Bodega', 'Alm', 'Centro', 'Planta', 'Plant']);
                         let bodega = (rawBodega && String(rawBodega).trim() !== '') ? String(rawBodega).trim().toUpperCase() : 'TMT1';
 
+                        let rawSub = findVal(row, ['Subbodega', 'Sub_Bodega', 'SubAlmacen', 'Subalm', 'Alm.Espec']);
+                        let subbodega = (rawSub && String(rawSub).trim() !== '') ? String(rawSub).trim() : '-';
+
                         let vol = getStValoradSap(row);
                         let pcs = parseNum(findVal(row, ['NºPiezas', 'NÂºPiezas', 'Piezas', 'Pcs']));
 
@@ -439,6 +442,7 @@
                             SKU: String(sku).trim(),
                             Descripcion: String(desc).trim(),
                             Bodega: bodega,
+                            Subbodega: subbodega,
                             Volumen: vol,
                             Piezas: pcs
                         };
@@ -519,6 +523,9 @@
                             let rawBodega = findVal(row, ['Bodega', 'Almacen', 'Alm', 'Centro', 'Planta', 'Plant']);
                             let bodega = (rawBodega && String(rawBodega).trim() !== '') ? String(rawBodega).trim().toUpperCase() : 'TMT1';
 
+                            let rawSub = findVal(row, ['Subbodega', 'Sub_Bodega', 'SubAlmacen', 'Subalm', 'Alm.Espec']);
+                            let subbodega = (rawSub && String(rawSub).trim() !== '') ? String(rawSub).trim() : '-';
+
                             let calle = findVal(row, ['Calle', 'Pasillo', 'Ubicacion', 'Ubic']);
                             let vol = getVolumenTerreno(row);
                             let pcs = parseNum(findVal(row, ['Piezas', 'NºPiezas', 'NÂºPiezas', 'Pcs']));
@@ -530,6 +537,7 @@
                                 SKU: String(sku).trim(),
                                 Descripcion: String(desc).trim(),
                                 Bodega: bodega,
+                                Subbodega: subbodega,
                                 Calle: String(calle).trim(),
                                 Volumen: vol,
                                 Piezas: pcs,
@@ -550,12 +558,13 @@
                                 let lote = item.Lote ? String(item.Lote).trim() : '';
                                 if(!lote) return;
                                 if(!terrenoCounts[lote]) {
-                                    terrenoCounts[lote] = { count: 0, items: [], operarios: new Set(), calles: new Set(), horas: [] };
+                                    terrenoCounts[lote] = { count: 0, items: [], operarios: new Set(), calles: new Set(), subbodegas: new Set(), horas: [] };
                                 }
                                 terrenoCounts[lote].count++;
                                 terrenoCounts[lote].items.push(item);
                                 if(item.Operario) terrenoCounts[lote].operarios.add(item.Operario);
                                 if(item.Calle) terrenoCounts[lote].calles.add(item.Calle);
+                                if(item.Subbodega && item.Subbodega !== '-') terrenoCounts[lote].subbodegas.add(item.Subbodega);
                                 if(item.Hora) terrenoCounts[lote].horas.push(item.Hora);
                             });
 
@@ -571,6 +580,7 @@
 
                                 if(data.count > 1) {
                                     let dupVol = sapMap.has(lote) ? sapMap.get(lote).Volumen : firstTerrenoItem.Volumen;
+                                    let dupSub = sapMap.has(lote) ? sapMap.get(lote).Subbodega : (Array.from(data.subbodegas).join(', ') || firstTerrenoItem.Subbodega);
                                     allDuplicados.push({
                                         Lote: lote,
                                         Count: data.count,
@@ -580,18 +590,19 @@
                                         SKU: firstTerrenoItem.SKU || '',
                                         Descripcion: firstTerrenoItem.Descripcion || '',
                                         Bodega: firstTerrenoItem.Bodega || 'TMT1',
+                                        Subbodega: dupSub,
                                         Volumen: dupVol
                                     });
                                 }
 
                                 if(sapMap.has(lote)) {
                                     let sapItem = sapMap.get(lote);
-                                    // CORRECCIÓN APLICADA AQUÍ: Se priorizan los datos del maestro SAP (SKU, Descripción, Bodega)
                                     allPareados.push({
                                         ...firstTerrenoItem,
                                         SKU: sapItem.SKU || firstTerrenoItem.SKU,
                                         Descripcion: sapItem.Descripcion || firstTerrenoItem.Descripcion,
                                         Bodega: sapItem.Bodega || firstTerrenoItem.Bodega,
+                                        Subbodega: sapItem.Subbodega !== '-' ? sapItem.Subbodega : (firstTerrenoItem.Subbodega || '-'),
                                         Volumen: sapItem.Volumen
                                     });
                                 } else {
@@ -780,12 +791,13 @@
                     <th class="p-3">SKU</th>
                     <th class="p-3">Descripción</th>
                     <th class="p-3">Almacén</th>
+                    <th class="p-3">Subbodega</th>
                     <th class="p-3">Lecturas</th>
                     <th class="p-3">Volumen (m³)</th>
                     <th class="p-3">Operarios</th>
                 `;
                 if(dataToRender.length === 0) {
-                    bodyEl.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">No hay registros duplicados para este filtro.</td></tr>`;
+                    bodyEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">No hay registros duplicados para este filtro.</td></tr>`;
                     return;
                 }
                 bodyEl.innerHTML = dataToRender.map(i => `
@@ -794,6 +806,7 @@
                         <td class="p-3">${i.SKU}</td>
                         <td class="p-3">${i.Descripcion}</td>
                         <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
+                        <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
                         <td class="p-3"><span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">${i.Count} lecturas</span></td>
                         <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
                         <td class="p-3">${i.Operarios}</td>
@@ -805,12 +818,13 @@
                     <th class="p-3">SKU</th>
                     <th class="p-3">Descripción</th>
                     <th class="p-3">Almacén</th>
+                    <th class="p-3">Subbodega</th>
                     <th class="p-3">Calle</th>
                     <th class="p-3">Volumen (m³)</th>
                     <th class="p-3">Piezas</th>
                 `;
                 if(dataToRender.length === 0) {
-                    bodyEl.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">Sin registros en esta categoría para este filtro.</td></tr>`;
+                    bodyEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin registros en esta categoría para este filtro.</td></tr>`;
                     return;
                 }
                 bodyEl.innerHTML = dataToRender.map(i => `
@@ -819,6 +833,7 @@
                         <td class="p-3">${i.SKU || '-'}</td>
                         <td class="p-3">${i.Descripcion || '-'}</td>
                         <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
+                        <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
                         <td class="p-3">${i.Calle || '-'}</td>
                         <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
                         <td class="p-3">${i.Piezas || '0'}</td>
@@ -995,7 +1010,7 @@
                 document.getElementById('dictamen-text').innerHTML = "Cargue el maestro y los archivos de terreno para generar el dictamen gerencial automático.";
                 document.getElementById('warehouse-breakdown-table').innerHTML = `<tr><td colspan="7" class="text-center py-4 text-slate-400">Sin datos cargados.</td></tr>`;
                 document.getElementById('timestamp-report').innerText = "--";
-                document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>`;
+                document.getElementById('table-body').innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>`;
 
                 switchView('dashboard');
             }
