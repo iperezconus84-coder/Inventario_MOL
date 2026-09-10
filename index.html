@@ -502,36 +502,37 @@
             <button type="button" id="tabAvance" class="nav-tab" role="tab" onclick="cambiarVista('avance')">03. Avance</button>
         </nav>
 
-        <!-- VISTA 1: CONFIGURACIÓN Y SINCRONIZACIÓN CLOUD -->
+        <!-- VISTA 1: CONFIGURACIÓN Y SINCRONIZACIÓN CLOUD / MANUAL -->
         <div id="viewConfig" class="view-section active" role="tabpanel">
             <div class="file-section">
-                <label style="margin-bottom: 8px;">Estado de Datos Maestros (GitHub / Offline):</label>
-                <div id="statusOperarios" class="status-box">⟳ Sincronizando operarios...</div>
-                <div id="statusPlano" class="status-box">⟳ Sincronizando plano_general...</div>
+                <label style="margin-bottom: 8px;">Estado de Datos Maestros:</label>
+                <div id="statusOperarios" class="status-box" style="background: var(--bg-element); border-color: var(--color-border); color: var(--color-text-secondary);">ℹ Pendiente de sincronización</div>
+                <div id="statusPlano" class="status-box" style="background: var(--bg-element); border-color: var(--color-border); color: var(--color-text-secondary);">ℹ Pendiente de sincronización</div>
+                <div id="statusStockGlobal" class="status-box" style="background: var(--bg-element); border-color: var(--color-border); color: var(--color-text-secondary);">ℹ Pendiente de sincronización</div>
 
                 <label for="operarioSelect" style="margin-top: 10px;">Operario Activo (Obligatorio):</label>
                 <select id="operarioSelect" onchange="bloquearOperarioConfig()">
-                    <option value="">Cargando operarios...</option>
+                    <option value="">Seleccione Operario...</option>
                 </select>
 
-                <button type="button" class="btn-action secondary" onclick="sincronizarDatosCloud(true)" style="margin-top: 6px;">
-                    🔄 Forzar Actualización desde GitHub
+                <button type="button" class="btn-action primary-action" onclick="sincronizarDatosCloud(true)" style="margin-top: 10px;">
+                    🔄 Refrescar Datos (Descargar desde GitHub)
                 </button>
             </div>
 
             <!-- RESPALDO MANUAL LOCAL -->
             <details class="file-section" style="cursor: pointer; margin-bottom: 16px;">
                 <summary style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-brand); text-transform: uppercase;">
-                    + Carga Manual Local (Stock Maestros / Sin Conexión)
+                    + Carga Manual Local (Archivos del Dispositivo / Sin Conexión)
                 </summary>
                 <div style="margin-top: 14px;">
                     <label for="fileStockManual">Cargar Archivo Maestro de Stock (stock_tmt1.csv):</label>
                     <input type="file" id="fileStockManual" accept=".csv">
 
-                    <label for="filePlanoManual">Cargar Plano Manual (Opcional):</label>
+                    <label for="filePlanoManual">Cargar Plano Manual (plano_general.csv):</label>
                     <input type="file" id="filePlanoManual" accept=".csv">
 
-                    <label for="fileOperariosManual">Cargar Operarios Manual (Opcional):</label>
+                    <label for="fileOperariosManual">Cargar Operarios Manual (operarios.csv):</label>
                     <input type="file" id="fileOperariosManual" accept=".csv">
                 </div>
             </details>
@@ -554,7 +555,7 @@
             <div class="hud-grid">
                 <div id="infoOperarioActivo" class="hud-chip primary">OP: No seleccionado</div>
                 <div id="infoUltimaCalle" class="hud-chip info">CALLE: Ninguna</div>
-                <div id="infoStockActivo" class="hud-chip stock-loading">STOCK: Seleccione una Bodega...</div>
+                <div id="infoStockActivo" class="hud-chip stock-loading">STOCK: Seleccione una Bodega o Refresque Datos...</div>
             </div>
 
             <!-- Cuadrícula en Cascada: Bodega -> Sub-Bodega -> Calle -->
@@ -721,7 +722,6 @@
             }
 
             await restaurarMaestrosLocales();
-            sincronizarDatosCloud(false);
 
             if (operarioActual) {
                 document.getElementById('infoOperarioActivo').innerText = `OP: ${operarioActual}`;
@@ -745,14 +745,24 @@
                 if (regOp && regOp.datos) {
                     datosOperarios = regOp.datos;
                     cargarOperariosSelect();
-                    actualizarStatusBadge('statusOperarios', `✓ OPERARIOS: ${regOp.datos.length} (OFFLINE)`, 'ok');
+                    actualizarStatusBadge('statusOperarios', `✓ OPERARIOS: ${regOp.datos.length} (LOCAL)`, 'ok');
                 }
 
                 const regPlano = await db.maestros.get('plano');
                 if (regPlano && regPlano.datos) {
                     datosPlano = regPlano.datos;
                     poblarSelectorBodegas();
-                    actualizarStatusBadge('statusPlano', `✓ PLANO: ${regPlano.datos.length} REGISTROS (OFFLINE)`, 'ok');
+                    actualizarStatusBadge('statusPlano', `✓ PLANO: ${regPlano.datos.length} REGISTROS (LOCAL)`, 'ok');
+                }
+
+                const regStock = await db.stocks_bodega.get('GLOBAL_TMT1');
+                if (regStock && regStock.datos) {
+                    datosStockActivo = regStock.datos;
+                    bodegaStockCargada = "GLOBAL_TMT1";
+                    const chip = document.getElementById('infoStockActivo');
+                    chip.className = "hud-chip stock-info";
+                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems - Local)`;
+                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK: ${regStock.datos.length} ÍTEMS (LOCAL)`, 'ok');
                 }
             } catch (e) {
                 console.warn("Aviso al restaurar caché local:", e);
@@ -775,10 +785,16 @@
             }
         }
 
-        // --- 4. SINCRONIZACIÓN AUTOMÁTICA DESDE GITHUB (CLOUD) ---
+        // --- 4. SINCRONIZACIÓN MANUAL DESDE GITHUB (CLOUD) ---
         async function sincronizarDatosCloud(mostrarAlerta = false) {
             const timeParam = `?t=${Date.now()}`;
             let cargados = 0;
+
+            if (mostrarAlerta) {
+                actualizarStatusBadge('statusOperarios', '⟳ Conectando con GitHub...', 'err');
+                actualizarStatusBadge('statusPlano', '⟳ Conectando con GitHub...', 'err');
+                actualizarStatusBadge('statusStockGlobal', '⟳ Conectando con GitHub...', 'err');
+            }
 
             // 1. Operarios
             try {
@@ -800,16 +816,12 @@
                                 }
                             }
                         });
-                    } else {
-                        throw new Error("404 en operarios");
                     }
-                } else {
-                    throw new Error("404 en operarios");
                 }
             } catch (err) {
                 const regOp = await db.maestros.get('operarios');
                 if (!regOp) {
-                    actualizarStatusBadge('statusOperarios', `⚠ Falta operarios.csv en /data/ (Use Carga Manual)`, 'err');
+                    actualizarStatusBadge('statusOperarios', `⚠ Sin conexión (Use Carga Manual)`, 'err');
                 }
             }
 
@@ -830,29 +842,53 @@
                                     datosPlano = results.data;
                                     await db.maestros.put({ clave: 'plano', datos: datosPlano, timestamp: new Date().toISOString() });
                                     poblarSelectorBodegas();
-                                    actualizarStatusBadge('statusPlano', `✓ PLANO GENERAL CLOUD (${datosPlano.length} REGISTROS)`, 'ok');
+                                    actualizarStatusBadge('statusPlano', `✓ PLANO CLOUD (${datosPlano.length})`, 'ok');
                                     cargados++;
-                                } else {
-                                    actualizarStatusBadge('statusPlano', `⚠ El archivo plano_general.csv está vacío`, 'err');
                                 }
-                            },
-                            error: () => actualizarStatusBadge('statusPlano', `⚠ Error al leer plano_general.csv`, 'err')
+                            }
                         });
-                    } else {
-                        throw new Error("404 en plano");
                     }
-                } else {
-                    throw new Error("404 en plano");
                 }
             } catch (err) {
                 const regPlano = await db.maestros.get('plano');
                 if (!regPlano) {
-                    actualizarStatusBadge('statusPlano', `⚠ No se encontró plano_general.csv en /data/`, 'err');
+                    actualizarStatusBadge('statusPlano', `⚠ Sin conexión (Use Carga Manual)`, 'err');
                 }
             }
 
+            // 3. Stock Global (stock_tmt1.csv)
+            try {
+                let resStock = await fetch(`./data/stock_tmt1.csv${timeParam}`);
+                if (!resStock.ok) resStock = await fetch(`./stock_tmt1.csv${timeParam}`);
+
+                if (resStock.ok) {
+                    const text = await resStock.text();
+                    if (!text.trim().startsWith("<")) {
+                        Papa.parse(text, {
+                            ...parseConfig,
+                            complete: async (results) => {
+                                if (results.data && results.data.length > 0) {
+                                    datosStockActivo = results.data;
+                                    bodegaStockCargada = "GLOBAL_TMT1";
+                                    await db.stocks_bodega.put({ bodega: 'GLOBAL_TMT1', datos: results.data, timestamp: new Date().toISOString() });
+                                    
+                                    const chip = document.getElementById('infoStockActivo');
+                                    chip.className = "hud-chip stock-info";
+                                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems)`;
+                                    
+                                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK CLOUD (${datosStockActivo.length})`, 'ok');
+                                    cargados++;
+                                }
+                            }
+                        });
+                    }
+                }
+            } catch (err) {
+                actualizarStatusBadge('statusStockGlobal', `⚠ Sin conexión (Use Carga Manual)`, 'err');
+            }
+
             if (mostrarAlerta) {
-                alert(cargados > 0 ? "Datos actualizados desde GitHub exitosamente." : "No se encontraron los archivos en /data/. Verifique los nombres en GitHub o cargue manualmente abajo.");
+                alert(cargados > 0 ? "Datos actualizados desde GitHub correctamente." : "No se pudo conectar a la ruta /data/. Verifique su red o utilice la carga manual inferior.");
             }
         }
 
@@ -864,10 +900,12 @@
                 ...parseConfig,
                 complete: async (results) => {
                     datosStockActivo = results.data;
-                    bodegaStockCargada = "MANUAL";
+                    bodegaStockCargada = "GLOBAL_TMT1";
+                    await db.stocks_bodega.put({ bodega: 'GLOBAL_TMT1', datos: results.data, timestamp: new Date().toISOString() });
                     const chip = document.getElementById('infoStockActivo');
                     chip.className = "hud-chip stock-info";
                     chip.innerText = `STOCK: ${file.name} (✓ ${datosStockActivo.length})`;
+                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK MANUAL (${datosStockActivo.length})`, 'ok');
                     alert(`Archivo maestro de stock cargado: ${results.data.length} ítems listos para auditar.`);
                 }
             });
@@ -933,8 +971,6 @@
             calleSelect.innerHTML = '<option value="">Calle...</option>';
             
             if (!bodega) {
-                document.getElementById('infoStockActivo').className = 'hud-chip stock-loading';
-                document.getElementById('infoStockActivo').innerText = 'STOCK: Seleccione una Bodega...';
                 return;
             }
 
@@ -955,8 +991,6 @@
             } else {
                 poblarCalles(filasBodega);
             }
-
-            cargarStockBodegaEnSegundoPlano(bodega);
         }
 
         function alCambiarSubBodega() {
@@ -987,63 +1021,6 @@
             });
             calleCerradaGuardada = false;
             actualizarBotonesAccion();
-        }
-
-        // --- 7. CARGA DINÁMICA DE STOCK UNIVERSAL (stock_tmt1.csv) ---
-        async function cargarStockBodegaEnSegundoPlano(bodega) {
-            const chip = document.getElementById('infoStockActivo');
-            const bodegaKey = bodega.trim().toUpperCase();
-            const bodegaFile = bodega.trim().toLowerCase();
-
-            if (bodegaStockCargada === bodegaKey && datosStockActivo.length > 0) return;
-
-            chip.className = "hud-chip stock-loading";
-            chip.innerText = `STOCK: Cargando maestro stock_tmt1.csv...`;
-
-            // 1. Buscar si ya estaba en IndexedDB local
-            try {
-                const cache = await db.stocks_bodega.get(bodegaKey);
-                if (cache && cache.datos && cache.datos.length > 0) {
-                    datosStockActivo = cache.datos;
-                    bodegaStockCargada = bodegaKey;
-                    chip.className = "hud-chip stock-info";
-                    chip.innerText = `STOCK: stock_tmt1 (${datosStockActivo.length} ítems - Offline)`;
-                }
-            } catch (e) {}
-
-            // 2. Rutas prioritarias: busca primero stock_tmt1.csv universal, luego respaldos específicos por bodega
-            const rutas = [
-                `./data/stock_tmt1.csv?t=${Date.now()}`,
-                `./stock_tmt1.csv?t=${Date.now()}`,
-                `./data/stock_${bodegaFile}.csv?t=${Date.now()}`
-            ];
-
-            for (const r of rutas) {
-                try {
-                    const res = await fetch(r);
-                    if (res.ok) {
-                        const text = await res.text();
-                        if (!text.trim().startsWith("<")) {
-                            Papa.parse(text, {
-                                ...parseConfig,
-                                complete: async (results) => {
-                                    datosStockActivo = results.data;
-                                    bodegaStockCargada = bodegaKey;
-                                    await db.stocks_bodega.put({ bodega: bodegaKey, datos: results.data, timestamp: new Date().toISOString() });
-                                    chip.className = "hud-chip stock-info";
-                                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems)`;
-                                }
-                            });
-                            return;
-                        }
-                    }
-                } catch (e) {}
-            }
-
-            if (datosStockActivo.length === 0 || bodegaStockCargada !== bodegaKey) {
-                chip.className = "hud-chip stock-loading";
-                chip.innerText = `STOCK: stock_tmt1 no hallado (Use Carga Manual)`;
-            }
         }
 
         // --- 8. CONFIGURACIÓN DE CALLE Y METAS ---
@@ -1637,9 +1614,9 @@
                     alert('No hay archivo de stock cargado para comparar en esta bodega.');
                     return;
                 }
-                const capturasBodega = await db.capturas.where('bodega').equals(bodegaStockCargada).toArray();
+                const capturasBodega = await db.capturas.toArray();
                 if (capturasBodega.length === 0) {
-                    alert('No hay capturas registradas para esta bodega.');
+                    alert('No hay capturas registradas.');
                     return;
                 }
 
@@ -1695,7 +1672,7 @@
                             await navigator.share({
                                 files: [file],
                                 title: `Diferencias Arauco - ${bodegaStockCargada}`,
-                                text: `Reporte de diferencias inventario Bodega ${bodegaStockCargada}`
+                                text: `Reporte de diferencias inventario`
                             });
                             return;
                         } catch (e) {
