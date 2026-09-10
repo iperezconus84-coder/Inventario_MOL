@@ -586,10 +586,13 @@
 
                                 if(sapMap.has(lote)) {
                                     let sapItem = sapMap.get(lote);
+                                    // CORRECCIÓN APLICADA AQUÍ: Se priorizan los datos del maestro SAP (SKU, Descripción, Bodega)
                                     allPareados.push({
                                         ...firstTerrenoItem,
-                                        Volumen: sapItem.Volumen,
-                                        Bodega: sapItem.Bodega || firstTerrenoItem.Bodega
+                                        SKU: sapItem.SKU || firstTerrenoItem.SKU,
+                                        Descripcion: sapItem.Descripcion || firstTerrenoItem.Descripcion,
+                                        Bodega: sapItem.Bodega || firstTerrenoItem.Bodega,
+                                        Volumen: sapItem.Volumen
                                     });
                                 } else {
                                     allSobrantes.push(firstTerrenoItem);
@@ -604,7 +607,6 @@
 
                             let whBreakdown = {};
                             
-                            // MODIFICACIÓN: Extraer almacenes EXCLUSIVAMENTE del stock teórico (SAP)
                             let sapWarehouses = new Set();
                             rawData.sap.forEach(i => {
                                 if(i.Bodega && String(i.Bodega).trim() !== '') {
@@ -993,7 +995,7 @@
                 document.getElementById('dictamen-text').innerHTML = "Cargue el maestro y los archivos de terreno para generar el dictamen gerencial automático.";
                 document.getElementById('warehouse-breakdown-table').innerHTML = `<tr><td colspan="7" class="text-center py-4 text-slate-400">Sin datos cargados.</td></tr>`;
                 document.getElementById('timestamp-report').innerText = "--";
-                document.getElementById('table-body').innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>`;
+                document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>`;
 
                 switchView('dashboard');
             }
