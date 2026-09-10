@@ -408,7 +408,6 @@
         }
 
         function getPiezasSap(row) {
-            // Intenta capturar específicamente el valor de la columna O / piezas del maestro teórico
             for(let k of ['nºpiezas', 'nÂºpiezas', 'piezas', 'pcs', 'cantidad_piezas']) {
                 for(let rKey in row) {
                     let cleanKey = rKey.replace(/^\ufeff/, '').trim();
@@ -619,10 +618,15 @@
                                         Bodega: sapItem.Bodega || firstTerrenoItem.Bodega,
                                         Subbodega: sapItem.Subbodega !== '-' ? sapItem.Subbodega : (firstTerrenoItem.Subbodega || '-'),
                                         Volumen: sapItem.Volumen,
-                                        Piezas: sapItem.Piezas // Se asignan las piezas exactas del maestro teórico (Columna O)
+                                        Piezas: sapItem.Piezas
                                     });
                                 } else {
-                                    allSobrantes.push(firstTerrenoItem);
+                                    // MEJORA APLICADA: Si el sobrante en terreno no tiene volumen especificado, se indica 1 lote escaneado para evitar ceros ciegos
+                                    let itemSobrante = { ...firstTerrenoItem };
+                                    if(!itemSobrante.Volumen || itemSobrante.Volumen === 0) {
+                                        itemSobrante.Volumen = 0; // Se mantiene en 0 para cálculo o se visualiza el recuento
+                                    }
+                                    allSobrantes.push(itemSobrante);
                                 }
                             }
 
@@ -732,7 +736,7 @@
             document.getElementById('kpi-net-diff').innerText = `${netDiff >= 0 ? '+' : ''}${netDiff.toFixed(2)} m³`;
             document.getElementById('kpi-net-pcs').innerText = `${netPcsDiff >= 0 ? '+' : ''}${netPcsDiff} piezas`;
             document.getElementById('kpi-abs-diff').innerText = `${absDiff.toFixed(2)} m³`;
-            document.getElementById('kpi-sobrante').innerText = `${volSobrante.toFixed(2)} m³`;
+            document.getElementById('kpi-sobrante').innerText = `${volSobrante > 0 ? volSobrante.toFixed(2) + ' m³' : globalData.sobrantes.length + ' lotes (sin vol)'}`;
             document.getElementById('kpi-faltante').innerText = `${volFaltante.toFixed(2)} m³`;
             document.getElementById('kpi-duplicados').innerText = globalData.duplicados.length;
 
@@ -785,7 +789,7 @@
             let selectedWh = document.getElementById('warehouse-filter').value;
             let descWh = selectedWh === 'ALL' ? 'todas las bodegas' : `el almacén [${selectedWh}]`;
 
-            let dictamenHTML = `Para ${descWh}, el inventario presenta un <strong>Índice de Confiabilidad (IRA) de ${ira.toFixed(1)}%</strong> (${ira >= 98 ? 'Clase Mundial' : (ira >= 95 ? 'Alerta Operativa' : 'Crítico')}). Se validaron <strong>${globalData.pareados.length} paquetes pareados</strong> (${volPareado.toFixed(2)} m³), detectando <strong>${globalData.sobrantes.length} sobrantes</strong> (${volSobrante.toFixed(2)} m³) y <strong>${globalData.faltantes.length} faltantes</strong> (${volFaltante.toFixed(2)} m³).`;
+            let dictamenHTML = `Para ${descWh}, el inventario presenta un <strong>Índice de Confiabilidad (IRA) de ${ira.toFixed(1)}%</strong> (${ira >= 98 ? 'Clase Mundial' : (ira >= 95 ? 'Alerta Operativa' : 'Crítico')}). Se validaron <strong>${globalData.pareados.length} paquetes pareados</strong> (${volPareado.toFixed(2)} m³), detectando <strong>${globalData.sobrantes.length} sobrantes</strong> (${volSobrante > 0 ? volSobrante.toFixed(2) + ' m³' : globalData.sobrantes.length + ' lotes externos'}) y <strong>${globalData.faltantes.length} faltantes</strong> (${volFaltante.toFixed(2)} m³).`;
             document.getElementById('dictamen-text').innerHTML = dictamenHTML;
             document.getElementById('timestamp-report').innerText = new Date().toLocaleString();
         }
@@ -835,6 +839,33 @@
                         <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
                         <td class="p-3 font-semibold text-slate-700">${i.Piezas || '0'}</td>
                         <td class="p-3">${i.Operarios}</td>
+                    </tr>
+                `).join('');
+            } else if(tab === 'sob') {
+                headersEl.innerHTML = `
+                    <th class="p-3">Lote</th>
+                    <th class="p-3">SKU</th>
+                    <th class="p-3">Descripción</th>
+                    <th class="p-3">Almacén</th>
+                    <th class="p-3">Subbodega</th>
+                    <th class="p-3">Calle</th>
+                    <th class="p-3">Volumen (m³)</th>
+                    <th class="p-3">Piezas</th>
+                `;
+                if(dataToRender.length === 0) {
+                    bodyEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin registros de sobrantes para este filtro.</td></tr>`;
+                    return;
+                }
+                bodyEl.innerHTML = dataToRender.map(i => `
+                    <tr class="hover:bg-slate-50 border-b border-slate-100">
+                        <td class="p-3 font-bold text-blue-800">${i.Lote || '-'}</td>
+                        <td class="p-3">${i.SKU || '-'}</td>
+                        <td class="p-3">${i.Descripcion || '-'}</td>
+                        <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
+                        <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
+                        <td class="p-3">${i.Calle || '-'}</td>
+                        <td class="p-3 font-semibold">${Number(i.Volumen || 0) > 0 ? Number(i.Volumen).toFixed(3) + ' m³' : '<span class="text-amber-600 italic">1 Lote (Sin vol.)</span>'}</td>
+                        <td class="p-3 font-semibold text-blue-700">${i.Piezas || '0'}</td>
                     </tr>
                 `).join('');
             } else {
@@ -939,7 +970,7 @@
                         <td class="p-2.5">${d.volSap.toFixed(2)} m³</td>
                         <td class="p-2.5">${d.volTer.toFixed(2)} m³</td>
                         <td class="p-2.5 text-emerald-700 font-semibold">${d.volPar.toFixed(2)} m³</td>
-                        <td class="p-2.5 text-blue-600">${d.volSob.toFixed(2)} m³</td>
+                        <td class="p-2.5 text-blue-600">${d.volSob > 0 ? d.volSob.toFixed(2) + ' m³' : globalData.sobrantes.length + ' lotes'}</td>
                         <td class="p-2.5 text-rose-600">${d.volFal.toFixed(2)} m³</td>
                         <td class="p-2.5 ${iraColor}">${d.ira.toFixed(1)}%</td>
                     </tr>
@@ -1057,7 +1088,7 @@
 
             let detalleAlmacenes = "\n--- DESGLOSE POR ALMACÉN ---\n";
             for(let [w, d] of Object.entries(globalData.warehouseBreakdown)) {
-                detalleAlmacenes += `Almacén ${w}: IRA ${d.ira.toFixed(1)}% | Pareados: ${d.volPar.toFixed(2)} m³ | Sobrantes: ${d.volSob.toFixed(2)} m³ | Faltantes: ${d.volFal.toFixed(2)} m³\n`;
+                detalleAlmacenes += `Almacén ${w}: IRA ${d.ira.toFixed(1)}% | Pareados: ${d.volPar.toFixed(2)} m³ | Sobrantes: ${d.volSob > 0 ? d.volSob.toFixed(2) + ' m³' : globalData.sobrantes.length + ' lotes'} | Faltantes: ${d.volFal.toFixed(2)} m³\n`;
             }
 
             let asunto = encodeURIComponent(`Informe de Conciliación Consolidado - Operaciones Molduras [${fechaHoy}]`);
