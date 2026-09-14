@@ -690,6 +690,20 @@
         // --- 2. ESTADO GLOBAL ---
         let datosPlano = [];
         let datosStockActivo = [];
+        let stockTimestamp = null; // ISO string: cuándo se cargó (GitHub o manual) el stock actualmente activo
+        const UMBRAL_HORAS_STOCK = 12; // Antigüedad máxima aceptable del stock antes de exigir confirmación/recarga
+
+        function formatearFechaStock(iso) {
+            if (!iso) return "sin fecha";
+            const d = new Date(iso);
+            const pad = n => String(n).padStart(2, '0');
+            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        function horasDesde(iso) {
+            if (!iso) return Infinity;
+            return (Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60);
+        }
         let bodegaStockCargada = "";
         let datosOperarios = [];
         let operarioActual = localStorage.getItem('inv_operario') || "";
@@ -759,10 +773,11 @@
                 if (regStock && regStock.datos) {
                     datosStockActivo = regStock.datos;
                     bodegaStockCargada = "GLOBAL_TMT1";
+                    stockTimestamp = regStock.timestamp || null;
                     const chip = document.getElementById('infoStockActivo');
                     chip.className = "hud-chip stock-info";
-                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems - Local)`;
-                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK: ${regStock.datos.length} ÍTEMS (LOCAL)`, 'ok');
+                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems) - Cargado: ${formatearFechaStock(stockTimestamp)}`;
+                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK: ${regStock.datos.length} ÍTEMS (LOCAL) - ${formatearFechaStock(stockTimestamp)}`, 'ok');
                 }
             } catch (e) {
                 console.warn("Aviso al restaurar caché local:", e);
@@ -870,13 +885,14 @@
                                 if (results.data && results.data.length > 0) {
                                     datosStockActivo = results.data;
                                     bodegaStockCargada = "GLOBAL_TMT1";
-                                    await db.stocks_bodega.put({ bodega: 'GLOBAL_TMT1', datos: results.data, timestamp: new Date().toISOString() });
+                                    stockTimestamp = new Date().toISOString();
+                                    await db.stocks_bodega.put({ bodega: 'GLOBAL_TMT1', datos: results.data, timestamp: stockTimestamp });
                                     
                                     const chip = document.getElementById('infoStockActivo');
                                     chip.className = "hud-chip stock-info";
-                                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems)`;
+                                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems) - Cargado: ${formatearFechaStock(stockTimestamp)}`;
                                     
-                                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK CLOUD (${datosStockActivo.length})`, 'ok');
+                                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK CLOUD (${datosStockActivo.length}) - ${formatearFechaStock(stockTimestamp)}`, 'ok');
                                     cargados++;
                                 }
                             }
@@ -901,11 +917,12 @@
                 complete: async (results) => {
                     datosStockActivo = results.data;
                     bodegaStockCargada = "GLOBAL_TMT1";
-                    await db.stocks_bodega.put({ bodega: 'GLOBAL_TMT1', datos: results.data, timestamp: new Date().toISOString() });
+                    stockTimestamp = new Date().toISOString();
+                    await db.stocks_bodega.put({ bodega: 'GLOBAL_TMT1', datos: results.data, timestamp: stockTimestamp });
                     const chip = document.getElementById('infoStockActivo');
                     chip.className = "hud-chip stock-info";
-                    chip.innerText = `STOCK: ${file.name} (✓ ${datosStockActivo.length})`;
-                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK MANUAL (${datosStockActivo.length})`, 'ok');
+                    chip.innerText = `STOCK: ${file.name} (✓ ${datosStockActivo.length}) - Cargado: ${formatearFechaStock(stockTimestamp)}`;
+                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK MANUAL (${datosStockActivo.length}) - ${formatearFechaStock(stockTimestamp)}`, 'ok');
                     alert(`Archivo maestro de stock cargado: ${results.data.length} ítems listos para auditar.`);
                 }
             });
@@ -1513,6 +1530,29 @@
                     alert("Seleccione un operario en Configuración.");
                     cambiarVista('config');
                     return;
+                }
+                if (!datosStockActivo || datosStockActivo.length === 0) {
+                    alert("No hay stock cargado. Refresque desde GitHub o cargue el archivo manual en Configuración antes de capturar.");
+                    document.getElementById('viewCaptura').classList.remove('active');
+                    document.getElementById('tabCaptura').classList.remove('active');
+                    cambiarVista('config');
+                    return;
+                }
+                const horas = horasDesde(stockTimestamp);
+                if (horas > UMBRAL_HORAS_STOCK) {
+                    const continuar = confirm(
+                        `⚠ El stock activo fue cargado el ${formatearFechaStock(stockTimestamp)} ` +
+                        `(hace ${Math.floor(horas)} horas), supera el umbral de ${UMBRAL_HORAS_STOCK}h.\n\n` +
+                        `Se recomienda refrescar desde GitHub o cargar un archivo manual actualizado ` +
+                        `antes de capturar, para no auditar contra un stock desactualizado.\n\n` +
+                        `¿Desea continuar de todas formas con el stock actual?`
+                    );
+                    if (!continuar) {
+                        document.getElementById('viewCaptura').classList.remove('active');
+                        document.getElementById('tabCaptura').classList.remove('active');
+                        cambiarVista('config');
+                        return;
+                    }
                 }
                 enfocarScanner();
             } else if (vista === 'avance') {
