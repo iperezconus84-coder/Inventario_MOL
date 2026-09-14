@@ -12,6 +12,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <!-- SheetJS (xlsx) for Excel export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- html2pdf for client-side PDF generation with images -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         body { font-family: 'Poppins', sans-serif; }
         .arauco-blue { background-color: #005F9E; }
@@ -29,7 +31,7 @@
             </div>
             <div class="flex items-center gap-2">
                 <span id="data-status-badge" class="bg-amber-500 text-white text-[10px] font-bold px-2 py-1 rounded-full">Sin Plano</span>
-                <button onclick="reiniciarTodo()" class="bg-rose-700 hover:bg-rose-800 text-white p-1.5 rounded-lg text-xs" title="Reiniciar">
+                <button onclick="reiniciarTodo()" class="bg-rose-700 hover:bg-rose-800 text-white p-1.5 rounded-lg text-xs cursor-pointer" title="Reiniciar">
                     🔄
                 </button>
             </div>
@@ -39,13 +41,29 @@
     <!-- Contenedor Principal Adaptado a Terreno -->
     <main class="max-w-md mx-auto px-4 py-4 flex-grow w-full space-y-4">
 
-        <!-- PASO 1: Ingestión del Plano -->
+        <!-- PASO 1: Ingestión del Plano o Carga de Respaldo JSON -->
         <section id="section-upload" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">1. Cargar Plano de Bodegas</h2>
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-700">1. Cargar Plano o Sesión Guardada</h2>
+            
+            <!-- Cargar CSV Original -->
             <div class="border-2 border-dashed border-slate-300 p-3 rounded-lg bg-slate-50 text-center space-y-2">
                 <input type="file" id="file-plano" accept=".csv" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 w-full cursor-pointer">
                 <button onclick="procesarPlano()" class="arauco-blue text-white w-full py-2 rounded-lg text-xs font-bold shadow cursor-pointer">
-                    Cargar Plano General
+                    Cargar Plano General (CSV)
+                </button>
+            </div>
+
+            <div class="relative flex py-1 items-center">
+                <div class="flex-grow border-t border-slate-200"></div>
+                <span class="flex-shrink mx-2 text-[10px] uppercase text-slate-400 font-bold">o continuar sesión</span>
+                <div class="flex-grow border-t border-slate-200"></div>
+            </div>
+
+            <!-- Cargar Respaldo JSON (Para pasar de Teléfono a PC) -->
+            <div class="border border-slate-200 p-3 rounded-lg bg-indigo-50/50 text-center space-y-2">
+                <input type="file" id="file-json-backup" accept=".json" class="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-indigo-100 file:text-indigo-700 w-full cursor-pointer">
+                <button onclick="importarSesionJSON()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2 rounded-lg text-xs font-bold shadow cursor-pointer">
+                    📂 Cargar Respaldo Previo (.json)
                 </button>
             </div>
         </section>
@@ -110,7 +128,7 @@
                 <input type="number" id="input-total-lotes" onchange="guardarDatosCalle()" class="w-20 bg-white border border-slate-300 rounded px-2 py-1 text-center font-bold text-slate-800 text-sm" value="0">
             </div>
 
-            <!-- Checklist con casillas (Desmarcados por defecto) -->
+            <!-- Checklist con casillas -->
             <div class="space-y-2 text-xs">
                 <span class="block font-bold text-slate-700 uppercase text-[10px] tracking-wider">Requisitos de Calidad (Marcar lo que CUMPLE):</span>
                 
@@ -138,7 +156,7 @@
                 <textarea id="input-comentario" oninput="guardarDatosCalle()" rows="2" placeholder="Ej: Faltan etiquetas en el paquete inferior..." class="w-full bg-slate-50 border border-slate-300 rounded-lg p-2 text-slate-700 text-xs focus:outline-none focus:border-blue-500"></textarea>
             </div>
 
-            <!-- Activación Directa de la Cámara y Guardado Local Automático -->
+            <!-- Activación Directa de la Cámara y Guardado Local -->
             <div class="space-y-2 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200 text-center">
                 <label class="block font-bold text-slate-700 uppercase text-[10px] tracking-wider mb-1">Evidencia Fotográfica de Terreno:</label>
                 <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="capturarYGuardarFotoLocal(event)" class="hidden">
@@ -154,10 +172,13 @@
             </button>
         </section>
 
-        <!-- PASO 4: Botón para Ver Resumen Ejecutivo -->
+        <!-- PASO 4: Botón para Ver Resumen Ejecutivo y Respaldo JSON -->
         <section id="section-export" class="hidden pt-2 space-y-2">
             <button onclick="mostrarResumenEjecutivo()" class="bg-emerald-600 hover:bg-emerald-700 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow transition flex items-center justify-center gap-2 cursor-pointer">
-                📊 Ver Resumen Ejecutivo y Exportar Excel
+                📊 Ver Resumen Ejecutivo y Opciones de Reporte
+            </button>
+            <button onclick="exportarSesionJSON()" class="bg-amber-600 hover:bg-amber-700 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                💾 Guardar Respaldo de Sesión (.json)
             </button>
         </section>
 
@@ -165,7 +186,7 @@
         <section id="section-resumen-exec" class="hidden bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
                 <h3 class="text-sm font-black text-slate-900">Resumen Ejecutivo de Auditoría</h3>
-                <button onclick="volverAuditoria()" class="bg-slate-200 text-slate-700 px-2 py-1 rounded text-xs font-semibold">← Volver</button>
+                <button onclick="volverAuditoria()" class="bg-slate-200 text-slate-700 px-2 py-1 rounded text-xs font-semibold cursor-pointer">← Volver</button>
             </div>
 
             <!-- Totales Globales -->
@@ -184,7 +205,7 @@
                 </div>
             </div>
 
-            <!-- Desglose por Bodega y Sub-bodega (Solo Revisadas) -->
+            <!-- Desglose por Bodega y Sub-bodega -->
             <div class="space-y-3">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700">Cumplimiento por Ubicación</h4>
                 <div id="exec-desglose-container" class="space-y-2 text-xs">
@@ -192,9 +213,18 @@
                 </div>
             </div>
 
-            <button onclick="exportarExcelEjecutivo()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow transition flex items-center justify-center gap-2 cursor-pointer">
-                📥 Descargar Excel con Resumen Ejecutivo
-            </button>
+            <!-- Botones de Exportación Automatizada -->
+            <div class="space-y-2 pt-2">
+                <button onclick="exportarPDFAutomatico()" class="bg-rose-600 hover:bg-rose-700 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                    📄 Descargar Informe Ejecutivo en PDF (con Fotos)
+                </button>
+                <button onclick="exportarExcelEjecutivo()" class="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                    📥 Descargar Excel con Resumen Ejecutivo
+                </button>
+                <button onclick="exportarSesionJSON()" class="bg-amber-600 hover:bg-amber-700 text-white w-full py-2.5 rounded-xl text-xs font-bold shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                    💾 Guardar Respaldo de Sesión (.json)
+                </button>
+            </div>
         </section>
 
     </main>
@@ -271,17 +301,13 @@
                                     mezcla: false,
                                     comentario: '',
                                     fotoRegistrada: false,
+                                    fotoBase64: null,
                                     revisado: false
                                 };
                             }
                         });
 
-                        document.getElementById('data-status-badge').innerText = `${planoGlobal.length} calles`;
-                        document.getElementById('section-upload').classList.add('hidden');
-                        document.getElementById('section-kpis').classList.remove('hidden');
-                        document.getElementById('section-selector').classList.remove('hidden');
-                        document.getElementById('section-export').classList.remove('hidden');
-
+                        activarInterfazApp(`${planoGlobal.length} calles`);
                         poblarBodegas();
                         actualizarKPIs();
                         alert(`¡Plano estructurado! Se cargaron ${planoGlobal.length} pasillos.`);
@@ -289,6 +315,64 @@
                 });
             };
             reader.readAsText(fileInput, "ISO-8859-1");
+        }
+
+        // --- FUNCIONES DE RESPALDO JSON (INTERCAMBIO TELÉFONO <-> PC) ---
+        function exportarSesionJSON() {
+            if(planoGlobal.length === 0) {
+                alert("No hay datos activos para respaldar.");
+                return;
+            }
+            let sesionData = {
+                planoGlobal: planoGlobal,
+                estadoAuditoria: estadoAuditoria,
+                fecha: new Date().toISOString()
+            };
+            let dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(sesionData));
+            let downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `Respaldo_Auditoria_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            alert("¡Respaldo JSON generado y descargado con éxito!");
+        }
+
+        function importarSesionJSON() {
+            let fileInput = document.getElementById('file-json-backup').files[0];
+            if(!fileInput) {
+                alert("Selecciona primero el archivo .json de respaldo.");
+                return;
+            }
+
+            let reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    let parsed = JSON.parse(evt.target.result);
+                    if(!parsed.planoGlobal || !parsed.estadoAuditoria) {
+                        throw new Error("Estructura de respaldo inválida");
+                    }
+
+                    planoGlobal = parsed.planoGlobal;
+                    estadoAuditoria = parsed.estadoAuditoria;
+
+                    activarInterfazApp(`${planoGlobal.length} calles (Restaurado)`);
+                    poblarBodegas();
+                    actualizarKPIs();
+                    alert(`¡Sesión restaurada con éxito! Se cargaron ${planoGlobal.length} pasillos desde el respaldo.`);
+                } catch(e) {
+                    alert("Error al leer el archivo JSON. Asegúrate de seleccionar un archivo de respaldo válido.");
+                }
+            };
+            reader.readAsText(fileInput);
+        }
+
+        function activarInterfazApp(badgeText) {
+            document.getElementById('data-status-badge').innerText = badgeText;
+            document.getElementById('section-upload').classList.add('hidden');
+            document.getElementById('section-kpis').classList.remove('hidden');
+            document.getElementById('section-selector').classList.remove('hidden');
+            document.getElementById('section-export').classList.remove('hidden');
         }
 
         function poblarBodegas() {
@@ -329,7 +413,7 @@
             let calles = planoGlobal.filter(i => i.bodega === bodegaActual && i.subBodega === subBodegaActual);
             calles.forEach(c => {
                 let key = `${c.bodega}_${c.subBodega}_${c.calle}`;
-                let rev = estadoAuditoria[key].revisado ? ' [Revisada]' : '';
+                let rev = estadoAuditoria[key]?.revisado ? ' [Revisada]' : '';
                 calleSelect.innerHTML += `<option value="${c.calle}">Calle ${c.calle}${rev}</option>`;
             });
         }
@@ -383,6 +467,7 @@
                 let base64Data = e.target.result;
                 let st = estadoAuditoria[calleSeleccionadaKey];
                 st.fotoRegistrada = true;
+                st.fotoBase64 = base64Data;
 
                 let nombreArchivo = `Bodega_${bodegaActual}_${subBodegaActual}_Calle_${calleActual}_Evidencia.jpg`;
                 let link = document.createElement('a');
@@ -473,9 +558,9 @@
 
             bodegas.forEach(b => {
                 let itemsBodega = planoGlobal.filter(i => i.bodega === b);
-                let revBodega = itemsBodega.filter(i => estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`].revisado);
+                let revBodega = itemsBodega.filter(i => estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`]?.revisado);
                 
-                if(revBodega.length === 0) return; // Omitir bodegas sin revisar
+                if(revBodega.length === 0) return;
 
                 let okBodega = revBodega.filter(i => {
                     let st = estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`];
@@ -494,9 +579,9 @@
                 let subBodegas = [...new Set(itemsBodega.map(i => i.subBodega))].sort();
                 subBodegas.forEach(sb => {
                     let itemsSb = itemsBodega.filter(i => i.subBodega === sb);
-                    let revSb = itemsSb.filter(i => estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`].revisado);
+                    let revSb = itemsSb.filter(i => estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`]?.revisado);
                     
-                    if(revSb.length === 0) return; // Omitir sub-bodegas sin revisar
+                    if(revSb.length === 0) return;
 
                     let okSb = revSb.filter(i => {
                         let st = estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`];
@@ -529,6 +614,102 @@
             document.getElementById('section-kpis').classList.remove('hidden');
             document.getElementById('section-selector').classList.remove('hidden');
             document.getElementById('section-export').classList.remove('hidden');
+        }
+
+        // --- EXPORTAR PDF EN CLIENTE CON FOTOS ---
+        function exportarPDFAutomatico() {
+            let revs = Object.values(estadoAuditoria).filter(st => st.revisado);
+            if(revs.length === 0) {
+                alert("No hay datos revisados para generar el PDF.");
+                return;
+            }
+
+            let elementoReporte = document.createElement('div');
+            elementoReporte.style.padding = '15px';
+            elementoReporte.style.fontFamily = 'Poppins, sans-serif';
+            elementoReporte.style.color = '#1e293b';
+            elementoReporte.style.backgroundColor = '#ffffff';
+
+            let cumplen = revs.filter(st => st.filos && st.acopios && st.etiquetas && st.mezcla).length;
+            let noCumplen = revs.length - cumplen;
+            let porcentaje = ((cumplen / revs.length) * 100).toFixed(1);
+
+            let filasHTML = planoGlobal.filter(i => {
+                let st = estadoAuditoria[`${i.bodega}_${i.subBodega}_${i.calle}`];
+                return st && st.revisado;
+            }).map(i => {
+                let key = `${i.bodega}_${i.subBodega}_${i.calle}`;
+                let st = estadoAuditoria[key];
+                let ok = st.filos && st.acopios && st.etiquetas && st.mezcla;
+                
+                let htmlFoto = st.fotoBase64 
+                    ? `<div style="margin-top: 4px;"><img src="${st.fotoBase64}" style="width: 70px; height: 50px; object-fit: cover; border-radius: 4px; border: 1px solid #cbd5e1;" /></div>` 
+                    : '<span style="color: #94a3b8; font-size: 8px;">Sin foto</span>';
+
+                return `
+                    <tr>
+                        <td style="padding: 5px; border: 1px solid #cbd5e1;"><b>${i.bodega}</b><br><span style="font-size:7px; color:#64748b;">${i.subBodega}</span><br>Calle ${i.calle}</td>
+                        <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: center; font-weight: bold;">${st.totalLotes}</td>
+                        <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: center; color: ${ok ? '#059669' : '#e11d48'}; font-weight: bold;">${ok ? 'CUMPLE' : 'NO CUMPLE'}</td>
+                        <td style="padding: 5px; border: 1px solid #cbd5e1; font-size: 8px;">
+                            <div><b>Obs:</b> ${st.comentario || 'Ninguna'}</div>
+                            <div style="margin-top: 2px;"><b>Filos:</b> ${st.filos?'✓':'✗'} | <b>Acopios:</b> ${st.acopios?'✓':'✗'} | <b>Etq:</b> ${st.etiquetas?'✓':'✗'} | <b>Mezcla:</b> ${st.mezcla?'✓':'✗'}</div>
+                            ${htmlFoto}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            elementoReporte.innerHTML = `
+                <div style="border-bottom: 3px solid #005F9E; padding-bottom: 6px; margin-bottom: 12px;">
+                    <h1 style="color: #005F9E; font-size: 14px; font-weight: 900; margin: 0;">ARAUCO • OPERACIONES MOLDURAS</h1>
+                    <p style="font-size: 9px; color: #64748b; margin: 2px 0 0 0;">Informe Ejecutivo de Auditoría de Terreno con Evidencia Fotográfica</p>
+                    <p style="font-size: 8px; color: #94a3b8; margin: 2px 0 0 0;">Fecha: ${new Date().toLocaleDateString()} | Total Pasillos Auditados: ${revs.length}</p>
+                </div>
+
+                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px; margin-bottom: 10px; font-size: 9px;">
+                    <h3 style="font-size: 10px; font-weight: 700; margin: 0 0 4px 0; color: #334155;">Resumen General de Cumplimiento</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td>Pasillos: <b>${revs.length}</b></td>
+                            <td style="color: #059669;">Cumplen: <b>${cumplen}</b></td>
+                            <td style="color: #e11d48;">No Cumplen: <b>${noCumplen}</b></td>
+                            <td><b>Efectividad:</b> ${porcentaje}%</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h3 style="font-size: 10px; font-weight: 700; margin: 8px 0 4px 0; color: #334155;">Detalle de Auditoría por Ubicación</h3>
+                <table style="width: 100%; font-size: 8px; border-collapse: collapse; border: 1px solid #cbd5e1;">
+                    <thead>
+                        <tr style="background-color: #005F9E; color: white;">
+                            <th style="padding: 5px; border: 1px solid #cbd5e1; text-align: left;">Ubicación</th>
+                            <th style="padding: 5px; border: 1px solid #cbd5e1; text-align: center;">Paq.</th>
+                            <th style="padding: 5px; border: 1px solid #cbd5e1; text-align: center;">Estado</th>
+                            <th style="padding: 5px; border: 1px solid #cbd5e1; text-align: left;">Observaciones y Evidencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filasHTML}
+                    </tbody>
+                </table>
+
+                <div style="margin-top: 20px; font-size: 7px; text-align: center; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 4px;">
+                    Documento generado 100% en dispositivo local • Arauco Terreno Móvil
+                </div>
+            `;
+
+            let opciones = {
+                margin:       8,
+                filename:     `Informe_Auditoria_Terreno_${new Date().toISOString().slice(0,10)}.pdf`,
+                image:        { type: 'jpeg', quality: 0.95 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().from(elementoReporte).set(opciones).save().then(() => {
+                alert("¡Informe PDF con fotos generado y descargado con éxito!");
+            });
         }
 
         function exportarExcelEjecutivo() {
@@ -581,6 +762,7 @@
             subBodegaActual = '';
             calleActual = '';
             document.getElementById('file-plano').value = "";
+            document.getElementById('file-json-backup').value = "";
             document.getElementById('section-upload').classList.remove('hidden');
             document.getElementById('section-kpis').classList.add('hidden');
             document.getElementById('section-selector').classList.add('hidden');
