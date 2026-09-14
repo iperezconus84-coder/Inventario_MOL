@@ -1,4 +1,4 @@
-const CACHE_NAME = 'arauco-porden-cache-v1';
+const CACHE_NAME = 'arauco-porden-cache-v2';
 const APP_PAGE = './porden.html';
 
 const assetsToCache = [
@@ -35,6 +35,29 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     if (event.request.method !== 'GET') return;
 
+    // Detectar si es una solicitud de navegación (cuando recargas la página o entras a la app)
+    if (event.request.mode === 'navigate' || event.request.headers.get('accept').includes('text/html')) {
+        event.respondWith(
+            fetch(event.request)
+                .then(networkResponse => {
+                    return caches.open(CACHE_NAME).then(cache => {
+                        cache.put(event.request, networkResponse.clone());
+                        return networkResponse;
+                    });
+                })
+                .catch(() => {
+                    // Si no hay red al actualizar, devolvemos inmediatamente el caché de la app
+                    return caches.match(event.request)
+                        .then(cachedResponse => {
+                            if (cachedResponse) return cachedResponse;
+                            return caches.match(APP_PAGE);
+                        });
+                })
+        );
+        return;
+    }
+
+    // Para el resto de recursos (librerías CDN, estilos, etc.)
     event.respondWith(
         fetch(event.request)
             .then(networkResponse => {
@@ -44,14 +67,7 @@ self.addEventListener('fetch', event => {
                 });
             })
             .catch(() => {
-                return caches.match(event.request).then(cachedResponse => {
-                    if (cachedResponse) {
-                        return cachedResponse;
-                    }
-                    if (event.request.headers.get('accept').includes('text/html')) {
-                        return caches.match(APP_PAGE);
-                    }
-                });
+                return caches.match(event.request);
             })
     );
 });
