@@ -505,29 +505,62 @@
         persistirEstadoLocal();
     }
 
+    // --- CAPTURA Y COMPRESIÓN DE FOTO OPTIMIZADA PARA TERRENO ---
     function capturarYGuardarFotoLocal(event) {
         let file = event.target.files[0];
         if(!file || !calleSeleccionadaKey) return;
 
         let reader = new FileReader();
         reader.onload = function(e) {
-            let base64Data = e.target.result;
-            let st = estadoAuditoria[calleSeleccionadaKey];
-            st.fotoRegistrada = true;
-            st.fotoBase64 = base64Data;
+            let img = new Image();
+            img.onload = function() {
+                let MAX_WIDTH = 1000;
+                let MAX_HEIGHT = 1000;
+                let width = img.width;
+                let height = img.height;
 
-            persistirEstadoLocal();
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
 
-            let nombreArchivo = `Bodega_${bodegaActual}_${subBodegaActual}_Calle_${calleActual}_Evidencia.jpg`;
-            let link = document.createElement('a');
-            link.href = base64Data;
-            link.download = nombreArchivo;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+                let canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                let ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
 
-            mostrarEstadoFoto(true);
-            alert(`¡Foto guardada localmente como "${nombreArchivo}"!`);
+                let base64Compressed = canvas.toDataURL('image/jpeg', 0.75);
+
+                let st = estadoAuditoria[calleSeleccionadaKey];
+                st.fotoRegistrada = true;
+                st.fotoBase64 = base64Compressed;
+
+                try {
+                    persistirEstadoLocal();
+                } catch (err) {
+                    console.warn("Memoria local al límite. La foto se guardó en la sesión pero se recomienda exportar respaldo JSON.");
+                }
+
+                let nombreArchivo = `Bodega_${bodegaActual}_${subBodegaActual}_Calle_${calleActual}_Evidencia.jpg`;
+                let link = document.createElement('a');
+                link.href = base64Compressed;
+                link.download = nombreArchivo;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+
+                mostrarEstadoFoto(true);
+                alert(`¡Foto comprimida y guardada con éxito para la Calle ${calleActual}!`);
+            };
+            img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     }
