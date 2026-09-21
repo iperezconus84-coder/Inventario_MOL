@@ -221,7 +221,7 @@
                             <tr class="bg-slate-100 text-slate-600 border-b border-slate-200 font-bold" id="table-headers"></tr>
                         </thead>
                         <tbody id="table-body" class="divide-y divide-slate-100 text-slate-700">
-                            <tr><td colspan="8" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>
+                            <tr><td colspan="9" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -431,6 +431,19 @@
             return 0;
         }
 
+        function calcularAntiguedadDias(fechaStr) {
+            if(!fechaStr || String(fechaStr).trim() === '') return 0;
+            // Espera formato DD-MM-YYYY
+            let partes = String(fechaStr).trim().split('-');
+            if(partes.length !== 3) return 0;
+            let fechaCreacion = new Date(`${partes[2]}-${partes[1]}-${partes[0]}`);
+            if(isNaN(fechaCreacion)) return 0;
+            let hoy = new Date();
+            let diffTime = hoy - fechaCreacion;
+            let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays >= 0 ? diffDays : 0;
+        }
+
         function procesarDatosMaestrosCSV(csvText, origenNombre) {
             Papa.parse(csvText, {
                 ...parseConfig,
@@ -439,6 +452,7 @@
                         let lote = findVal(row, ['Lote', 'Package', 'NºLote', 'Codigo', 'LoteSap']);
                         let sku = findVal(row, ['Material', 'SKU', 'CodigoMat', 'Cod']);
                         let desc = findVal(row, ['Desc.Mat.', 'Descripcion', 'Desc', 'MaterialDesc']);
+                        let creacion = findVal(row, ['Creacion', 'FechaCreacion', 'F.Creacion']) || '';
                         
                         let rawBodega = findVal(row, ['Almacen', 'Bodega', 'Alm', 'Centro', 'Planta', 'Plant']);
                         let bodega = (rawBodega && String(rawBodega).trim() !== '') ? String(rawBodega).trim().toUpperCase() : 'TMT1';
@@ -448,6 +462,7 @@
 
                         let vol = getStValoradSap(row);
                         let pcs = getPiezasSap(row);
+                        let antDays = calcularAntiguedadDias(creacion);
 
                         return {
                             Lote: String(lote).trim(),
@@ -456,7 +471,9 @@
                             Bodega: bodega,
                             Subbodega: subbodega,
                             Volumen: vol,
-                            Piezas: pcs
+                            Piezas: pcs,
+                            Creacion: creacion,
+                            AntiguedadDias: antDays
                         };
                     }).filter(item => item.Lote !== '' && item.Lote !== 'undefined' && item.Lote !== 'null');
                     
@@ -486,7 +503,7 @@
                     }));
 
                     document.getElementById('data-indicator').innerText = `Maestro [${origenNombre}] (${rawData.sap.length} reg)`;
-                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros usando [St.Valorad] y piezas de columna O!`);
+                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros (Antigüedad calculada)!`);
                 }
             });
         }
@@ -594,18 +611,21 @@
                                     let dupVol = sapMap.has(lote) ? sapMap.get(lote).Volumen : firstTerrenoItem.Volumen;
                                     let dupPcs = sapMap.has(lote) ? sapMap.get(lote).Piezas : firstTerrenoItem.Piezas;
                                     let dupSub = sapMap.has(lote) ? sapMap.get(lote).Subbodega : (Array.from(data.subbodegas).join(', ') || firstTerrenoItem.Subbodega);
+                                    let sapRef = sapMap.get(lote);
                                     allDuplicados.push({
                                         Lote: lote,
                                         Count: data.count,
                                         Operarios: Array.from(data.operarios).join(', '),
                                         Calles: Array.from(data.calles).join(', '),
                                         Horas: data.horas.join(', '),
-                                        SKU: firstTerrenoItem.SKU || '',
-                                        Descripcion: firstTerrenoItem.Descripcion || '',
+                                        SKU: sapRef ? sapRef.SKU : (firstTerrenoItem.SKU || ''),
+                                        Descripcion: sapRef ? sapRef.Descripcion : (firstTerrenoItem.Descripcion || ''),
                                         Bodega: firstTerrenoItem.Bodega || 'TMT1',
                                         Subbodega: dupSub,
                                         Volumen: dupVol,
-                                        Piezas: dupPcs
+                                        Piezas: dupPcs,
+                                        Creacion: sapRef ? sapRef.Creacion : '-',
+                                        AntiguedadDias: sapRef ? sapRef.AntiguedadDias : 0
                                     });
                                 }
 
@@ -618,14 +638,12 @@
                                         Bodega: sapItem.Bodega || firstTerrenoItem.Bodega,
                                         Subbodega: sapItem.Subbodega !== '-' ? sapItem.Subbodega : (firstTerrenoItem.Subbodega || '-'),
                                         Volumen: sapItem.Volumen,
-                                        Piezas: sapItem.Piezas
+                                        Piezas: sapItem.Piezas,
+                                        Creacion: sapItem.Creacion || '-',
+                                        AntiguedadDias: sapItem.AntiguedadDias || 0
                                     });
                                 } else {
-                                    // MEJORA APLICADA: Si el sobrante en terreno no tiene volumen especificado, se indica 1 lote escaneado para evitar ceros ciegos
-                                    let itemSobrante = { ...firstTerrenoItem };
-                                    if(!itemSobrante.Volumen || itemSobrante.Volumen === 0) {
-                                        itemSobrante.Volumen = 0; // Se mantiene en 0 para cálculo o se visualiza el recuento
-                                    }
+                                    let itemSobrante = { ...firstTerrenoItem, Creacion: '-', AntiguedadDias: 0 };
                                     allSobrantes.push(itemSobrante);
                                 }
                             }
@@ -637,7 +655,6 @@
                             }
 
                             let whBreakdown = {};
-                            
                             let sapWarehouses = new Set();
                             rawData.sap.forEach(i => {
                                 if(i.Bodega && String(i.Bodega).trim() !== '') {
@@ -822,7 +839,7 @@
                     <th class="p-3">Lecturas</th>
                     <th class="p-3">Volumen (m³)</th>
                     <th class="p-3">Piezas</th>
-                    <th class="p-3">Operarios</th>
+                    <th class="p-3">Antigüedad</th>
                 `;
                 if(dataToRender.length === 0) {
                     bodyEl.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">No hay registros duplicados para este filtro.</td></tr>`;
@@ -838,7 +855,7 @@
                         <td class="p-3"><span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">${i.Count} lecturas</span></td>
                         <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
                         <td class="p-3 font-semibold text-slate-700">${i.Piezas || '0'}</td>
-                        <td class="p-3">${i.Operarios}</td>
+                        <td class="p-3 font-medium text-slate-600">${i.AntiguedadDias} días <span class="block text-[10px] text-slate-400">(${i.Creacion})</span></td>
                     </tr>
                 `).join('');
             } else if(tab === 'sob') {
@@ -868,33 +885,78 @@
                         <td class="p-3 font-semibold text-blue-700">${i.Piezas || '0'}</td>
                     </tr>
                 `).join('');
-            } else {
+            } else if(tab === 'fal') {
                 headersEl.innerHTML = `
                     <th class="p-3">Lote</th>
                     <th class="p-3">SKU</th>
                     <th class="p-3">Descripción</th>
                     <th class="p-3">Almacén</th>
                     <th class="p-3">Subbodega</th>
-                    <th class="p-3">Calle</th>
                     <th class="p-3">Volumen (m³)</th>
                     <th class="p-3">Piezas</th>
+                    <th class="p-3">Antigüedad</th>
                 `;
                 if(dataToRender.length === 0) {
-                    bodyEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin registros en esta categoría para este filtro.</td></tr>`;
+                    bodyEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin registros de faltantes para este filtro.</td></tr>`;
                     return;
                 }
                 bodyEl.innerHTML = dataToRender.map(i => `
                     <tr class="hover:bg-slate-50 border-b border-slate-100">
-                        <td class="p-3 font-bold text-slate-800">${i.Lote || '-'}</td>
+                        <td class="p-3 font-bold text-rose-600">${i.Lote || '-'}</td>
                         <td class="p-3">${i.SKU || '-'}</td>
                         <td class="p-3">${i.Descripcion || '-'}</td>
                         <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
                         <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
-                        <td class="p-3">${i.Calle || '-'}</td>
                         <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
-                        <td class="p-3 font-semibold text-emerald-700">${i.Piezas || '0'}</td>
+                        <td class="p-3 font-semibold text-rose-700">${i.Piezas || '0'}</td>
+                        <td class="p-3 font-medium text-slate-600">${i.AntiguedadDias || 0} días <span class="block text-[10px] text-slate-400">(${i.Creacion || '-'})</span></td>
                     </tr>
                 `).join('');
+            } else {
+                // PESTAÑA PAREADOS OK (Incluye toda la info + Antigüedad calculada)
+                headersEl.innerHTML = `
+                    <th class="p-3">Lote</th>
+                    <th class="p-3">SKU</th>
+                    <th class="p-3">Descripción</th>
+                    <th class="p-3">Almacén</th>
+                    <th class="p-3">Subbodega</th>
+                    <th class="p-3">Calle / Ubic.</th>
+                    <th class="p-3">Volumen (m³)</th>
+                    <th class="p-3">Piezas</th>
+                    <th class="p-3">Antigüedad</th>
+                `;
+                if(dataToRender.length === 0) {
+                    bodyEl.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">Sin registros pareados OK para este filtro.</td></tr>`;
+                    return;
+                }
+                bodyEl.innerHTML = dataToRender.map(i => {
+                    let badgeAntiguedad = '';
+                    let days = i.AntiguedadDias || 0;
+                    if (days > 180) {
+                        badgeAntiguedad = `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[10px] font-bold">Crítico (${days}d)</span>`;
+                    } else if (days > 90) {
+                        badgeAntiguedad = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Moderado (${days}d)</span>`;
+                    } else {
+                        badgeAntiguedad = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-semibold">${days} días</span>`;
+                    }
+
+                    return `
+                        <tr class="hover:bg-slate-50 border-b border-slate-100">
+                            <td class="p-3 font-bold text-slate-800">${i.Lote || '-'}</td>
+                            <td class="p-3">${i.SKU || '-'}</td>
+                            <td class="p-3">${i.Descripcion || '-'}</td>
+                            <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
+                            <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
+                            <td class="p-3 text-slate-600">${i.Calle || '-'}</td>
+                            <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
+                            <td class="p-3 font-semibold text-emerald-700">${i.Piezas || '0'}</td>
+                            <td class="p-3">
+                                ${badgeAntiguedad}
+                                <span class="block text-[10px] text-slate-400 mt-0.5">Creación: ${i.Creacion || '-'}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             }
         }
 
