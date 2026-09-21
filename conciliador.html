@@ -433,7 +433,6 @@
 
         function calcularAntiguedadDias(fechaStr) {
             if(!fechaStr || String(fechaStr).trim() === '') return 0;
-            // Espera formato DD-MM-YYYY
             let partes = String(fechaStr).trim().split('-');
             if(partes.length !== 3) return 0;
             let fechaCreacion = new Date(`${partes[2]}-${partes[1]}-${partes[0]}`);
@@ -503,7 +502,7 @@
                     }));
 
                     document.getElementById('data-indicator').innerText = `Maestro [${origenNombre}] (${rawData.sap.length} reg)`;
-                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros (Antigüedad calculada)!`);
+                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros (Antigüedad graduada)!`);
                 }
             });
         }
@@ -845,19 +844,34 @@
                     bodyEl.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">No hay registros duplicados para este filtro.</td></tr>`;
                     return;
                 }
-                bodyEl.innerHTML = dataToRender.map(i => `
-                    <tr class="hover:bg-slate-50 border-b border-slate-100">
-                        <td class="p-3 font-bold text-amber-600">${i.Lote}</td>
-                        <td class="p-3">${i.SKU}</td>
-                        <td class="p-3">${i.Descripcion}</td>
-                        <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
-                        <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
-                        <td class="p-3"><span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">${i.Count} lecturas</span></td>
-                        <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
-                        <td class="p-3 font-semibold text-slate-700">${i.Piezas || '0'}</td>
-                        <td class="p-3 font-medium text-slate-600">${i.AntiguedadDias} días <span class="block text-[10px] text-slate-400">(${i.Creacion})</span></td>
-                    </tr>
-                `).join('');
+                bodyEl.innerHTML = dataToRender.map(i => {
+                    let days = i.AntiguedadDias || 0;
+                    let badgeAntiguedad = '';
+                    if (days > 365) {
+                        badgeAntiguedad = `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[10px] font-bold">Crítico (${days}d)</span>`;
+                    } else if (days > 90) {
+                        badgeAntiguedad = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Moderado (${days}d)</span>`;
+                    } else {
+                        badgeAntiguedad = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-semibold">OK (${days}d)</span>`;
+                    }
+
+                    return `
+                        <tr class="hover:bg-slate-50 border-b border-slate-100">
+                            <td class="p-3 font-bold text-amber-600">${i.Lote}</td>
+                            <td class="p-3">${i.SKU}</td>
+                            <td class="p-3">${i.Descripcion}</td>
+                            <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
+                            <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
+                            <td class="p-3"><span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">${i.Count} lecturas</span></td>
+                            <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
+                            <td class="p-3 font-semibold text-slate-700">${i.Piezas || '0'}</td>
+                            <td class="p-3">
+                                ${badgeAntiguedad}
+                                <span class="block text-[10px] text-slate-400 mt-0.5">Creación: ${i.Creacion || '-'}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             } else if(tab === 'sob') {
                 headersEl.innerHTML = `
                     <th class="p-3">Lote</th>
@@ -900,20 +914,35 @@
                     bodyEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin registros de faltantes para este filtro.</td></tr>`;
                     return;
                 }
-                bodyEl.innerHTML = dataToRender.map(i => `
-                    <tr class="hover:bg-slate-50 border-b border-slate-100">
-                        <td class="p-3 font-bold text-rose-600">${i.Lote || '-'}</td>
-                        <td class="p-3">${i.SKU || '-'}</td>
-                        <td class="p-3">${i.Descripcion || '-'}</td>
-                        <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
-                        <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
-                        <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
-                        <td class="p-3 font-semibold text-rose-700">${i.Piezas || '0'}</td>
-                        <td class="p-3 font-medium text-slate-600">${i.AntiguedadDias || 0} días <span class="block text-[10px] text-slate-400">(${i.Creacion || '-'})</span></td>
-                    </tr>
-                `).join('');
+                bodyEl.innerHTML = dataToRender.map(i => {
+                    let days = i.AntiguedadDias || 0;
+                    let badgeAntiguedad = '';
+                    if (days > 365) {
+                        badgeAntiguedad = `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[10px] font-bold">Crítico (${days}d)</span>`;
+                    } else if (days > 90) {
+                        badgeAntiguedad = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Moderado (${days}d)</span>`;
+                    } else {
+                        badgeAntiguedad = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-semibold">OK (${days}d)</span>`;
+                    }
+
+                    return `
+                        <tr class="hover:bg-slate-50 border-b border-slate-100">
+                            <td class="p-3 font-bold text-rose-600">${i.Lote || '-'}</td>
+                            <td class="p-3">${i.SKU || '-'}</td>
+                            <td class="p-3">${i.Descripcion || '-'}</td>
+                            <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
+                            <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
+                            <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
+                            <td class="p-3 font-semibold text-rose-700">${i.Piezas || '0'}</td>
+                            <td class="p-3">
+                                ${badgeAntiguedad}
+                                <span class="block text-[10px] text-slate-400 mt-0.5">Creación: ${i.Creacion || '-'}</span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             } else {
-                // PESTAÑA PAREADOS OK (Incluye toda la info + Antigüedad calculada)
+                // PESTAÑA PAREADOS OK
                 headersEl.innerHTML = `
                     <th class="p-3">Lote</th>
                     <th class="p-3">SKU</th>
@@ -932,12 +961,12 @@
                 bodyEl.innerHTML = dataToRender.map(i => {
                     let badgeAntiguedad = '';
                     let days = i.AntiguedadDias || 0;
-                    if (days > 180) {
+                    if (days > 365) {
                         badgeAntiguedad = `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[10px] font-bold">Crítico (${days}d)</span>`;
                     } else if (days > 90) {
                         badgeAntiguedad = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Moderado (${days}d)</span>`;
                     } else {
-                        badgeAntiguedad = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-semibold">${days} días</span>`;
+                        badgeAntiguedad = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-semibold">OK (${days}d)</span>`;
                     }
 
                     return `
