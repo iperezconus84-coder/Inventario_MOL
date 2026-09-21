@@ -502,30 +502,26 @@
             <button type="button" id="tabAvance" class="nav-tab" role="tab" onclick="cambiarVista('avance')">03. Avance</button>
         </nav>
 
-        <!-- VISTA 1: CONFIGURACIÓN Y SINCRONIZACIÓN CLOUD / MANUAL -->
+        <!-- VISTA 1: CONFIGURACIÓN Y CARGA MANUAL -->
         <div id="viewConfig" class="view-section active" role="tabpanel">
             <div class="file-section">
                 <label style="margin-bottom: 8px;">Estado de Datos Maestros:</label>
-                <div id="statusOperarios" class="status-box" style="background: var(--bg-element); border-color: var(--color-border); color: var(--color-text-secondary);">ℹ Pendiente de sincronización</div>
-                <div id="statusPlano" class="status-box" style="background: var(--bg-element); border-color: var(--color-border); color: var(--color-text-secondary);">ℹ Pendiente de sincronización</div>
-                <div id="statusStockGlobal" class="status-box" style="background: var(--bg-element); border-color: var(--color-border); color: var(--color-text-secondary);">ℹ Pendiente de sincronización</div>
+                <div id="statusOperarios" class="status-box" style="background: var(--bg-element); border-color: var(--color-border); color: var(--color-text-secondary);">ℹ Pendiente de carga manual</div>
+                <div id="statusPlano" class="status-box" style="background: var(--bg-element); border-color: var(--color-border); color: var(--color-text-secondary);">ℹ Pendiente de carga manual</div>
+                <div id="statusStockGlobal" class="status-box" style="background: var(--bg-element); border-color: var(--color-border); color: var(--color-text-secondary);">ℹ Pendiente de carga manual</div>
 
                 <label for="operarioSelect" style="margin-top: 10px;">Operario Activo (Obligatorio):</label>
                 <select id="operarioSelect" onchange="bloquearOperarioConfig()">
                     <option value="">Seleccione Operario...</option>
                 </select>
-
-                <button type="button" class="btn-action primary-action" onclick="sincronizarDatosCloud(true)" style="margin-top: 10px;">
-                    🔄 Refrescar Datos (Descargar desde GitHub)
-                </button>
             </div>
 
-            <!-- RESPALDO MANUAL LOCAL -->
-            <details class="file-section" style="cursor: pointer; margin-bottom: 16px;">
-                <summary style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-brand); text-transform: uppercase;">
-                    + Carga Manual Local (Archivos del Dispositivo / Sin Conexión)
-                </summary>
-                <div style="margin-top: 14px;">
+            <!-- CARGA MANUAL LOCAL -->
+            <div class="file-section" style="margin-bottom: 16px;">
+                <label style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--color-brand); text-transform: uppercase; margin-bottom: 12px;">
+                    📂 Carga Manual Local (Archivos del Dispositivo)
+                </label>
+                <div>
                     <label for="fileStockManual">Cargar Archivo Maestro de Stock (stock_tmt1.csv):</label>
                     <input type="file" id="fileStockManual" accept=".csv">
 
@@ -535,7 +531,7 @@
                     <label for="fileOperariosManual">Cargar Operarios Manual (operarios.csv):</label>
                     <input type="file" id="fileOperariosManual" accept=".csv">
                 </div>
-            </details>
+            </div>
 
             <!-- BOTONES DE EXPORTACIÓN Y COMPARTIR CON QUICK SHARE / WHATSAPP -->
             <button type="button" class="btn-action share-btn" onclick="descargarCSVGlobal()">
@@ -555,7 +551,7 @@
             <div class="hud-grid">
                 <div id="infoOperarioActivo" class="hud-chip primary">OP: No seleccionado</div>
                 <div id="infoUltimaCalle" class="hud-chip info">CALLE: Ninguna</div>
-                <div id="infoStockActivo" class="hud-chip stock-loading">STOCK: Seleccione una Bodega o Refresque Datos...</div>
+                <div id="infoStockActivo" class="hud-chip stock-loading">STOCK: Seleccione una Bodega o Cargue Archivos...</div>
             </div>
 
             <!-- Cuadrícula en Cascada: Bodega -> Sub-Bodega -> Calle -->
@@ -690,20 +686,7 @@
         // --- 2. ESTADO GLOBAL ---
         let datosPlano = [];
         let datosStockActivo = [];
-        let stockTimestamp = null; // ISO string: cuándo se cargó (GitHub o manual) el stock actualmente activo
-        const UMBRAL_HORAS_STOCK = 12; // Antigüedad máxima aceptable del stock antes de exigir confirmación/recarga
-
-        function formatearFechaStock(iso) {
-            if (!iso) return "sin fecha";
-            const d = new Date(iso);
-            const pad = n => String(n).padStart(2, '0');
-            return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-        }
-
-        function horasDesde(iso) {
-            if (!iso) return Infinity;
-            return (Date.now() - new Date(iso).getTime()) / (1000 * 60 * 60);
-        }
+        let stockTimestamp = null;
         let bodegaStockCargada = "";
         let datosOperarios = [];
         let operarioActual = localStorage.getItem('inv_operario') || "";
@@ -720,9 +703,8 @@
             skipEmptyLines: 'greedy', 
             dynamicTyping: false, 
             encoding: "ISO-8859-1",
-            delimiter: "", // Autodetecta si es coma o punto y coma
+            delimiter: "",
             transformHeader: function(header) {
-                // Limpia caracteres invisibles de las cabeceras del CSV
                 return header.replace(/^\ufeff/, '').trim();
             }
         };
@@ -776,8 +758,8 @@
                     stockTimestamp = regStock.timestamp || null;
                     const chip = document.getElementById('infoStockActivo');
                     chip.className = "hud-chip stock-info";
-                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems) - Cargado: ${formatearFechaStock(stockTimestamp)}`;
-                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK: ${regStock.datos.length} ÍTEMS (LOCAL) - ${formatearFechaStock(stockTimestamp)}`, 'ok');
+                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems)`;
+                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK: ${regStock.datos.length} ÍTEMS (LOCAL)`, 'ok');
                 }
             } catch (e) {
                 console.warn("Aviso al restaurar caché local:", e);
@@ -800,115 +782,7 @@
             }
         }
 
-        // --- 4. SINCRONIZACIÓN MANUAL DESDE GITHUB (CLOUD) ---
-        async function sincronizarDatosCloud(mostrarAlerta = false) {
-            const timeParam = `?t=${Date.now()}`;
-            let cargados = 0;
-
-            if (mostrarAlerta) {
-                actualizarStatusBadge('statusOperarios', '⟳ Conectando con GitHub...', 'err');
-                actualizarStatusBadge('statusPlano', '⟳ Conectando con GitHub...', 'err');
-                actualizarStatusBadge('statusStockGlobal', '⟳ Conectando con GitHub...', 'err');
-            }
-
-            // 1. Operarios
-            try {
-                let resOp = await fetch(`./data/operarios.csv${timeParam}`);
-                if (!resOp.ok) resOp = await fetch(`./operarios.csv${timeParam}`);
-
-                if (resOp.ok) {
-                    const text = await resOp.text();
-                    if (!text.trim().startsWith("<")) {
-                        Papa.parse(text, {
-                            ...parseConfig,
-                            complete: async (results) => {
-                                if (results.data && results.data.length > 0) {
-                                    datosOperarios = results.data;
-                                    await db.maestros.put({ clave: 'operarios', datos: datosOperarios, timestamp: new Date().toISOString() });
-                                    cargarOperariosSelect();
-                                    actualizarStatusBadge('statusOperarios', `✓ OPERARIOS CLOUD (${datosOperarios.length})`, 'ok');
-                                    cargados++;
-                                }
-                            }
-                        });
-                    }
-                }
-            } catch (err) {
-                const regOp = await db.maestros.get('operarios');
-                if (!regOp) {
-                    actualizarStatusBadge('statusOperarios', `⚠ Sin conexión (Use Carga Manual)`, 'err');
-                }
-            }
-
-            // 2. Plano General
-            try {
-                let resPlano = await fetch(`./data/plano_general.csv${timeParam}`);
-                if (!resPlano.ok) resPlano = await fetch(`./data/plano.csv${timeParam}`);
-                if (!resPlano.ok) resPlano = await fetch(`./data/plano_tmt1.csv${timeParam}`);
-                if (!resPlano.ok) resPlano = await fetch(`./plano_general.csv${timeParam}`);
-
-                if (resPlano.ok) {
-                    const text = await resPlano.text();
-                    if (!text.trim().startsWith("<")) {
-                        Papa.parse(text, {
-                            ...parseConfig,
-                            complete: async (results) => {
-                                if (results.data && results.data.length > 0) {
-                                    datosPlano = results.data;
-                                    await db.maestros.put({ clave: 'plano', datos: datosPlano, timestamp: new Date().toISOString() });
-                                    poblarSelectorBodegas();
-                                    actualizarStatusBadge('statusPlano', `✓ PLANO CLOUD (${datosPlano.length})`, 'ok');
-                                    cargados++;
-                                }
-                            }
-                        });
-                    }
-                }
-            } catch (err) {
-                const regPlano = await db.maestros.get('plano');
-                if (!regPlano) {
-                    actualizarStatusBadge('statusPlano', `⚠ Sin conexión (Use Carga Manual)`, 'err');
-                }
-            }
-
-            // 3. Stock Global (stock_tmt1.csv)
-            try {
-                let resStock = await fetch(`./data/stock_tmt1.csv${timeParam}`);
-                if (!resStock.ok) resStock = await fetch(`./stock_tmt1.csv${timeParam}`);
-
-                if (resStock.ok) {
-                    const text = await resStock.text();
-                    if (!text.trim().startsWith("<")) {
-                        Papa.parse(text, {
-                            ...parseConfig,
-                            complete: async (results) => {
-                                if (results.data && results.data.length > 0) {
-                                    datosStockActivo = results.data;
-                                    bodegaStockCargada = "GLOBAL_TMT1";
-                                    stockTimestamp = new Date().toISOString();
-                                    await db.stocks_bodega.put({ bodega: 'GLOBAL_TMT1', datos: results.data, timestamp: stockTimestamp });
-                                    
-                                    const chip = document.getElementById('infoStockActivo');
-                                    chip.className = "hud-chip stock-info";
-                                    chip.innerText = `STOCK: stock_tmt1 (✓ ${datosStockActivo.length} ítems) - Cargado: ${formatearFechaStock(stockTimestamp)}`;
-                                    
-                                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK CLOUD (${datosStockActivo.length}) - ${formatearFechaStock(stockTimestamp)}`, 'ok');
-                                    cargados++;
-                                }
-                            }
-                        });
-                    }
-                }
-            } catch (err) {
-                actualizarStatusBadge('statusStockGlobal', `⚠ Sin conexión (Use Carga Manual)`, 'err');
-            }
-
-            if (mostrarAlerta) {
-                alert(cargados > 0 ? "Datos actualizados desde GitHub correctamente." : "No se pudo conectar a la ruta /data/. Verifique su red o utilice la carga manual inferior.");
-            }
-        }
-
-        // --- 5. CARGA MANUAL DE RESPALDO (STOCK UNIFICADO stock_tmt1.csv) ---
+        // --- 4. CARGA MANUAL DE RESPALDO (LOCAL) ---
         document.getElementById('fileStockManual').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -921,8 +795,8 @@
                     await db.stocks_bodega.put({ bodega: 'GLOBAL_TMT1', datos: results.data, timestamp: stockTimestamp });
                     const chip = document.getElementById('infoStockActivo');
                     chip.className = "hud-chip stock-info";
-                    chip.innerText = `STOCK: ${file.name} (✓ ${datosStockActivo.length}) - Cargado: ${formatearFechaStock(stockTimestamp)}`;
-                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK MANUAL (${datosStockActivo.length}) - ${formatearFechaStock(stockTimestamp)}`, 'ok');
+                    chip.innerText = `STOCK: ${file.name} (✓ ${datosStockActivo.length})`;
+                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK MANUAL (${datosStockActivo.length})`, 'ok');
                     alert(`Archivo maestro de stock cargado: ${results.data.length} ítems listos para auditar.`);
                 }
             });
@@ -958,7 +832,7 @@
             });
         });
 
-        // --- 6. SELECTORES EN CASCADA (BODEGA -> SUB-BODEGA -> CALLE) ---
+        // --- 5. SELECTORES EN CASCADA ---
         function poblarSelectorBodegas() {
             const bSelect = document.getElementById('bodegaSelect');
             const actual = bSelect.value;
@@ -987,9 +861,7 @@
             subBodegaSelect.innerHTML = '<option value="">Sub-Bodega...</option>';
             calleSelect.innerHTML = '<option value="">Calle...</option>';
             
-            if (!bodega) {
-                return;
-            }
+            if (!bodega) return;
 
             const filasBodega = datosPlano.filter(r => obtenerValorCSV(r, 'bodega', 'Bodega') === bodega);
             const subBodegas = new Set();
@@ -1040,7 +912,7 @@
             actualizarBotonesAccion();
         }
 
-        // --- 8. CONFIGURACIÓN DE CALLE Y METAS ---
+        // --- 6. CONFIGURACIÓN DE CALLE Y METAS ---
         async function configurarCalle() {
             try {
                 const bodega = document.getElementById('bodegaSelect').value;
@@ -1115,7 +987,7 @@
             }
         }
 
-        // --- 9. MOTOR DE ESCANEO Y CAPTURA ---
+        // --- 7. MOTOR DE ESCANEO Y CAPTURA ---
         document.getElementById('scannerInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -1143,7 +1015,7 @@
 
             const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
             if (contadorActual >= meta) {
-                alert(`Se ha alcanzado la meta de ${meta} lotes para esta calle. Amplíe la cantidad de forma manual si desea capturar más.`);
+                alert(`Se ha alcanzado la meta de ${meta} lotes para esta calle.`);
                 return;
             }
 
@@ -1152,17 +1024,15 @@
 
         async function procesarLoteEscaneado(bodega, subBodega, calle, lote) {
             try {
-                // 1. Verificación misma calle
                 const yaCapturadoCalle = capturasCalleActual.find(c => String(c.lote).trim() === lote);
                 if (yaCapturadoCalle) {
                     emitirSonido('error');
                     setTimeout(() => {
-                        mostrarModal("¡BLOQUEO: LOTE DUPLICADO!", `El lote ${lote} ya fue escaneado en esta misma calle. La captura ha sido bloqueada.`, function() {}, false);
+                        mostrarModal("¡BLOQUEO: LOTE DUPLICADO!", `El lote ${lote} ya fue escaneado en esta misma calle.`, function() {}, false);
                     }, 50);
                     return;
                 }
 
-                // 2. Verificación en otras calles
                 const yaCapturadoOtraCalle = await db.capturas
                     .where('lote')
                     .equals(lote)
@@ -1172,7 +1042,7 @@
                 if (yaCapturadoOtraCalle) {
                     emitirSonido('error');
                     setTimeout(() => {
-                        mostrarModal("¡BLOQUEO: LOTE EN OTRA CALLE!", `El lote ${lote} ya fue registrado previamente en la calle ${yaCapturadoOtraCalle.calle}. La captura ha sido bloqueada.`, function() {}, false);
+                        mostrarModal("¡BLOQUEO: LOTE EN OTRA CALLE!", `El lote ${lote} ya fue registrado en la calle ${yaCapturadoOtraCalle.calle}.`, function() {}, false);
                     }, 50);
                     return;
                 }
@@ -1254,7 +1124,7 @@
             }
         }
 
-        // --- 10. ESCÁNER POR CÁMARA ---
+        // --- 8. ESCÁNER POR CÁMARA ---
         function abrirEscanearCamara() {
             const bodega = document.getElementById('bodegaSelect').value;
             const calle = document.getElementById('calleSelect').value;
@@ -1289,7 +1159,7 @@
             enfocarScanner();
         }
 
-        // --- 11. MODALES Y DIÁLOGOS ---
+        // --- 9. MODALES Y DIÁLOGOS ---
         function mostrarModal(titulo, mensaje, callback, mostrarCancelar = true) {
             document.getElementById('modalTitle').innerText = titulo;
             document.getElementById('modalMessage').innerText = mensaje;
@@ -1532,27 +1402,11 @@
                     return;
                 }
                 if (!datosStockActivo || datosStockActivo.length === 0) {
-                    alert("No hay stock cargado. Refresque desde GitHub o cargue el archivo manual en Configuración antes de capturar.");
+                    alert("No hay stock cargado. Cargue el archivo manual en Configuración antes de capturar.");
                     document.getElementById('viewCaptura').classList.remove('active');
                     document.getElementById('tabCaptura').classList.remove('active');
                     cambiarVista('config');
                     return;
-                }
-                const horas = horasDesde(stockTimestamp);
-                if (horas > UMBRAL_HORAS_STOCK) {
-                    const continuar = confirm(
-                        `⚠ El stock activo fue cargado el ${formatearFechaStock(stockTimestamp)} ` +
-                        `(hace ${Math.floor(horas)} horas), supera el umbral de ${UMBRAL_HORAS_STOCK}h.\n\n` +
-                        `Se recomienda refrescar desde GitHub o cargar un archivo manual actualizado ` +
-                        `antes de capturar, para no auditar contra un stock desactualizado.\n\n` +
-                        `¿Desea continuar de todas formas con el stock actual?`
-                    );
-                    if (!continuar) {
-                        document.getElementById('viewCaptura').classList.remove('active');
-                        document.getElementById('tabCaptura').classList.remove('active');
-                        cambiarVista('config');
-                        return;
-                    }
                 }
                 enfocarScanner();
             } else if (vista === 'avance') {
@@ -1592,7 +1446,7 @@
             }
         }
 
-        // --- 12. DESCARGA Y COMPARTIR DIRECTO (QUICK SHARE / WHATSAPP / EXCEL) ---
+        // --- 10. DESCARGA Y COMPARTIR DIRECTO ---
         function descargarArchivoCSV(contenidoCSV, nombreArchivo) {
             const blob = new Blob(["\uFEFF" + contenidoCSV], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
@@ -1636,7 +1490,6 @@
                             return; 
                         } catch (err) {
                             if (err.name === 'AbortError') return; 
-                            console.warn("Aviso al compartir:", err);
                         }
                     }
                 }
@@ -1728,7 +1581,7 @@
             }
         }
 
-        // --- 13. REINICIO DE SISTEMA ---
+        // --- 11. REINICIO DE SISTEMA ---
         function reiniciarSistema() {
             mostrarModal("¿Reiniciar Sistema?", "Se borrarán las capturas y los datos locales de este dispositivo.", async function(conf) {
                 if (conf) {
