@@ -59,8 +59,8 @@
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-2 justify-center">
-                <button onclick="exportarCierreHistoricoLocal()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Genera el archivo estandarizado para guardar en tu carpeta local del escritorio /historico/">
-                    📂 Guardar Cierre Local
+                <button onclick="exportarCierreHistoricoLocal()" class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Genera el archivo completo con todas las solapas">
+                    📂 Guardar Cierre Completo (.xlsx)
                 </button>
                 <button onclick="enviarCorreoEjecutivo()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-md text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
                     📧 Correo Ejecutivo
@@ -83,7 +83,7 @@
             <h2 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Ingestión de Archivos (Slot 1: Stock Teórico vs Slot 2: Terreno)</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
-                <!-- Slot 1: Stock Teórico Maestro (Homologado) -->
+                <!-- Slot 1: Stock Teórico Maestro -->
                 <div class="border-2 border-dashed border-slate-300 p-4 rounded-lg flex flex-col justify-between bg-slate-50">
                     <div>
                         <p class="text-xs font-bold text-slate-600 mb-1">Slot 1: Stock Teórico Maestro (CSV)</p>
@@ -98,7 +98,7 @@
                         <p class="text-xs font-bold text-slate-600 mb-1">Slot 2: Capturas de Terreno (Múltiples CSV)</p>
                         <input type="file" id="file-terreno" accept=".csv" multiple class="text-xs text-slate-500 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer w-full mt-2">
                     </div>
-                    <p class="text-[10px] text-slate-400 italic mt-2">Puedes arrastrar o seleccionar varios archivos de terreno a la vez.</p>
+                    <p class="text-[10px] text-slate-400 italic mt-2">Puedes seleccionar varios archivos de terreno a la vez para unificarlos.</p>
                 </div>
 
             </div>
@@ -199,19 +199,26 @@
         <div id="view-audit" class="hidden space-y-4">
             <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col xl:flex-row justify-between items-center gap-3">
                 <div class="flex items-center space-x-2 w-full xl:w-auto">
-                    <input type="text" id="search-input" onkeyup="filterTables()" placeholder="Buscar por Lote, SKU, Descripción o Subbodega..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-full xl:w-80 focus:outline-none focus:border-blue-500">
+                    <input type="text" id="search-input" onkeyup="filterTables()" placeholder="Buscar por Lote, SKU, Descripción o Ubicación..." class="border border-slate-300 rounded-lg px-3 py-1.5 text-xs w-full xl:w-80 focus:outline-none focus:border-blue-500">
                 </div>
                 <div class="flex flex-wrap items-center gap-2 justify-center">
                     <div class="flex flex-wrap gap-1 bg-slate-100 p-1 rounded-lg">
-                        <button onclick="switchTab('dup')" id="tab-dup" class="px-3 py-1.5 rounded-md text-xs font-semibold bg-white shadow-sm text-slate-800">⚠️ Duplicados (<span id="count-dup">0</span>)</button>
+                        <button onclick="switchTab('fisico')" id="tab-fisico" class="px-3 py-1.5 rounded-md text-xs font-semibold bg-white shadow-sm text-slate-800">📦 Stock Físico</button>
+                        <button onclick="switchTab('sistemico')" id="tab-sistemico" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900">💻 Stock Sistémico</button>
+                        <button onclick="switchTab('ok')" id="tab-ok" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900">✅ Pareados (<span id="count-ok">0</span>)</button>
                         <button onclick="switchTab('sob')" id="tab-sob" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900">➕ Sobrantes (<span id="count-sob">0</span>)</button>
                         <button onclick="switchTab('fal')" id="tab-fal" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900">➖ Faltantes (<span id="count-fal">0</span>)</button>
-                        <button onclick="switchTab('ok')" id="tab-ok" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900">✅ Pareados (<span id="count-ok">0</span>)</button>
+                        <button onclick="switchTab('dup')" id="tab-dup" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900">⚠️ Duplicados (<span id="count-dup">0</span>)</button>
                     </div>
-                    <button onclick="exportarTablaActivaExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Exporta a Excel los datos con indicador visual de antigüedad">
-                        📊 Exportar Vista con Alertas
+                    <button onclick="exportarTablaActivaExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Exporta la vista activa a Excel">
+                        📊 Exportar Vista
                     </button>
                 </div>
+            </div>
+
+            <!-- Subtítulo / Descripción de la pestaña activa -->
+            <div id="view-description-bar" class="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-lg text-xs font-medium">
+                Visualizando <strong>Stock Físico</strong>: Todo lo hallado en terreno (Pareados OK + Sobrantes). Piezas redondeadas al entero superior (Math.ceil).
             </div>
 
             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -221,7 +228,7 @@
                             <tr class="bg-slate-100 text-slate-600 border-b border-slate-200 font-bold" id="table-headers"></tr>
                         </thead>
                         <tbody id="table-body" class="divide-y divide-slate-100 text-slate-700">
-                            <tr><td colspan="9" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>
+                            <tr><td colspan="10" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -324,10 +331,7 @@
 
     <!-- Lógica JavaScript -->
     <script>
-        let rawData = {
-            sap: [],
-            terreno: []
-        };
+        let rawData = { sap: [], terreno: [] };
 
         let globalData = {
             sap: [],
@@ -336,8 +340,10 @@
             sobrantes: [],
             faltantes: [],
             pareados: [],
+            stockFisico: [],
+            stockSistemico: [],
             warehouseBreakdown: {},
-            currentTab: 'dup'
+            currentTab: 'fisico'
         };
 
         let compChartInstance = null;
@@ -367,7 +373,7 @@
 
         function switchTab(tab) {
             globalData.currentTab = tab;
-            ['dup', 'sob', 'fal', 'ok'].forEach(t => {
+            ['fisico', 'sistemico', 'ok', 'sob', 'fal', 'dup'].forEach(t => {
                 const btn = document.getElementById('tab-' + t);
                 if(t === tab) {
                     btn.className = "px-3 py-1.5 rounded-md text-xs font-semibold bg-white shadow-sm text-slate-800";
@@ -375,6 +381,28 @@
                     btn.className = "px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900";
                 }
             });
+
+            let descBar = document.getElementById('view-description-bar');
+            if(tab === 'fisico') {
+                descBar.className = "bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-lg text-xs font-medium";
+                descBar.innerHTML = "Visualizando <strong>Stock Físico</strong>: Todo lo hallado en terreno (Pareados OK + Sobrantes). Piezas redondeadas al entero superior (Math.ceil).";
+            } else if(tab === 'sistemico') {
+                descBar.className = "bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-2 rounded-lg text-xs font-medium";
+                descBar.innerHTML = "Visualizando <strong>Stock Sistémico</strong>: Todo lo teórico maestro SAP (Pareados OK + Faltantes). Piezas redondeadas al entero superior (Math.ceil).";
+            } else if(tab === 'ok') {
+                descBar.className = "bg-slate-100 border border-slate-200 text-slate-700 px-4 py-2 rounded-lg text-xs font-medium";
+                descBar.innerHTML = "Visualizando <strong>Detalle Pareados OK</strong>: Paquetes coincidentes exactos entre SAP y Terreno.";
+            } else if(tab === 'sob') {
+                descBar.className = "bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded-lg text-xs font-medium";
+                descBar.innerHTML = "Visualizando <strong>Detalle Sobrantes</strong>: Paquetes encontrados en terreno sin registro en el sistema.";
+            } else if(tab === 'fal') {
+                descBar.className = "bg-rose-50 border border-rose-200 text-rose-800 px-4 py-2 rounded-lg text-xs font-medium";
+                descBar.innerHTML = "Visualizando <strong>Detalle Faltantes</strong>: Paquetes teóricos SAP que no aparecieron en terreno.";
+            } else {
+                descBar.className = "bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-lg text-xs font-medium";
+                descBar.innerHTML = "Visualizando <strong>Duplicados</strong>: Lotes escaneados más de una vez en terreno.";
+            }
+
             renderTableData();
         }
 
@@ -383,6 +411,12 @@
             let s = String(val).trim().replace(/\s+/g, '').replace(',', '.');
             let num = parseFloat(s);
             return isNaN(num) ? 0 : num;
+        }
+
+        // Función para asegurar piezas enteras aplicando Math.ceil (entero correlativo siguiente si hay decimales)
+        function parsePcsCeil(val) {
+            let num = parseNum(val);
+            return Math.ceil(num);
         }
 
         function findVal(row, keys) {
@@ -412,7 +446,7 @@
                 for(let rKey in row) {
                     let cleanKey = rKey.replace(/^\ufeff/, '').trim();
                     if(cleanKey.toLowerCase() === k) {
-                        return parseNum(row[rKey]);
+                        return parsePcsCeil(row[rKey]);
                     }
                 }
             }
@@ -484,33 +518,9 @@
                         };
                     }).filter(item => item.Lote !== '' && item.Lote !== 'undefined' && item.Lote !== 'null');
                     
-                    let skuVolumeMap = {};
-                    parsedSap.forEach(item => {
-                        let s = item.SKU || 'GENERAL';
-                        if(!skuVolumeMap[s]) skuVolumeMap[s] = 0;
-                        skuVolumeMap[s] += item.Volumen;
-                    });
-
-                    let sortedSkus = Object.keys(skuVolumeMap).sort((a,b) => skuVolumeMap[b] - skuVolumeMap[a]);
-                    let totalGlobalVol = sortedSkus.reduce((acc, s) => acc + skuVolumeMap[s], 0) || 1;
-                    
-                    let cumulativeVol = 0;
-                    let abcMap = {};
-                    sortedSkus.forEach(s => {
-                        cumulativeVol += skuVolumeMap[s];
-                        let pct = (cumulativeVol / totalGlobalVol) * 100;
-                        if(pct <= 80) abcMap[s] = 'A';
-                        else if(pct <= 95) abcMap[s] = 'B';
-                        else abcMap[s] = 'C';
-                    });
-
-                    rawData.sap = parsedSap.map(item => ({
-                        ...item,
-                        ABC: abcMap[item.SKU || 'GENERAL'] || 'C'
-                    }));
-
+                    rawData.sap = parsedSap;
                     document.getElementById('data-indicator').innerText = `Maestro [${origenNombre}] (${rawData.sap.length} reg)`;
-                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros y alertas graduadas para Excel!`);
+                    alert(`¡Stock teórico cargado (${origenNombre}) con ${rawData.sap.length} registros y piezas ajustadas a entero superior!`);
                 }
             });
         }
@@ -518,7 +528,6 @@
         document.getElementById('file-sap-local').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if(!file) return;
-            
             const reader = new FileReader();
             reader.onload = function(evt) {
                 procesarDatosMaestrosCSV(evt.target.result, file.name);
@@ -564,7 +573,8 @@
 
                             let calle = findVal(row, ['Calle', 'Pasillo', 'Ubicacion', 'Ubic']);
                             let vol = getVolumenTerreno(row);
-                            let pcs = parseNum(findVal(row, ['Piezas', 'NºPiezas', 'NÂºPiezas', 'Pcs']));
+                            // Aplicar redondeo a entero superior (Math.ceil) en piezas de terreno
+                            let pcs = parsePcsCeil(findVal(row, ['Piezas', 'NºPiezas', 'NÂºPiezas', 'Pcs']));
                             let operario = findVal(row, ['Operario', 'Usuario', 'User']) || 'Operario Terreno';
                             let hora = findVal(row, ['Hora', 'Time', 'Timestamp']) || '--:--';
 
@@ -652,16 +662,30 @@
                                         Alerta_Antiguedad: sapItem.Alerta_Antiguedad || '-'
                                     });
                                 } else {
-                                    let itemSobrante = { ...firstTerrenoItem, Creacion: '-', Antiguedad_Dias: 0, Alerta_Antiguedad: 'N/A (Sobrante Terreno)' };
+                                    let itemSobrante = { 
+                                        ...firstTerrenoItem, 
+                                        Creacion: '-', 
+                                        Antiguedad_Dias: 0, 
+                                        Alerta_Antiguedad: 'N/A (Sobrante Terreno)',
+                                        Tipo_Hallazgo: 'SOBRANTE'
+                                    };
                                     allSobrantes.push(itemSobrante);
                                 }
                             }
 
                             for(let [lote, item] of sapMap.entries()) {
                                 if(!scannedLots.has(lote)) {
-                                    allFaltantes.push(item);
+                                    let itemFaltante = {
+                                        ...item,
+                                        Tipo_Hallazgo: 'FALTANTE',
+                                        Calle: '-'
+                                    };
+                                    allFaltantes.push(itemFaltante);
                                 }
                             }
+
+                            let combinedFisico = allPareados.map(i => ({...i, Tipo_Hallazgo: 'PAREADO OK'})).concat(allSobrantes);
+                            let combinedSistemico = allPareados.map(i => ({...i, Tipo_Hallazgo: 'PAREADO OK'})).concat(allFaltantes);
 
                             let whBreakdown = {};
                             let sapWarehouses = new Set();
@@ -685,7 +709,6 @@
                                 let volFal = falB.reduce((acc, i) => acc + i.Volumen, 0);
 
                                 let iraB = volSap > 0 ? Math.min(100, Math.max(0, (volPar / volSap) * 100)) : 0;
-
                                 whBreakdown[w] = { volSap, volTer, volPar, volSob, volFal, ira: iraB };
                             });
                             globalData.warehouseBreakdown = whBreakdown;
@@ -695,6 +718,8 @@
                                 globalData.sobrantes = allSobrantes.filter(i => i.Bodega === selectedWh);
                                 globalData.faltantes = allFaltantes.filter(i => i.Bodega === selectedWh);
                                 globalData.duplicados = allDuplicados.filter(i => i.Bodega === selectedWh);
+                                globalData.stockFisico = combinedFisico.filter(i => i.Bodega === selectedWh);
+                                globalData.stockSistemico = combinedSistemico.filter(i => i.Bodega === selectedWh);
                                 globalData.sap = rawData.sap.filter(i => i.Bodega === selectedWh);
                                 globalData.terreno = rawData.terreno.filter(i => i.Bodega === selectedWh);
                             } else {
@@ -702,6 +727,8 @@
                                 globalData.sobrantes = allSobrantes;
                                 globalData.faltantes = allFaltantes;
                                 globalData.duplicados = allDuplicados;
+                                globalData.stockFisico = combinedFisico;
+                                globalData.stockSistemico = combinedSistemico;
                                 globalData.sap = rawData.sap;
                                 globalData.terreno = rawData.terreno;
                             }
@@ -785,10 +812,10 @@
                 iraLabel.innerText = "Rojo (Crítico)";
             }
 
-            document.getElementById('count-dup').innerText = globalData.duplicados.length;
+            document.getElementById('count-ok').innerText = globalData.pareados.length;
             document.getElementById('count-sob').innerText = globalData.sobrantes.length;
             document.getElementById('count-fal').innerText = globalData.faltantes.length;
-            document.getElementById('count-ok').innerText = globalData.pareados.length;
+            document.getElementById('count-dup').innerText = globalData.duplicados.length;
 
             document.getElementById('stat-ok').innerText = globalData.pareados.length;
             document.getElementById('stat-sob').innerText = globalData.sobrantes.length;
@@ -815,7 +842,7 @@
             let selectedWh = document.getElementById('warehouse-filter').value;
             let descWh = selectedWh === 'ALL' ? 'todas las bodegas' : `el almacén [${selectedWh}]`;
 
-            let dictamenHTML = `Para ${descWh}, el inventario presenta un <strong>Índice de Confiabilidad (IRA) de ${ira.toFixed(1)}%</strong> (${ira >= 98 ? 'Clase Mundial' : (ira >= 95 ? 'Alerta Operativa' : 'Crítico')}). Se validaron <strong>${globalData.pareados.length} paquetes pareados</strong> (${volPareado.toFixed(2)} m³), detectando <strong>${globalData.sobrantes.length} sobrantes</strong> (${volSobrante > 0 ? volSobrante.toFixed(2) + ' m³' : globalData.sobrantes.length + ' lotes externos'}) y <strong>${globalData.faltantes.length} faltantes</strong> (${volFaltante.toFixed(2)} m³).`;
+            let dictamenHTML = `Para ${descWh}, el inventario presenta un <strong>Índice de Confiabilidad (IRA) de ${ira.toFixed(1)}%</strong>. Se validaron <strong>${globalData.pareados.length} paquetes pareados</strong> (${volPareado.toFixed(2)} m³), detectando <strong>${globalData.sobrantes.length} sobrantes</strong> y <strong>${globalData.faltantes.length} faltantes</strong>.`;
             document.getElementById('dictamen-text').innerHTML = dictamenHTML;
             document.getElementById('timestamp-report').innerText = new Date().toLocaleString();
         }
@@ -827,10 +854,12 @@
             let query = document.getElementById('search-input').value.toLowerCase();
 
             let dataToRender = [];
-            if(tab === 'dup') dataToRender = globalData.duplicados;
+            if(tab === 'fisico') dataToRender = globalData.stockFisico;
+            if(tab === 'sistemico') dataToRender = globalData.stockSistemico;
+            if(tab === 'ok') dataToRender = globalData.pareados;
             if(tab === 'sob') dataToRender = globalData.sobrantes;
             if(tab === 'fal') dataToRender = globalData.faltantes;
-            if(tab === 'ok') dataToRender = globalData.pareados;
+            if(tab === 'dup') dataToRender = globalData.duplicados;
 
             if(query) {
                 dataToRender = dataToRender.filter(item => {
@@ -838,47 +867,77 @@
                 });
             }
 
-            if(tab === 'dup') {
+            if(tab === 'fisico' || tab === 'sistemico') {
+                headersEl.innerHTML = `
+                    <th class="p-3">Estado / Hallazgo</th>
+                    <th class="p-3">Lote</th>
+                    <th class="p-3">SKU</th>
+                    <th class="p-3">Descripción</th>
+                    <th class="p-3">Almacén</th>
+                    <th class="p-3">Subbodega</th>
+                    <th class="p-3">Ubicación / Calle</th>
+                    <th class="p-3">Volumen (m³)</th>
+                    <th class="p-3">Piezas (Entero)</th>
+                    <th class="p-3">Antigüedad / Alerta</th>
+                `;
+                if(dataToRender.length === 0) {
+                    bodyEl.innerHTML = `<tr><td colspan="10" class="text-center py-6 text-slate-400">Sin registros para esta vista.</td></tr>`;
+                    return;
+                }
+                bodyEl.innerHTML = dataToRender.map(i => {
+                    let isSob = i.Tipo_Hallazgo === 'SOBRANTE';
+                    let isFal = i.Tipo_Hallazgo === 'FALTANTE';
+                    let badgeStatus = '';
+                    if(isSob) badgeStatus = `<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-[10px] font-bold">➕ SOBRANTE</span>`;
+                    else if(isFal) badgeStatus = `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[10px] font-bold">➖ FALTANTE</span>`;
+                    else badgeStatus = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-bold">✅ PAREADO OK</span>`;
+
+                    let textColor = isSob ? 'text-blue-700' : (isFal ? 'text-rose-600' : 'text-slate-800');
+
+                    return `
+                        <tr class="hover:bg-slate-50 border-b border-slate-100">
+                            <td class="p-3">${badgeStatus}</td>
+                            <td class="p-3 font-bold ${textColor}">${i.Lote || '-'}</td>
+                            <td class="p-3">${i.SKU || '-'}</td>
+                            <td class="p-3">${i.Descripcion || '-'}</td>
+                            <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
+                            <td class="p-3 text-slate-600">${i.Subbodega || '-'}</td>
+                            <td class="p-3 text-slate-600">${i.Calle || '-'}</td>
+                            <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
+                            <td class="p-3 font-semibold ${textColor}">${i.Piezas || '0'} pcs</td>
+                            <td class="p-3 text-xs">${i.Alerta_Antiguedad || '-'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else if(tab === 'ok') {
                 headersEl.innerHTML = `
                     <th class="p-3">Lote</th>
                     <th class="p-3">SKU</th>
                     <th class="p-3">Descripción</th>
                     <th class="p-3">Almacén</th>
                     <th class="p-3">Subbodega</th>
-                    <th class="p-3">Lecturas</th>
+                    <th class="p-3">Calle / Ubic.</th>
                     <th class="p-3">Volumen (m³)</th>
-                    <th class="p-3">Piezas</th>
-                    <th class="p-3">Antigüedad y Estado Excel</th>
+                    <th class="p-3">Piezas (Entero)</th>
+                    <th class="p-3">Antigüedad y Estado</th>
                 `;
                 if(dataToRender.length === 0) {
-                    bodyEl.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">No hay registros duplicados para este filtro.</td></tr>`;
+                    bodyEl.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">Sin registros pareados OK.</td></tr>`;
                     return;
                 }
-                bodyEl.innerHTML = dataToRender.map(i => {
-                    let days = i.Antiguedad_Dias || 0;
-                    let badgeHTML = '';
-                    if (days > 365) {
-                        badgeHTML = `<span class="bg-rose-100 text-rose-800 px-2.5 py-1 rounded text-[11px] font-bold">🚨 CRÍTICO (>1 Año / ${days}d)</span>`;
-                    } else if (days > 90) {
-                        badgeHTML = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded text-[11px] font-bold">⚠️ MODERADO (${days}d)</span>`;
-                    } else {
-                        badgeHTML = `<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded text-[11px] font-semibold">✅ OK (${days}d)</span>`;
-                    }
-
-                    return `
-                        <tr class="hover:bg-slate-50 border-b border-slate-100">
-                            <td class="p-3 font-bold text-amber-600">${i.Lote}</td>
-                            <td class="p-3">${i.SKU}</td>
-                            <td class="p-3">${i.Descripcion}</td>
-                            <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
-                            <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
-                            <td class="p-3"><span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">${i.Count} lecturas</span></td>
-                            <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
-                            <td class="p-3 font-semibold text-slate-700">${i.Piezas || '0'}</td>
-                            <td class="p-3">${badgeHTML} <span class="block text-[10px] text-slate-400">Creación: ${i.Creacion || '-'}</span></td>
-                        </tr>
-                    `;
-                }).join('');
+                bodyEl.innerHTML = dataToRender.map(i => `
+                    <tr class="hover:bg-slate-50 border-b border-slate-100">
+                        <td class="p-3 font-bold text-slate-800">${i.Lote || '-'}</td>
+                        <td class="p-3">${i.SKU || '-'}</td>
+                        <td class="p-3">${i.Descripcion || '-'}</td>
+                        <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
+                        <td class="p-3 text-slate-600">${i.Subbodega || '-'}</td>
+                        <td class="p-3 text-slate-600">${i.Calle || '-'}</td>
+                        <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
+                        <td class="p-3 font-semibold text-emerald-700">${i.Piezas || '0'} pcs</td>
+                        <td class="p-3 text-xs">${i.Alerta_Antiguedad || '-'}</td>
+                    </tr>
+                `).join('');
             } else if(tab === 'sob') {
                 headersEl.innerHTML = `
                     <th class="p-3">Lote</th>
@@ -888,22 +947,22 @@
                     <th class="p-3">Subbodega</th>
                     <th class="p-3">Calle</th>
                     <th class="p-3">Volumen (m³)</th>
-                    <th class="p-3">Piezas</th>
+                    <th class="p-3">Piezas (Entero)</th>
                 `;
                 if(dataToRender.length === 0) {
-                    bodyEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin registros de sobrantes para este filtro.</td></tr>`;
+                    bodyEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin registros sobrantes.</td></tr>`;
                     return;
                 }
                 bodyEl.innerHTML = dataToRender.map(i => `
                     <tr class="hover:bg-slate-50 border-b border-slate-100">
-                        <td class="p-3 font-bold text-blue-800">${i.Lote || '-'}</td>
+                        <td class="p-3 font-bold text-blue-700">${i.Lote || '-'}</td>
                         <td class="p-3">${i.SKU || '-'}</td>
                         <td class="p-3">${i.Descripcion || '-'}</td>
                         <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
-                        <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
+                        <td class="p-3 text-slate-600">${i.Subbodega || '-'}</td>
                         <td class="p-3">${i.Calle || '-'}</td>
-                        <td class="p-3 font-semibold">${Number(i.Volumen || 0) > 0 ? Number(i.Volumen).toFixed(3) + ' m³' : '<span class="text-amber-600 italic">1 Lote (Sin vol.)</span>'}</td>
-                        <td class="p-3 font-semibold text-blue-700">${i.Piezas || '0'}</td>
+                        <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
+                        <td class="p-3 font-semibold text-blue-700">${i.Piezas || '0'} pcs</td>
                     </tr>
                 `).join('');
             } else if(tab === 'fal') {
@@ -914,79 +973,51 @@
                     <th class="p-3">Almacén</th>
                     <th class="p-3">Subbodega</th>
                     <th class="p-3">Volumen (m³)</th>
-                    <th class="p-3">Piezas</th>
-                    <th class="p-3">Antigüedad y Estado Excel</th>
+                    <th class="p-3">Piezas (Entero)</th>
+                    <th class="p-3">Antigüedad y Estado</th>
                 `;
                 if(dataToRender.length === 0) {
-                    bodyEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin registros de faltantes para este filtro.</td></tr>`;
+                    bodyEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin registros faltantes.</td></tr>`;
                     return;
                 }
-                bodyEl.innerHTML = dataToRender.map(i => {
-                    let days = i.Antiguedad_Dias || 0;
-                    let badgeHTML = '';
-                    if (days > 365) {
-                        badgeHTML = `<span class="bg-rose-100 text-rose-800 px-2.5 py-1 rounded text-[11px] font-bold">🚨 CRÍTICO (>1 Año / ${days}d)</span>`;
-                    } else if (days > 90) {
-                        badgeHTML = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded text-[11px] font-bold">⚠️ MODERADO (${days}d)</span>`;
-                    } else {
-                        badgeHTML = `<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded text-[11px] font-semibold">✅ OK (${days}d)</span>`;
-                    }
-
-                    return `
-                        <tr class="hover:bg-slate-50 border-b border-slate-100">
-                            <td class="p-3 font-bold text-rose-600">${i.Lote || '-'}</td>
-                            <td class="p-3">${i.SKU || '-'}</td>
-                            <td class="p-3">${i.Descripcion || '-'}</td>
-                            <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
-                            <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
-                            <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
-                            <td class="p-3 font-semibold text-rose-700">${i.Piezas || '0'}</td>
-                            <td class="p-3">${badgeHTML} <span class="block text-[10px] text-slate-400">Creación: ${i.Creacion || '-'}</span></td>
-                        </tr>
-                    `;
-                }).join('');
+                bodyEl.innerHTML = dataToRender.map(i => `
+                    <tr class="hover:bg-slate-50 border-b border-slate-100">
+                        <td class="p-3 font-bold text-rose-600">${i.Lote || '-'}</td>
+                        <td class="p-3">${i.SKU || '-'}</td>
+                        <td class="p-3">${i.Descripcion || '-'}</td>
+                        <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
+                        <td class="p-3 text-slate-600">${i.Subbodega || '-'}</td>
+                        <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
+                        <td class="p-3 font-semibold text-rose-700">${i.Piezas || '0'} pcs</td>
+                        <td class="p-3 text-xs">${i.Alerta_Antiguedad || '-'}</td>
+                    </tr>
+                `).join('');
             } else {
-                // PESTAÑA PAREADOS OK
+                // DUPLICADOS
                 headersEl.innerHTML = `
                     <th class="p-3">Lote</th>
                     <th class="p-3">SKU</th>
                     <th class="p-3">Descripción</th>
                     <th class="p-3">Almacén</th>
-                    <th class="p-3">Subbodega</th>
-                    <th class="p-3">Calle / Ubic.</th>
+                    <th class="p-3">Lecturas</th>
+                    <th class="p-3">Operarios / Horas</th>
                     <th class="p-3">Volumen (m³)</th>
-                    <th class="p-3">Piezas</th>
-                    <th class="p-3">Antigüedad y Estado Excel</th>
                 `;
                 if(dataToRender.length === 0) {
-                    bodyEl.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">Sin registros pareados OK para este filtro.</td></tr>`;
+                    bodyEl.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">Sin lotes duplicados.</td></tr>`;
                     return;
                 }
-                bodyEl.innerHTML = dataToRender.map(i => {
-                    let badgeHTML = '';
-                    let days = i.Antiguedad_Dias || 0;
-                    if (days > 365) {
-                        badgeHTML = `<span class="bg-rose-100 text-rose-800 px-2.5 py-1 rounded text-[11px] font-bold">🚨 CRÍTICO (>1 Año / ${days}d)</span>`;
-                    } else if (days > 90) {
-                        badgeHTML = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded text-[11px] font-bold">⚠️ MODERADO (${days}d)</span>`;
-                    } else {
-                        badgeHTML = `<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded text-[11px] font-semibold">✅ OK (${days}d)</span>`;
-                    }
-
-                    return `
-                        <tr class="hover:bg-slate-50 border-b border-slate-100">
-                            <td class="p-3 font-bold text-slate-800">${i.Lote || '-'}</td>
-                            <td class="p-3">${i.SKU || '-'}</td>
-                            <td class="p-3">${i.Descripcion || '-'}</td>
-                            <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
-                            <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
-                            <td class="p-3 text-slate-600">${i.Calle || '-'}</td>
-                            <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
-                            <td class="p-3 font-semibold text-emerald-700">${i.Piezas || '0'}</td>
-                            <td class="p-3">${badgeHTML} <span class="block text-[10px] text-slate-400">Creación: ${i.Creacion || '-'}</span></td>
-                        </tr>
-                    `;
-                }).join('');
+                bodyEl.innerHTML = dataToRender.map(i => `
+                    <tr class="hover:bg-slate-50 border-b border-slate-100">
+                        <td class="p-3 font-bold text-amber-600">${i.Lote}</td>
+                        <td class="p-3">${i.SKU}</td>
+                        <td class="p-3">${i.Descripcion}</td>
+                        <td class="p-3 font-semibold text-blue-700">${i.Bodega || '-'}</td>
+                        <td class="p-3"><span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">${i.Count} veces</span></td>
+                        <td class="p-3 text-[11px] text-slate-600">${i.Operarios}</td>
+                        <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
+                    </tr>
+                `).join('');
             }
         }
 
@@ -1000,19 +1031,12 @@
             let dataToExport = [];
             let nombreHoja = "";
 
-            if(tab === 'dup') {
-                dataToExport = globalData.duplicados;
-                nombreHoja = "Duplicados";
-            } else if(tab === 'sob') {
-                dataToExport = globalData.sobrantes;
-                nombreHoja = "Sobrantes";
-            } else if(tab === 'fal') {
-                dataToExport = globalData.faltantes;
-                nombreHoja = "Faltantes";
-            } else if(tab === 'ok') {
-                dataToExport = globalData.pareados;
-                nombreHoja = "Pareados OK";
-            }
+            if(tab === 'fisico') { dataToExport = globalData.stockFisico; nombreHoja = "Stock_Fisico"; }
+            else if(tab === 'sistemico') { dataToExport = globalData.stockSistemico; nombreHoja = "Stock_Sistemico"; }
+            else if(tab === 'ok') { dataToExport = globalData.pareados; nombreHoja = "Pareados_OK"; }
+            else if(tab === 'sob') { dataToExport = globalData.sobrantes; nombreHoja = "Sobrantes"; }
+            else if(tab === 'fal') { dataToExport = globalData.faltantes; nombreHoja = "Faltantes"; }
+            else { dataToExport = globalData.duplicados; nombreHoja = "Duplicados"; }
 
             if(query) {
                 dataToExport = dataToExport.filter(item => {
@@ -1021,7 +1045,7 @@
             }
 
             if(dataToExport.length === 0) {
-                alert("No hay registros en la vista actual para exportar.");
+                alert("No hay registros para exportar en esta vista.");
                 return;
             }
 
@@ -1030,7 +1054,7 @@
             XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
 
             let fechaStr = new Date().toISOString().slice(0,10);
-            XLSX.writeFile(wb, `Auditoria_${nombreHoja}_${fechaStr}.xlsx`);
+            XLSX.writeFile(wb, `Inventario_${nombreHoja}_${fechaStr}.xlsx`);
         }
 
         function updateReportUI() {
@@ -1062,7 +1086,7 @@
                         <td class="p-2.5">${d.volSap.toFixed(2)} m³</td>
                         <td class="p-2.5">${d.volTer.toFixed(2)} m³</td>
                         <td class="p-2.5 text-emerald-700 font-semibold">${d.volPar.toFixed(2)} m³</td>
-                        <td class="p-2.5 text-blue-600">${d.volSob > 0 ? d.volSob.toFixed(2) + ' m³' : globalData.sobrantes.length + ' lotes'}</td>
+                        <td class="p-2.5 text-blue-600">${d.volSob.toFixed(2)} m³</td>
                         <td class="p-2.5 text-rose-600">${d.volFal.toFixed(2)} m³</td>
                         <td class="p-2.5 ${iraColor}">${d.ira.toFixed(1)}%</td>
                     </tr>
@@ -1072,7 +1096,7 @@
 
         function exportarCierreHistoricoLocal() {
             if (rawData.sap.length === 0 || globalData.pareados.length === 0) {
-                alert("No hay datos de inventario procesados para exportar.");
+                alert("Por favor procese la conciliación antes de guardar el cierre.");
                 return;
             }
 
@@ -1095,27 +1119,22 @@
             }];
             
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumenGeneral), "Resumen Ejecutivo");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.stockFisico), "Stock Físico");
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.stockSistemico), "Stock Sistémico");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.pareados), "Pareados OK");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.sobrantes), "Sobrantes");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.faltantes), "Faltantes");
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.duplicados), "Duplicados");
 
-            XLSX.writeFile(wb, `Cierre_Inventario_${centroNombre}_${fechaStr}.xlsx`);
-            alert(`Cierre generado con éxito. La columna 'Alerta_Antiguedad' incluye etiquetas visuales directas para filtrar en Excel.`);
+            XLSX.writeFile(wb, `Cierre_Inventario_Completo_${centroNombre}_${fechaStr}.xlsx`);
+            alert(`¡Cierre completo generado con éxito! Las piezas se han normalizado a números enteros (redondeo al entero superior).`);
         }
 
         function finalizarYLimpiar() {
             if (confirm("¿Estás seguro de finalizar el análisis y limpiar todos los datos en caché?")) {
                 rawData = { sap: [], terreno: [] };
                 globalData = {
-                    sap: [],
-                    terreno: [],
-                    duplicados: [],
-                    sobrantes: [],
-                    faltantes: [],
-                    pareados: [],
-                    warehouseBreakdown: {},
-                    currentTab: 'dup'
+                    sap: [], terreno: [], duplicados: [], sobrantes: [], faltantes: [], pareados: [], stockFisico: [], stockSistemico: [], warehouseBreakdown: {}, currentTab: 'fisico'
                 };
 
                 document.getElementById('file-sap-local').value = "";
@@ -1143,14 +1162,9 @@
                 iraValue.innerText = "0.0%";
                 document.getElementById('ira-label').innerText = "Sin Datos";
 
-                if(compChartInstance) {
-                    compChartInstance.destroy();
-                    compChartInstance = null;
-                }
+                if(compChartInstance) { compChartInstance.destroy(); compChartInstance = null; }
 
-                ['dup', 'sob', 'fal', 'ok'].forEach(t => {
-                    document.getElementById('count-' + t).innerText = "0";
-                });
+                ['ok', 'sob', 'fal', 'dup'].forEach(t => { document.getElementById('count-' + t).innerText = "0"; });
                 document.getElementById('stat-ok').innerText = "0";
                 document.getElementById('stat-sob').innerText = "0";
                 document.getElementById('stat-fal').innerText = "0";
@@ -1158,7 +1172,7 @@
                 document.getElementById('dictamen-text').innerHTML = "Cargue el maestro y los archivos de terreno para generar el dictamen gerencial automático.";
                 document.getElementById('warehouse-breakdown-table').innerHTML = `<tr><td colspan="7" class="text-center py-4 text-slate-400">Sin datos cargados.</td></tr>`;
                 document.getElementById('timestamp-report').innerText = "--";
-                document.getElementById('table-body').innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>`;
+                document.getElementById('table-body').innerHTML = `<tr><td colspan="10" class="text-center py-6 text-slate-400">Sin datos cargados.</td></tr>`;
 
                 switchView('dashboard');
             }
@@ -1180,7 +1194,7 @@
 
             let detalleAlmacenes = "\n--- DESGLOSE POR ALMACÉN ---\n";
             for(let [w, d] of Object.entries(globalData.warehouseBreakdown)) {
-                detalleAlmacenes += `Almacén ${w}: IRA ${d.ira.toFixed(1)}% | Pareados: ${d.volPar.toFixed(2)} m³ | Sobrantes: ${d.volSob > 0 ? d.volSob.toFixed(2) + ' m³' : globalData.sobrantes.length + ' lotes'} | Faltantes: ${d.volFal.toFixed(2)} m³\n`;
+                detalleAlmacenes += `Almacén ${w}: IRA ${d.ira.toFixed(1)}% | Pareados: ${d.volPar.toFixed(2)} m³ | Sobrantes: ${d.volSob.toFixed(2)} m³ | Faltantes: ${d.volFal.toFixed(2)} m³\n`;
             }
 
             let asunto = encodeURIComponent(`Informe de Conciliación Consolidado - Operaciones Molduras [${fechaHoy}]`);
@@ -1193,7 +1207,7 @@
                 `• Volumen Faltante Sistema: ${volFaltante}\n` +
                 `• Lotes Duplicados Cruzados: ${totalDuplicados}\n` +
                 detalleAlmacenes + `\n` +
-                `El detalle analítico completo por almacén y formato Excel se encuentra disponible para su revisión y auditoría de puestos de trabajo.\n\n` +
+                `El archivo Excel exportado incluye solapas separadas para Stock Físico, Stock Sistémico, Pareados OK, Sobrantes, Faltantes y Duplicados (con piezas en números enteros).\n\n` +
                 `Atentamente,\n` +
                 `Ivan Pérez Conus\n` +
                 `Coordinador de Insumos y Control de Inventarios - Operaciones Molduras`;
