@@ -208,8 +208,8 @@
                         <button onclick="switchTab('fal')" id="tab-fal" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900">➖ Faltantes (<span id="count-fal">0</span>)</button>
                         <button onclick="switchTab('ok')" id="tab-ok" class="px-3 py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900">✅ Pareados (<span id="count-ok">0</span>)</button>
                     </div>
-                    <button onclick="exportarTablaActivaExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Exporta a Excel los datos que estás viendo actualmente en esta pestaña">
-                        📊 Exportar Vista
+                    <button onclick="exportarTablaActivaExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 shadow-sm" title="Exporta a Excel los datos con indicador visual de antigüedad">
+                        📊 Exportar Vista con Alertas
                     </button>
                 </div>
             </div>
@@ -443,6 +443,12 @@
             return diffDays >= 0 ? diffDays : 0;
         }
 
+        function obtenerEstadoAntiguedad(days) {
+            if (days > 365) return '🚨 [CRÍTICO] Más de 1 Año';
+            if (days > 90) return '⚠️ [MODERADO] Entre 90d y 1 Año';
+            return '✅ [OK] Menos de 90d';
+        }
+
         function procesarDatosMaestrosCSV(csvText, origenNombre) {
             Papa.parse(csvText, {
                 ...parseConfig,
@@ -462,6 +468,7 @@
                         let vol = getStValoradSap(row);
                         let pcs = getPiezasSap(row);
                         let antDays = calcularAntiguedadDias(creacion);
+                        let estadoAnt = obtenerEstadoAntiguedad(antDays);
 
                         return {
                             Lote: String(lote).trim(),
@@ -472,7 +479,8 @@
                             Volumen: vol,
                             Piezas: pcs,
                             Creacion: creacion,
-                            AntiguedadDias: antDays
+                            Antiguedad_Dias: antDays,
+                            Alerta_Antiguedad: estadoAnt
                         };
                     }).filter(item => item.Lote !== '' && item.Lote !== 'undefined' && item.Lote !== 'null');
                     
@@ -502,7 +510,7 @@
                     }));
 
                     document.getElementById('data-indicator').innerText = `Maestro [${origenNombre}] (${rawData.sap.length} reg)`;
-                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros (Antigüedad graduada)!`);
+                    alert(`¡Stock teórico cargado exitosamente (${origenNombre}) con ${rawData.sap.length} registros y alertas graduadas para Excel!`);
                 }
             });
         }
@@ -624,7 +632,8 @@
                                         Volumen: dupVol,
                                         Piezas: dupPcs,
                                         Creacion: sapRef ? sapRef.Creacion : '-',
-                                        AntiguedadDias: sapRef ? sapRef.AntiguedadDias : 0
+                                        Antiguedad_Dias: sapRef ? sapRef.Antiguedad_Dias : 0,
+                                        Alerta_Antiguedad: sapRef ? sapRef.Alerta_Antiguedad : '-'
                                     });
                                 }
 
@@ -639,10 +648,11 @@
                                         Volumen: sapItem.Volumen,
                                         Piezas: sapItem.Piezas,
                                         Creacion: sapItem.Creacion || '-',
-                                        AntiguedadDias: sapItem.AntiguedadDias || 0
+                                        Antiguedad_Dias: sapItem.Antiguedad_Dias || 0,
+                                        Alerta_Antiguedad: sapItem.Alerta_Antiguedad || '-'
                                     });
                                 } else {
-                                    let itemSobrante = { ...firstTerrenoItem, Creacion: '-', AntiguedadDias: 0 };
+                                    let itemSobrante = { ...firstTerrenoItem, Creacion: '-', Antiguedad_Dias: 0, Alerta_Antiguedad: 'N/A (Sobrante Terreno)' };
                                     allSobrantes.push(itemSobrante);
                                 }
                             }
@@ -838,21 +848,21 @@
                     <th class="p-3">Lecturas</th>
                     <th class="p-3">Volumen (m³)</th>
                     <th class="p-3">Piezas</th>
-                    <th class="p-3">Antigüedad</th>
+                    <th class="p-3">Antigüedad y Estado Excel</th>
                 `;
                 if(dataToRender.length === 0) {
                     bodyEl.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">No hay registros duplicados para este filtro.</td></tr>`;
                     return;
                 }
                 bodyEl.innerHTML = dataToRender.map(i => {
-                    let days = i.AntiguedadDias || 0;
-                    let badgeAntiguedad = '';
+                    let days = i.Antiguedad_Dias || 0;
+                    let badgeHTML = '';
                     if (days > 365) {
-                        badgeAntiguedad = `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[10px] font-bold">Crítico (${days}d)</span>`;
+                        badgeHTML = `<span class="bg-rose-100 text-rose-800 px-2.5 py-1 rounded text-[11px] font-bold">🚨 CRÍTICO (>1 Año / ${days}d)</span>`;
                     } else if (days > 90) {
-                        badgeAntiguedad = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Moderado (${days}d)</span>`;
+                        badgeHTML = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded text-[11px] font-bold">⚠️ MODERADO (${days}d)</span>`;
                     } else {
-                        badgeAntiguedad = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-semibold">OK (${days}d)</span>`;
+                        badgeHTML = `<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded text-[11px] font-semibold">✅ OK (${days}d)</span>`;
                     }
 
                     return `
@@ -865,10 +875,7 @@
                             <td class="p-3"><span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">${i.Count} lecturas</span></td>
                             <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
                             <td class="p-3 font-semibold text-slate-700">${i.Piezas || '0'}</td>
-                            <td class="p-3">
-                                ${badgeAntiguedad}
-                                <span class="block text-[10px] text-slate-400 mt-0.5">Creación: ${i.Creacion || '-'}</span>
-                            </td>
+                            <td class="p-3">${badgeHTML} <span class="block text-[10px] text-slate-400">Creación: ${i.Creacion || '-'}</span></td>
                         </tr>
                     `;
                 }).join('');
@@ -908,21 +915,21 @@
                     <th class="p-3">Subbodega</th>
                     <th class="p-3">Volumen (m³)</th>
                     <th class="p-3">Piezas</th>
-                    <th class="p-3">Antigüedad</th>
+                    <th class="p-3">Antigüedad y Estado Excel</th>
                 `;
                 if(dataToRender.length === 0) {
                     bodyEl.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Sin registros de faltantes para este filtro.</td></tr>`;
                     return;
                 }
                 bodyEl.innerHTML = dataToRender.map(i => {
-                    let days = i.AntiguedadDias || 0;
-                    let badgeAntiguedad = '';
+                    let days = i.Antiguedad_Dias || 0;
+                    let badgeHTML = '';
                     if (days > 365) {
-                        badgeAntiguedad = `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[10px] font-bold">Crítico (${days}d)</span>`;
+                        badgeHTML = `<span class="bg-rose-100 text-rose-800 px-2.5 py-1 rounded text-[11px] font-bold">🚨 CRÍTICO (>1 Año / ${days}d)</span>`;
                     } else if (days > 90) {
-                        badgeAntiguedad = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Moderado (${days}d)</span>`;
+                        badgeHTML = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded text-[11px] font-bold">⚠️ MODERADO (${days}d)</span>`;
                     } else {
-                        badgeAntiguedad = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-semibold">OK (${days}d)</span>`;
+                        badgeHTML = `<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded text-[11px] font-semibold">✅ OK (${days}d)</span>`;
                     }
 
                     return `
@@ -934,10 +941,7 @@
                             <td class="p-3 font-medium text-slate-600">${i.Subbodega || '-'}</td>
                             <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
                             <td class="p-3 font-semibold text-rose-700">${i.Piezas || '0'}</td>
-                            <td class="p-3">
-                                ${badgeAntiguedad}
-                                <span class="block text-[10px] text-slate-400 mt-0.5">Creación: ${i.Creacion || '-'}</span>
-                            </td>
+                            <td class="p-3">${badgeHTML} <span class="block text-[10px] text-slate-400">Creación: ${i.Creacion || '-'}</span></td>
                         </tr>
                     `;
                 }).join('');
@@ -952,21 +956,21 @@
                     <th class="p-3">Calle / Ubic.</th>
                     <th class="p-3">Volumen (m³)</th>
                     <th class="p-3">Piezas</th>
-                    <th class="p-3">Antigüedad</th>
+                    <th class="p-3">Antigüedad y Estado Excel</th>
                 `;
                 if(dataToRender.length === 0) {
                     bodyEl.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-slate-400">Sin registros pareados OK para este filtro.</td></tr>`;
                     return;
                 }
                 bodyEl.innerHTML = dataToRender.map(i => {
-                    let badgeAntiguedad = '';
-                    let days = i.AntiguedadDias || 0;
+                    let badgeHTML = '';
+                    let days = i.Antiguedad_Dias || 0;
                     if (days > 365) {
-                        badgeAntiguedad = `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded text-[10px] font-bold">Crítico (${days}d)</span>`;
+                        badgeHTML = `<span class="bg-rose-100 text-rose-800 px-2.5 py-1 rounded text-[11px] font-bold">🚨 CRÍTICO (>1 Año / ${days}d)</span>`;
                     } else if (days > 90) {
-                        badgeAntiguedad = `<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[10px] font-bold">Moderado (${days}d)</span>`;
+                        badgeHTML = `<span class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded text-[11px] font-bold">⚠️ MODERADO (${days}d)</span>`;
                     } else {
-                        badgeAntiguedad = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-[10px] font-semibold">OK (${days}d)</span>`;
+                        badgeHTML = `<span class="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded text-[11px] font-semibold">✅ OK (${days}d)</span>`;
                     }
 
                     return `
@@ -979,10 +983,7 @@
                             <td class="p-3 text-slate-600">${i.Calle || '-'}</td>
                             <td class="p-3 font-semibold">${Number(i.Volumen || 0).toFixed(3)} m³</td>
                             <td class="p-3 font-semibold text-emerald-700">${i.Piezas || '0'}</td>
-                            <td class="p-3">
-                                ${badgeAntiguedad}
-                                <span class="block text-[10px] text-slate-400 mt-0.5">Creación: ${i.Creacion || '-'}</span>
-                            </td>
+                            <td class="p-3">${badgeHTML} <span class="block text-[10px] text-slate-400">Creación: ${i.Creacion || '-'}</span></td>
                         </tr>
                     `;
                 }).join('');
@@ -1100,7 +1101,7 @@
             XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.duplicados), "Duplicados");
 
             XLSX.writeFile(wb, `Cierre_Inventario_${centroNombre}_${fechaStr}.xlsx`);
-            alert(`Cierre generado con éxito. Guárdalo directamente en tu carpeta del escritorio (ej. historico/2026/09/).`);
+            alert(`Cierre generado con éxito. La columna 'Alerta_Antiguedad' incluye etiquetas visuales directas para filtrar en Excel.`);
         }
 
         function finalizarYLimpiar() {
