@@ -1583,9 +1583,11 @@
 
         // --- 11. REINICIO DE SISTEMA ---
         function reiniciarSistema() {
-            mostrarModal("¿Reiniciar Sistema?", "Se borrarán las capturas y los datos locales de este dispositivo.", async function(conf) {
+            mostrarModal("¿Reiniciar Sistema?", "Se borrarán todas las capturas, los archivos maestros y la configuración de este dispositivo.", async function(conf) {
                 if (conf) {
                     await db.capturas.clear();
+                    await db.maestros.clear();
+                    await db.stocks_bodega.clear();
                     localStorage.removeItem('inv_operario');
                     localStorage.removeItem('inv_ultima_calle');
                     location.reload();
