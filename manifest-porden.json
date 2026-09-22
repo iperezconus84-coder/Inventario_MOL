@@ -1,7 +1,7 @@
 {
   "name": "Arauco Porden Terreno",
   "short_name": "Porden",
-  "start_url": "./porden.html",
+  "start_url": "./porden",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#005F9E",
