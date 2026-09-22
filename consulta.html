@@ -237,8 +237,8 @@
             return isNaN(num) ? 0 : num;
         }
 
-        function parsePcsCeil(val) {
-            return Math.ceil(parseNum(val));
+        function parsePcsInt(val) {
+            return Math.round(parseNum(val));
         }
 
         function limpiarSKU(skuVal) {
@@ -334,7 +334,7 @@
                             }
                         }
 
-                        // Búsqueda inteligente y tolerante a variantes para Piezas
+                        // Búsqueda inteligente y tolerante a variantes para Piezas (redondeando decimales a enteros)
                         let pcs = 0;
                         for(let rKey in row) {
                             let ck = rKey.replace(/^\ufeff/, '').trim().toLowerCase()
@@ -344,7 +344,7 @@
                             if(ck.includes('pieza') || ck === 'pcs' || ck.includes('cantidad')) {
                                 let valPcs = row[rKey];
                                 if(valPcs !== '') {
-                                    pcs = parsePcsCeil(valPcs);
+                                    pcs = parsePcsInt(valPcs);
                                     break;
                                 }
                             }
