@@ -70,7 +70,7 @@
         </section>
         
         <div class="text-center text-[10px] text-slate-400 mt-6">
-            Arauco IMOL Consulta Terreno v2.1<br>Funciona 100% Offline (PWA)
+            Arauco IMOL Consulta Terreno v2.2<br>Funciona 100% Offline (PWA)
         </div>
     </div>
 
@@ -218,7 +218,7 @@
         }
     }
 
-    // Configuración de PapaParse para SAP (forzando delimitador ;)
+    // Configuración de PapaParse para SAP (delimitador ;)
     const parseConfigSAP = {
         header: true,
         skipEmptyLines: true,
@@ -332,7 +332,7 @@
         } catch(e) { console.error("Error Carga Storage:", e); }
     }
 
-    // Carga de Archivo SAP con FileReader (ISO-8859-1 para respetar acentos y símbolos como Nº)
+    // Carga de Archivo SAP con FileReader (ISO-8859-1 y robustez ampliada para piezas)
     document.getElementById('file-sap').addEventListener('change', function(e) {
         const file = e.target.files[0];
         if(!file) return;
@@ -363,29 +363,36 @@
                             }
                         }
 
-                        // Búsqueda inteligente directa para NºPiezas, Piezas, Cantidad, etc.
+                        // Búsqueda ultrarrobusta y ampliada para Piezas / Cantidad / Stock / No valorado
                         let pcs = 0;
-                        const exactPieceKeys = ['nºpiezas', 'n°piezas', 'nº piezas', 'n° piezas', 'npiezas', 'piezas', 'pcs', 'cantidad', 'cant', 'stock'];
+                        const exactPieceKeys = [
+                            'nºpiezas', 'n°piezas', 'nº piezas', 'n° piezas', 'npiezas', 
+                            'piezas', 'pcs', 'cantidad', 'cant', 'stock', 
+                            'st. no valor', 'stnovalor', 'st_no_valor', 'unidades', 'unid', 'cant.disp', 'cantdisp'
+                        ];
                         for(let k of exactPieceKeys) {
                             let val = findVal(row, [k]);
                             if(val !== undefined && val !== null && String(val).trim() !== '') {
                                 pcs = parsePcsInt(val);
-                                break;
+                                if(pcs > 0) break;
                             }
                         }
 
-                        // Fallback de búsqueda normalizado si no coincide exactamente
+                        // Fallback de búsqueda normalizada ampliada
                         if(pcs === 0) {
                             for(let rKey in row) {
                                 let ck = rKey.replace(/^\ufeff/, '').trim().toLowerCase()
                                     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                                     .replace(/[º°ª]/g, "o").replace(/[^a-z0-9]/g, "");
                                 
-                                if(ck.includes('pieza') || ck === 'pcs' || ck.includes('cantidad') || ck.includes('cant')) {
+                                if(ck.includes('pieza') || ck.includes('cant') || ck.includes('stock') || ck.includes('pcs') || ck.includes('unid') || ck.includes('novalor')) {
                                     let valPcs = row[rKey];
                                     if(valPcs !== undefined && valPcs !== null && String(valPcs).trim() !== '') {
-                                        pcs = parsePcsInt(valPcs);
-                                        break;
+                                        let parsed = parsePcsInt(valPcs);
+                                        if(parsed > 0) {
+                                            pcs = parsed;
+                                            break;
+                                        }
                                     }
                                 }
                             }
