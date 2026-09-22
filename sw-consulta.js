@@ -7,7 +7,7 @@ const urlsToCache = [
     './manifest.json',
     './icon-192x192.png',
     './icon-512x512.png',
-    // Librerías externas (esencial para que funcione offline completo)
+    // Librerías externas (esenciales para que funcione offline)
     'https://cdn.tailwindcss.com',
     'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
@@ -20,7 +20,7 @@ self.addEventListener('install', event => {
         caches.open(CACHE_NAME)
             .then(cache => {
                 console.log('Cache abierta');
-                // Usamos catch para que si un ícono o archivo falla, no detenga toda la instalación
+                // Usamos catch para que si un ícono o archivo falla (ej. si aún no subes los iconos PNG), no detenga toda la instalación
                 return Promise.allSettled(
                     urlsToCache.map(url => cache.add(url).catch(err => console.warn('No se pudo cachear:', url, err)))
                 );
@@ -49,7 +49,7 @@ self.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request)
             .then(response => {
-                // Si el archivo está en la caché, lo devuelve (Offline)
+                // Si el archivo está en la caché, lo devuelve inmediatamente (Offline Support)
                 if (response) {
                     return response;
                 }
