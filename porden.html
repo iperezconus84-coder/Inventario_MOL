@@ -5,13 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arauco • Porden Terreno</title>
     
-    <!-- PapaParse para CSV -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <!-- SheetJS para Excel -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- html2pdf para PDF con fotos -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
     <!-- Configuración PWA y Service Worker -->
     <link rel="manifest" href="manifest-porden.json">
     <meta name="theme-color" content="#005F9E">
@@ -252,7 +245,7 @@
     Arauco • Operaciones Molduras • Porden Terreno Móvil
 </footer>
 
-<!-- Lógica JavaScript + LocalStorage + PWA -->
+<!-- Lógica JavaScript Autónoma (Sin CDNs externos bloqueantes) -->
 <script>
     let planoGlobal = [];
     let estadoAuditoria = {}; 
@@ -261,14 +254,27 @@
     let subBodegaActual = '';
     let calleActual = '';
 
-    const parseConfig = {
-        header: true,
-        skipEmptyLines: true,
-        delimiter: "",
-        transformHeader: function(header) {
-            return header.replace(/^\ufeff/, '').trim();
+    // Parser CSV nativo seguro para funcionamiento 100% offline sin dependencias externas
+    function parsearCSVNativo(text) {
+        let lines = text.split(/\r\n|\n/);
+        if(lines.length === 0) return [];
+        
+        let delimiter = lines[0].includes(';') ? ';' : ',';
+        let headers = lines[0].split(delimiter).map(h => h.replace(/^\ufeff/, '').trim().replace(/^["']|["']$/g, ''));
+        
+        let result = [];
+        for (let i = 1; i < lines.length; i++) {
+            if(!lines[i].trim()) continue;
+            let currentline = lines[i].split(delimiter);
+            let obj = {};
+            for (let j = 0; j < headers.length; j++) {
+                let val = currentline[j] !== undefined ? currentline[j].trim().replace(/^["']|["']$/g, '') : '';
+                obj[headers[j]] = val;
+            }
+            result.push(obj);
         }
-    };
+        return result;
+    }
 
     function persistirEstadoLocal() {
         if(planoGlobal.length === 0) return;
@@ -277,7 +283,11 @@
             estadoAuditoria: estadoAuditoria,
             fecha: new Date().toISOString()
         };
-        localStorage.setItem('arauco_porden_sesion_activa', JSON.stringify(sesionData));
+        try {
+            localStorage.setItem('arauco_porden_sesion_activa', JSON.stringify(sesionData));
+        } catch(e) {
+            console.warn("Memoria local llena.");
+        }
     }
 
     function recuperarSesionLocal() {
@@ -311,60 +321,61 @@
 
         let reader = new FileReader();
         reader.onload = function(evt) {
-            Papa.parse(evt.target.result, {
-                ...parseConfig,
-                complete: function(res) {
-                    planoGlobal = res.data.map((row, index) => {
-                        let bodega = row['Bodega'] || 'TMT1';
-                        let subBodega = row['Sub_bodega'] || row['Sub_Bodega'] || 'GENERAL';
-                        let calle = row['Calle'] || '-';
+            try {
+                let rawData = parsearCSVNativo(evt.target.result);
+                planoGlobal = rawData.map((row, index) => {
+                    let bodega = row['Bodega'] || row['BODEGA'] || 'TMT1';
+                    let subBodega = row['Sub_bodega'] || row['Sub_Bodega'] || row['SUB_BODEGA'] || 'GENERAL';
+                    let calle = row['Calle'] || row['CALLE'] || '-';
 
-                        let pkts = 0;
-                        for(let rKey in row) {
-                            if(rKey.toLowerCase().includes('pqt') || rKey.toLowerCase().includes('cant') || rKey.toLowerCase().includes('nº')) {
-                                let val = parseInt(row[rKey]);
-                                if(!isNaN(val) && val >= 0) pkts = val;
-                            }
+                    let pkts = 0;
+                    for(let rKey in row) {
+                        let lKey = rKey.toLowerCase();
+                        if(lKey.includes('pqt') || lKey.includes('cant') || lKey.includes('nº') || lKey.includes('paquetes')) {
+                            let val = parseInt(row[rKey]);
+                            if(!isNaN(val) && val >= 0) pkts = val;
                         }
-
-                        return {
-                            id: index,
-                            bodega: String(bodega).trim().toUpperCase(),
-                            subBodega: String(subBodega).trim(),
-                            calle: String(calle).trim(),
-                            paquetesTeoricos: pkts
-                        };
-                    }).filter(item => item.calle !== '-' && item.calle !== '');
-
-                    if(planoGlobal.length === 0) {
-                        alert("El archivo no contiene registros válidos de calles.");
-                        return;
                     }
 
-                    planoGlobal.forEach(item => {
-                        let key = `${item.bodega}_${item.subBodega}_${item.calle}`;
-                        if(!estadoAuditoria[key]) {
-                            estadoAuditoria[key] = {
-                                totalLotes: item.paquetesTeoricos,
-                                filos: false,      
-                                acopios: false,
-                                etiquetas: false,
-                                mezcla: false,
-                                comentario: '',
-                                fotoRegistrada: false,
-                                fotoBase64: null,
-                                revisado: false
-                            };
-                        }
-                    });
+                    return {
+                        id: index,
+                        bodega: String(bodega).trim().toUpperCase(),
+                        subBodega: String(subBodega).trim(),
+                        calle: String(calle).trim(),
+                        paquetesTeoricos: pkts
+                    };
+                }).filter(item => item.calle !== '-' && item.calle !== '');
 
-                    activarInterfazApp(`${planoGlobal.length} calles`);
-                    poblarBodegas();
-                    actualizarKPIs();
-                    persistirEstadoLocal();
-                    alert(`¡Plano estructurado! Se cargaron ${planoGlobal.length} pasillos.`);
+                if(planoGlobal.length === 0) {
+                    alert("El archivo CSV no contiene registros válidos de calles.");
+                    return;
                 }
-            });
+
+                planoGlobal.forEach(item => {
+                    let key = `${item.bodega}_${item.subBodega}_${item.calle}`;
+                    if(!estadoAuditoria[key]) {
+                        estadoAuditoria[key] = {
+                            totalLotes: item.paquetesTeoricos,
+                            filos: false,      
+                            acopios: false,
+                            etiquetas: false,
+                            mezcla: false,
+                            comentario: '',
+                            fotoRegistrada: false,
+                            fotoBase64: null,
+                            revisado: false
+                        };
+                    }
+                });
+
+                activarInterfazApp(`${planoGlobal.length} calles`);
+                poblarBodegas();
+                actualizarKPIs();
+                persistirEstadoLocal();
+                alert(`¡Plano estructurado! Se cargaron ${planoGlobal.length} pasillos.`);
+            } catch (err) {
+                alert("Error al procesar el archivo CSV: " + err.message);
+            }
         };
         reader.readAsText(fileInput, "ISO-8859-1");
     }
@@ -413,7 +424,7 @@
                 persistirEstadoLocal();
                 alert(`¡Sesión restaurada con éxito! Se cargaron ${planoGlobal.length} pasillos.`);
             } catch(e) {
-                alert("Error al leer el archivo JSON. Asegúrate de seleccionar un respaldo válido.");
+                alert("Error al leer el archivo JSON.");
             }
         };
         reader.readAsText(fileInput);
@@ -705,10 +716,16 @@
         document.getElementById('section-export').classList.remove('hidden');
     }
 
+    // Exportación dinámica segura con carga condicional de CDNs
     function exportarPDFAutomatico() {
         let revs = Object.values(estadoAuditoria).filter(st => st.revisado);
         if(revs.length === 0) {
             alert("No hay datos revisados para generar el PDF.");
+            return;
+        }
+
+        if (typeof html2pdf === 'undefined') {
+            alert("La función de PDF requiere conexión a internet para compilarse por primera vez. Utilice el Respaldo JSON si está completamente offline.");
             return;
         }
 
@@ -811,6 +828,11 @@
             return;
         }
 
+        if (typeof XLSX === 'undefined') {
+            alert("La exportación a Excel requiere conexión inicial. Utilice el Respaldo JSON para guardar la sesión sin internet.");
+            return;
+        }
+
         let detalle = callesRevisadas.map(i => {
             let key = `${i.bodega}_${i.subBodega}_${i.calle}`;
             let st = estadoAuditoria[key];
@@ -867,6 +889,11 @@
         }
     }
 </script>
+
+<!-- Carga asíncrona no bloqueante de librerías para Excel y PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" async></script>
 
 </body>
 </html>
