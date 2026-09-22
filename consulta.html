@@ -1,76 +1,653 @@
-const CACHE_NAME = 'imol-terreno-v2';
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Arauco IMOL Terreno</title>
+    
+    <!-- Enlace al Manifest para la PWA -->
+    <link rel="manifest" href="./manifest.json">
 
-// Archivos locales y CDNs externos que necesitamos guardar en la memoria caché del teléfono
-const urlsToCache = [
-    './',
-    './consulta.html',
-    './manifest.json',
-    './icon-192x192.png',
-    './icon-512x512.png',
-    // Librerías externas (esencial para que funcione offline completo)
-    'https://cdn.tailwindcss.com',
-    'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js',
-    'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-    'https://unpkg.com/@zxing/library@latest'
-];
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .arauco-blue { background-color: #005a9c; }
+        /* Evitar scroll horizontal accidental */
+        body { overflow-x: hidden; }
+        /* Estilo para que el padding bottom compense la barra de navegación fija */
+        .pb-safe { padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 70px); }
+    </style>
 
-// 1. INSTALACIÓN: Descarga y guarda todos los archivos necesarios
-self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('Cache abierta');
-                // Usamos catch para que si un ícono o archivo falla, no detenga toda la instalación
-                return Promise.allSettled(
-                    urlsToCache.map(url => cache.add(url).catch(err => console.warn('No se pudo cachear:', url, err)))
-                );
-            })
-    );
-});
+    <!-- Librerías Necesarias -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://unpkg.com/@zxing/library@latest"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col font-sans select-none">
 
-// 2. ACTIVACIÓN: Limpia cachés antiguas si cambias la versión de la app
-self.addEventListener('activate', event => {
-    const cacheWhitelist = [CACHE_NAME];
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(cacheName => {
-                    if (cacheWhitelist.indexOf(cacheName) === -1) {
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
-        })
-    );
-});
+    <!-- Cabecera Corporativa -->
+    <header class="arauco-blue text-white shadow-md z-10 sticky top-0">
+        <div class="max-w-xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl font-black tracking-tighter lowercase">arauco</span>
+                <span class="border-l border-blue-400 pl-2 text-xs font-medium opacity-90">IMOL • Terreno</span>
+            </div>
+            <div class="text-right flex items-center gap-2">
+                <span id="system-badge" class="bg-amber-500 text-white px-2 py-0.5 rounded text-[10px] font-bold">Sin Datos</span>
+            </div>
+        </div>
+    </header>
 
-// 3. INTERCEPCIÓN (El Modo Offline): Busca primero en caché, si no está, va a internet
-self.addEventListener('fetch', event => {
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                // Si el archivo está en la caché, lo devuelve (Offline)
-                if (response) {
-                    return response;
+    <!-- Contenedor Principal con padding bottom para la nav bar -->
+    <main class="max-w-xl mx-auto px-4 py-5 w-full flex-grow pb-safe">
+
+        <!-- ========================================== -->
+        <!-- VISTA 1: CONFIGURACIÓN Y CARGA DE DATOS    -->
+        <!-- ========================================== -->
+        <div id="view-data" class="view-section space-y-4 block">
+            <section class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <h2 class="text-sm font-black text-slate-800 uppercase tracking-wide">Gestión de Bases de Datos</h2>
+                </div>
+                
+                <div class="bg-blue-50 p-3 rounded-lg border border-blue-100 flex justify-between items-center">
+                    <div>
+                        <span class="block text-[10px] font-bold text-blue-800 uppercase">Estado Actual</span>
+                        <span id="db-counter" class="text-xs font-semibold text-blue-600">0 lotes SAP | 0 ubicaciones</span>
+                    </div>
+                    <button onclick="reiniciarSistemaCompleto()" class="bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-1.5 rounded-lg text-[10px] font-bold shadow-sm transition">
+                        🔄 Borrar Todo
+                    </button>
+                </div>
+
+                <div class="space-y-3 pt-2">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-[11px] font-bold text-slate-600">1. Cargar Maestro Teórico SAP (Obligatorio .csv)</label>
+                        <input type="file" id="file-sap" accept=".csv" class="text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer border border-slate-200 rounded-lg p-1 bg-slate-50 w-full">
+                    </div>
+
+                    <div class="flex flex-col gap-1.5 pt-3">
+                        <label class="text-[11px] font-bold text-slate-600">2. Cargar Avance de Terreno (Opcional .csv)</label>
+                        <input type="file" id="file-terreno" accept=".csv" class="text-sm text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer border border-slate-200 rounded-lg p-1 bg-slate-50 w-full">
+                    </div>
+                </div>
+
+                <!-- Botón de Exportación Consolidada -->
+                <div class="pt-5 border-t border-slate-100 mt-2">
+                    <button onclick="exportarMaestroConUbicaciones()" class="w-full bg-slate-800 hover:bg-slate-900 text-white px-4 py-3 rounded-xl text-xs font-bold shadow transition flex justify-center items-center gap-2">
+                        📥 Exportar Excel de Ubicaciones Consolidado
+                    </button>
+                </div>
+            </section>
+            
+            <div class="text-center text-[10px] text-slate-400 mt-6">
+                Arauco IMOL Consulta Terreno v2.0<br>Funciona 100% Offline (PWA)
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VISTA 2: OPERACIÓN / ESCANEO EN TERRENO    -->
+        <!-- ========================================== -->
+        <div id="view-scan" class="view-section space-y-4 hidden">
+            
+            <section id="search-section" class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm opacity-40 pointer-events-none transition-all">
+                <div class="flex justify-between items-center mb-3">
+                    <label for="input-lote" class="text-xs font-bold text-slate-700 uppercase tracking-wider">Consultar Lote</label>
+                    <button onclick="toggleCamera()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
+                        📷 Usar Cámara
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" id="input-lote" autocomplete="off" placeholder="Pistola código barras o manual..." class="w-full px-4 py-3 bg-slate-50 border-2 border-slate-300 rounded-xl text-sm font-bold text-slate-800 focus:outline-none focus:border-blue-600 focus:bg-white transition shadow-inner">
+                    <button onclick="ejecutarConsulta()" class="arauco-blue hover:opacity-95 text-white px-5 py-3 rounded-xl text-sm font-bold shadow transition">
+                        Ver
+                    </button>
+                </div>
+            </section>
+
+            <!-- Contenedor del Resultado del Escaneo -->
+            <section id="result-container" class="hidden">
+                <!-- Se inyecta dinámicamente -->
+            </section>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- VISTA 3: HISTORIAL DE LA SESIÓN            -->
+        <!-- ========================================== -->
+        <div id="view-history" class="view-section space-y-4 hidden">
+            <section class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col h-[calc(100vh-160px)]">
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-100">
+                    <h3 class="text-sm font-black uppercase tracking-wider text-slate-800">Historial de Lecturas (<span id="history-count">0</span>)</h3>
+                    <div class="flex gap-2">
+                        <button onclick="exportarHistorial()" class="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 px-3 py-1.5 rounded-lg text-[10px] font-bold flex items-center gap-1 transition">
+                            📊 Descargar
+                        </button>
+                        <button onclick="limpiarHistorial()" class="bg-slate-100 text-slate-600 hover:bg-slate-200 px-3 py-1.5 rounded-lg text-[10px] font-bold transition">
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+                <div class="flex-grow overflow-y-auto rounded-lg border border-slate-100 bg-slate-50 relative">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-200 text-slate-700 sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="p-2.5 font-bold">Hora</th>
+                                <th class="p-2.5 font-bold">Lote</th>
+                                <th class="p-2.5 font-bold">Ubicación</th>
+                                <th class="p-2.5 font-bold">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-body" class="divide-y divide-slate-200 text-slate-700 bg-white">
+                            <tr><td colspan="4" class="text-center py-8 text-slate-400">No hay lecturas en esta sesión.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- Barra de Navegación Inferior (Tabs) -->
+    <nav class="fixed bottom-0 w-full bg-white border-t border-slate-200 flex justify-around text-slate-500 z-40 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <button onclick="switchView('view-data')" id="tab-data" class="flex-1 py-3.5 flex flex-col items-center justify-center gap-1 transition-all text-blue-700 font-bold border-t-2 border-blue-700 bg-blue-50/50">
+            <span class="text-xl leading-none">⚙️</span>
+            <span class="text-[9px] uppercase tracking-wider">Datos</span>
+        </button>
+        <button onclick="switchView('view-scan')" id="tab-scan" class="flex-1 py-3.5 flex flex-col items-center justify-center gap-1 transition-all border-t-2 border-transparent">
+            <span class="text-xl leading-none">🔍</span>
+            <span class="text-[9px] uppercase tracking-wider">Operar</span>
+        </button>
+        <button onclick="switchView('view-history')" id="tab-history" class="flex-1 py-3.5 flex flex-col items-center justify-center gap-1 transition-all border-t-2 border-transparent">
+            <span class="text-xl leading-none">📋</span>
+            <span class="text-[9px] uppercase tracking-wider">Historial</span>
+        </button>
+    </nav>
+
+    <!-- Modal de Cámara (ZXing) -->
+    <div id="camera-modal" class="fixed inset-0 bg-slate-900/90 z-50 hidden flex flex-col items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-4 shadow-2xl space-y-3">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-sm">Escáner de Terreno</h3>
+                <button onclick="toggleCamera()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full w-8 h-8 flex items-center justify-center font-bold text-lg">✕</button>
+            </div>
+            <div class="relative w-full h-72 bg-black rounded-xl overflow-hidden flex items-center justify-center">
+                <video id="video-preview" class="w-full h-full object-cover"></video>
+                <div class="absolute inset-0 border-2 border-dashed border-emerald-400/70 m-8 rounded-xl pointer-events-none flex flex-col items-center justify-center gap-2">
+                    <div class="w-full h-[2px] bg-red-500/50 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></div>
+                    <span class="text-white text-[10px] bg-black/60 px-2 py-1 rounded absolute bottom-2">Alinee el código de barras</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lógica JavaScript de la App -->
+    <script>
+        // Variables Globales
+        let sapDB = new Map();
+        let terrenoLocations = new Map();
+        let historial = [];
+        let codeReader = null;
+        let cameraActive = false;
+        let ultimoLoteConsultado = '';
+
+        // Sistema de Navegación (Tabs)
+        function switchView(viewId) {
+            ['view-data', 'view-scan', 'view-history'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+                document.getElementById(id).classList.remove('block');
+            });
+            
+            document.getElementById(viewId).classList.remove('hidden');
+            document.getElementById(viewId).classList.add('block');
+
+            ['tab-data', 'tab-scan', 'tab-history'].forEach(id => {
+                let tab = document.getElementById(id);
+                tab.classList.remove('text-blue-700', 'font-bold', 'border-blue-700', 'bg-blue-50/50');
+                tab.classList.add('text-slate-500', 'border-transparent');
+            });
+
+            let activeTabId = 'tab-' + viewId.split('-')[1];
+            let activeTab = document.getElementById(activeTabId);
+            activeTab.classList.remove('text-slate-500', 'border-transparent');
+            activeTab.classList.add('text-blue-700', 'font-bold', 'border-blue-700', 'bg-blue-50/50');
+            
+            if(viewId === 'view-scan') {
+                setTimeout(() => {
+                    let input = document.getElementById('input-lote');
+                    if(input && !input.disabled) input.focus();
+                }, 100);
+            }
+        }
+
+        // Configuración de PapaParse
+        const parseConfig = {
+            header: true,
+            skipEmptyLines: true,
+            delimiter: "",
+            transformHeader: function(header) {
+                return header.replace(/^\ufeff/, '').trim();
+            }
+        };
+
+        // Utilidades de Parseo
+        function parseNum(val) {
+            if(!val) return 0;
+            let s = String(val).trim().replace(/\s+/g, '').replace(',', '.');
+            let num = parseFloat(s);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function parsePcsCeil(val) {
+            return Math.ceil(parseNum(val));
+        }
+
+        function limpiarSKU(skuVal) {
+            if(!skuVal) return '-';
+            let s = String(skuVal).trim();
+            return s.replace(/^0+/, '') || '0';
+        }
+
+        function findVal(row, keys) {
+            for(let k of keys) {
+                for(let rKey in row) {
+                    let ck = rKey.replace(/^\ufeff/, '').trim();
+                    if(ck.toLowerCase() === k.toLowerCase()) return row[rKey];
                 }
-                // Si no está, lo busca en internet
-                return fetch(event.request).then(
-                    function(networkResponse) {
-                        // Verifica si es una respuesta válida antes de cachearla al vuelo
-                        if(!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                            return networkResponse;
-                        }
-                        
-                        // Opcional: Clonar y cachear archivos nuevos que se vayan encontrando
-                        var responseToCache = networkResponse.clone();
-                        caches.open(CACHE_NAME)
-                            .then(function(cache) {
-                                cache.put(event.request, responseToCache);
-                            });
+            }
+            return '';
+        }
 
-                        return networkResponse;
-                    }
-                );
-            })
-    );
-});
+        function calcularDiasDesde(fechaStr) {
+            if(!fechaStr || String(fechaStr).trim() === '') return 0;
+            let partes = String(fechaStr).trim().split('-');
+            if(partes.length !== 3) return 0;
+            let fechaReg = new Date(`${partes[2]}-${partes[1]}-${partes[0]}`);
+            if(isNaN(fechaReg)) return 0;
+            let diffTime = new Date() - fechaReg;
+            let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays >= 0 ? diffDays : 0;
+        }
+
+        function obtenerEstadoAntiguedad(days) {
+            if (days > 365) return { text: '🚨 > 1 Año (Crítico)', class: 'bg-rose-100 text-rose-800 border-rose-200' };
+            if (days > 90) return { text: '⚠️ 90d - 1 Año', class: 'bg-amber-100 text-amber-800 border-amber-200' };
+            return { text: '✅ < 90d (OK)', class: 'bg-emerald-100 text-emerald-800 border-emerald-200' };
+        }
+
+        // Inicialización y Storage
+        window.addEventListener('DOMContentLoaded', () => {
+            cargarDatosDesdeStorage();
+        });
+
+        function guardarDatosEnStorage() {
+            try {
+                localStorage.setItem('imol_sap_db', JSON.stringify(Array.from(sapDB.entries())));
+                localStorage.setItem('imol_terreno_loc', JSON.stringify(Array.from(terrenoLocations.entries())));
+                localStorage.setItem('imol_historial', JSON.stringify(historial));
+            } catch(e) { console.error("Error Storage:", e); }
+        }
+
+        function cargarDatosDesdeStorage() {
+            try {
+                let sapSaved = localStorage.getItem('imol_sap_db');
+                let terrenoSaved = localStorage.getItem('imol_terreno_loc');
+                let historialSaved = localStorage.getItem('imol_historial');
+
+                if(sapSaved) sapDB = new Map(JSON.parse(sapSaved));
+                if(terrenoSaved) terrenoLocations = new Map(JSON.parse(terrenoSaved));
+                if(historialSaved) {
+                    historial = JSON.parse(historialSaved);
+                    actualizarHistorial();
+                }
+
+                actualizarContadorEstado();
+
+                if(sapDB.size > 0) {
+                    switchView('view-scan');
+                }
+            } catch(e) { console.error("Error Carga Storage:", e); }
+        }
+
+        // Carga de Archivos
+        document.getElementById('file-sap').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            Papa.parse(file, {
+                ...parseConfig,
+                complete: function(results) {
+                    sapDB.clear();
+                    results.data.forEach(row => {
+                        let lote = findVal(row, ['Lote', 'Package', 'NºLote', 'Codigo', 'LoteSap']);
+                        if(!lote || String(lote).trim() === '') return;
+                        
+                        let creacion = findVal(row, ['Creacion', 'FechaCreacion', 'F.Creacion']) || '-';
+                        let ultimoMov = findVal(row, ['Ult.Mov', 'UltMovimiento', 'Ult_Mov', 'FechaMod', 'Modificacion', 'F.Ult.Mov']) || '-';
+                        
+                        let rawBodega = findVal(row, ['Almacen', 'Bodega', 'Alm', 'Centro', 'Planta', 'Plant']);
+                        let rawSub = findVal(row, ['Subbodega', 'Sub_Bodega', 'SubAlmacen', 'Subalm', 'Alm.Espec']);
+                        
+                        let vol = 0;
+                        for(let rKey in row) {
+                            let ck = rKey.replace(/^\ufeff/, '').trim().toLowerCase();
+                            if(ck === 'st.valorad' || ck === 'stvalorad' || ck === 'volumen' || ck === 'vol') {
+                                vol = parseNum(row[rKey]); break;
+                            }
+                        }
+
+                        let pcs = 0;
+                        for(let k of ['nºpiezas', 'nÂºpiezas', 'piezas', 'pcs', 'cantidad_piezas']) {
+                            let valPcs = findVal(row, [k]);
+                            if(valPcs !== '') { pcs = parsePcsCeil(valPcs); break; }
+                        }
+
+                        sapDB.set(String(lote).trim(), {
+                            Lote: String(lote).trim(),
+                            SKU: limpiarSKU(findVal(row, ['Material', 'SKU', 'CodigoMat', 'Cod'])),
+                            Descripcion: String(findVal(row, ['Desc.Mat.', 'Descripcion', 'Desc', 'MaterialDesc'])).trim(),
+                            Bodega: (rawBodega && String(rawBodega).trim() !== '') ? String(rawBodega).trim().toUpperCase() : 'TMT1',
+                            Subbodega: (rawSub && String(rawSub).trim() !== '') ? String(rawSub).trim() : '-',
+                            Volumen: vol,
+                            Piezas: pcs,
+                            Creacion: creacion,
+                            AntiguedadDias: calcularDiasDesde(creacion),
+                            AntiguedadInfo: obtenerEstadoAntiguedad(calcularDiasDesde(creacion)),
+                            UltimoMovimiento: ultimoMov,
+                            MovDias: calcularDiasDesde(ultimoMov !== '-' ? ultimoMov : creacion)
+                        });
+                    });
+                    guardarDatosEnStorage();
+                    actualizarContadorEstado();
+                    alert(`¡Maestro SAP cargado (${sapDB.size} lotes)!`);
+                    switchView('view-scan'); 
+                }
+            });
+        });
+
+        document.getElementById('file-terreno').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            Papa.parse(file, {
+                ...parseConfig,
+                complete: function(results) {
+                    results.data.forEach(row => {
+                        let lote = findVal(row, ['Lote', 'Package', 'NºLote', 'Codigo', 'CodLote']);
+                        if(!lote || String(lote).trim() === '') return;
+                        terrenoLocations.set(String(lote).trim(), {
+                            Calle: String(findVal(row, ['Calle', 'Pasillo', 'Ubicacion', 'Ubic', 'Posicion'])).trim() || 'Sin Asignar',
+                            Subbodega: findVal(row, ['Subbodega', 'Sub_Bodega', 'SubAlmacen']) || ''
+                        });
+                    });
+                    guardarDatosEnStorage();
+                    actualizarContadorEstado();
+                    alert(`¡Ubicaciones de terreno importadas exitosamente!`);
+                }
+            });
+        });
+
+        function actualizarContadorEstado() {
+            document.getElementById('db-counter').innerText = `${sapDB.size} SAP | ${terrenoLocations.size} Ubic.`;
+            if(sapDB.size > 0) {
+                document.getElementById('system-badge').className = "bg-emerald-600 text-white px-2 py-0.5 rounded text-[10px] font-bold";
+                document.getElementById('system-badge').innerText = "Listo (Offline)";
+                document.getElementById('search-section').classList.remove('opacity-40', 'pointer-events-none');
+            } else {
+                document.getElementById('system-badge').className = "bg-amber-500 text-white px-2 py-0.5 rounded text-[10px] font-bold";
+                document.getElementById('system-badge').innerText = "Sin Datos";
+                document.getElementById('search-section').classList.add('opacity-40', 'pointer-events-none');
+            }
+        }
+
+        // Lógica de Consulta
+        document.getElementById('input-lote').addEventListener('keypress', function(e) {
+            if(e.key === 'Enter') ejecutarConsulta();
+        });
+
+        function ejecutarConsulta() {
+            let input = document.getElementById('input-lote');
+            let loteBuscado = input.value.trim();
+            if(!loteBuscado) return;
+            procesarLote(loteBuscado);
+            input.value = '';
+            input.focus();
+        }
+
+        function procesarLote(lote) {
+            ultimoLoteConsultado = lote;
+            let hora = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            let container = document.getElementById('result-container');
+            container.classList.remove('hidden');
+
+            let item = sapDB.get(lote);
+            let ubicacionTerreno = terrenoLocations.get(lote);
+
+            if(item) {
+                let pasilloCalle = ubicacionTerreno ? ubicacionTerreno.Calle : '';
+                container.innerHTML = `
+                    <div class="bg-white p-5 rounded-2xl border-l-4 border-emerald-500 shadow-lg space-y-4 mb-4">
+                        <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-bold uppercase tracking-wider text-emerald-600 mb-1 flex items-center gap-1"><span class="bg-emerald-500 rounded-full w-2 h-2 inline-block"></span> Encontrado en SAP</span>
+                                <h2 class="text-2xl font-black text-slate-800 break-all leading-none">${item.Lote}</h2>
+                            </div>
+                            <div class="text-right flex flex-col items-end">
+                                <span class="bg-slate-100 text-slate-700 px-2 py-1 rounded text-[10px] font-bold mb-1">${item.Bodega} / ${item.Subbodega}</span>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded border font-semibold ${item.AntiguedadInfo.class}">${item.AntiguedadInfo.text}</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 border border-slate-200 p-3 rounded-xl">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1.5">📍 Asignar Ubicación Terreno</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="input-nueva-ubicacion" value="${pasilloCalle}" placeholder="Ej: Pasillo A..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 shadow-sm">
+                                <button onclick="guardarUbicacionTerreno()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm">
+                                    Guardar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="flex flex-col items-center justify-center p-2 rounded-lg bg-emerald-50 border border-emerald-100">
+                                <span class="text-[10px] text-emerald-700 font-bold uppercase">Piezas</span>
+                                <span class="text-2xl font-black text-emerald-900">${item.Piezas}</span>
+                            </div>
+                            <div class="flex flex-col items-center justify-center p-2 rounded-lg bg-blue-50 border border-blue-100">
+                                <span class="text-[10px] text-blue-700 font-bold uppercase">Volumen</span>
+                                <span class="text-xl font-black text-blue-900">${item.Volumen.toFixed(3)}<span class="text-xs ml-1 font-normal">m³</span></span>
+                            </div>
+                        </div>
+
+                        <div class="text-xs border-t border-slate-100 pt-3 text-slate-600">
+                            <p class="font-bold leading-tight mb-2 text-slate-800">SKU ${item.SKU}<br><span class="font-normal text-slate-500 text-[11px]">${item.Descripcion}</span></p>
+                            <div class="flex justify-between text-[10px] text-slate-400">
+                                <span>Creado: ${item.Creacion}</span>
+                                <span>Ult. Mov: ${item.UltimoMovimiento}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                historial.unshift({ Hora: hora, Lote: item.Lote, Ubicacion: pasilloCalle || 'Sin Asignar', Estado: 'OK', Piezas: item.Piezas });
+
+            } else {
+                container.innerHTML = `
+                    <div class="bg-white p-5 rounded-2xl border-l-4 border-rose-500 shadow-lg space-y-4 mb-4">
+                        <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+                            <div class="flex flex-col">
+                                <span class="text-[9px] font-bold uppercase tracking-wider text-rose-600 mb-1 flex items-center gap-1"><span class="bg-rose-500 rounded-full w-2 h-2 inline-block"></span> Inexistente en SAP</span>
+                                <h2 class="text-2xl font-black text-slate-800 break-all leading-none">${lote}</h2>
+                            </div>
+                            <span class="bg-rose-50 text-rose-700 px-2 py-1 rounded text-[10px] font-bold">Sobrante</span>
+                        </div>
+
+                        <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl">
+                            <label class="block text-[10px] font-bold text-amber-700 uppercase mb-1.5">📍 Ubicación (Sobrante)</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="input-nueva-ubicacion" placeholder="Indicar pasillo..." class="w-full px-3 py-2 bg-white border border-amber-300 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 shadow-sm">
+                                <button onclick="guardarUbicacionTerreno()" class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm">
+                                    Guardar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <p class="text-xs text-rose-800 bg-rose-50 p-2 rounded text-center border border-rose-100">Este código no está en la base teórica cargada.</p>
+                    </div>
+                `;
+
+                historial.unshift({ Hora: hora, Lote: lote, Ubicacion: 'Sin Asignar', Estado: 'INEXISTENTE', Piezas: 0 });
+            }
+
+            guardarDatosEnStorage();
+            actualizarHistorial();
+            
+            setTimeout(() => {
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            }, 50);
+        }
+
+        function guardarUbicacionTerreno() {
+            let nuevaUbicacion = document.getElementById('input-nueva-ubicacion').value.trim();
+            if(!nuevaUbicacion) {
+                alert("Ingrese una ubicación para guardar.");
+                return;
+            }
+            terrenoLocations.set(ultimoLoteConsultado, { Calle: nuevaUbicacion, Subbodega: '' });
+            if(historial.length > 0 && historial[0].Lote === ultimoLoteConsultado) {
+                historial[0].Ubicacion = nuevaUbicacion;
+                actualizarHistorial();
+            }
+            guardarDatosEnStorage();
+            actualizarContadorEstado();
+            
+            let btn = event.target;
+            let originalText = btn.innerText;
+            btn.innerText = "✓ OK";
+            btn.classList.add("bg-emerald-600");
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.remove("bg-emerald-600");
+                document.getElementById('input-lote').focus();
+            }, 1000);
+        }
+
+        // Historial y Exportaciones
+        function actualizarHistorial() {
+            let tbody = document.getElementById('history-body');
+            document.getElementById('history-count').innerText = historial.length;
+
+            if(historial.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400">No hay lecturas en esta sesión.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = historial.map(h => {
+                let isOk = h.Estado === 'OK';
+                let icon = isOk ? '🟢' : '🔴';
+                let textClass = isOk ? 'text-slate-800' : 'text-rose-600';
+                return `
+                    <tr class="hover:bg-slate-50 border-b border-slate-100">
+                        <td class="p-2.5 text-[10px] text-slate-400 whitespace-nowrap">${h.Hora}</td>
+                        <td class="p-2.5 font-bold ${textClass}">${h.Lote}</td>
+                        <td class="p-2.5 font-semibold text-blue-700">${h.Ubicacion}</td>
+                        <td class="p-2.5 text-center" title="${h.Estado}">${icon}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function limpiarHistorial() {
+            if(confirm("¿Limpiar historial de la pantalla? (No borra el consolidado exportable)")) {
+                historial = [];
+                guardarDatosEnStorage();
+                actualizarHistorial();
+                document.getElementById('result-container').classList.add('hidden');
+            }
+        }
+
+        function reiniciarSistemaCompleto() {
+            if(confirm("⚠️ PELIGRO: ¿Borrar la base de datos SAP y TODAS las ubicaciones capturadas en caché? (Asegúrese de haber exportado primero).")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        function exportarHistorial() {
+            if(historial.length === 0) return alert("Historial vacío.");
+            let datos = historial.map(h => {
+                let ter = terrenoLocations.get(h.Lote);
+                return {
+                    Hora_Escaneo: h.Hora, Lote: h.Lote,
+                    Ubicacion_Terreno: ter ? ter.Calle : h.Ubicacion,
+                    Estado_SAP: h.Estado, Piezas: h.Piezas
+                };
+            });
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(datos), "Sesion");
+            XLSX.writeFile(wb, `IMOL_Historial_Sesion_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        function exportarMaestroConUbicaciones() {
+            if(sapDB.size === 0 && terrenoLocations.size === 0) return alert("No hay datos para exportar.");
+            let reporte = [];
+            for(let [lote, item] of sapDB.entries()) {
+                let ter = terrenoLocations.get(lote);
+                reporte.push({
+                    Lote: item.Lote, SKU: item.SKU, Descripcion: item.Descripcion,
+                    Bodega: item.Bodega, Subbodega: item.Subbodega,
+                    Ubicacion_Actualizada_Terreno: ter ? ter.Calle : 'Sin Asignar',
+                    Volumen_m3: item.Volumen, Piezas_Enteras: item.Piezas,
+                    Fecha_Creacion: item.Creacion, Antiguedad_Dias: item.AntiguedadDias,
+                    Ultimo_Movimiento: item.UltimoMovimiento
+                });
+            }
+            for(let [lote, ter] of terrenoLocations.entries()) {
+                if(!sapDB.has(lote)) {
+                    reporte.push({
+                        Lote: lote, SKU: 'SOBRANTE', Descripcion: 'No registrado en SAP cargado',
+                        Bodega: '-', Subbodega: '-', Ubicacion_Actualizada_Terreno: ter.Calle,
+                        Volumen_m3: 0, Piezas_Enteras: 0, Fecha_Creacion: '-', Antiguedad_Dias: 0, Ultimo_Movimiento: '-'
+                    });
+                }
+            }
+            let wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(reporte), "Ubicaciones_Actualizadas");
+            XLSX.writeFile(wb, `IMOL_Actualizacion_Terreno_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        // Cámara ZXing
+        function toggleCamera() {
+            let modal = document.getElementById('camera-modal');
+            cameraActive = !cameraActive;
+            if(cameraActive) {
+                modal.classList.remove('hidden');
+                try {
+                    codeReader = new ZXing.BrowserBarcodeReader();
+                    codeReader.decodeFromVideoDevice(null, 'video-preview', (result, err) => {
+                        if (result && result.getText().trim()) {
+                            toggleCamera();
+                            procesarLote(result.getText().trim());
+                        }
+                    });
+                } catch(e) { alert("Error iniciando cámara."); toggleCamera(); }
+            } else {
+                modal.classList.add('hidden');
+                if(codeReader) codeReader.reset();
+            }
+        }
+    </script>
+
+    <!-- Script de Registro del Service Worker para PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw-consulta.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado con éxito:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Error al registrar el Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
