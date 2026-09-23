@@ -703,7 +703,7 @@
             skipEmptyLines: 'greedy', 
             dynamicTyping: false, 
             encoding: "ISO-8859-1",
-            delimiter: "",
+            delimiter: ";", // ACTUALIZADO PARA FORZAR LA LECTURA CORRECTA
             transformHeader: function(header) {
                 return header.replace(/^\ufeff/, '').trim();
             }
@@ -939,7 +939,7 @@
                         obtenerValorCSV(row, 'calle', 'Calle') === calle
                     );
                     if (regPlano) {
-                        const cant = obtenerValorCSV(regPlano, 'cantidad_lotes', 'Cantidad_Lotes', 'meta');
+                        const cant = obtenerValorCSV(regPlano, 'cantidad_lotes', 'Cantidad_Lotes', 'meta', "Nº Pqt's"); // ACTUALIZADO PARA RECONOCER LA CABECERA
                         document.getElementById('metaLotes').value = cant ? parseInt(cant, 10) : 300;
                     }
                 }
@@ -1075,9 +1075,9 @@
             }
 
             const datosExtra = infoStock ? { 
-                sku: obtenerValorCSV(infoStock, 'sku', 'SKU'), 
-                descripcion: obtenerValorCSV(infoStock, 'descripción', 'descripcion', 'Descripción', 'Descripcion', 'DESCRIPCION'), 
-                piezas: obtenerValorCSV(infoStock, 'piezas', 'Piezas', 'PIEZAS'), 
+                sku: obtenerValorCSV(infoStock, 'sku', 'SKU', 'Material'), // ACTUALIZADO PARA RECONOCER LA CABECERA MATERIAL
+                descripcion: obtenerValorCSV(infoStock, 'descripción', 'descripcion', 'Descripción', 'Descripcion', 'DESCRIPCION', 'Desc.Mat.'), // ACTUALIZADO PARA RECONOCER DESC.MAT.
+                piezas: obtenerValorCSV(infoStock, 'piezas', 'Piezas', 'PIEZAS', 'NºPiezas'), // ACTUALIZADO PARA RECONOCER NºPIEZAS
                 volumen: obtenerValorCSV(infoStock, 'volumen', 'Volumen', 'VOLUMEN') 
             } : {};
 
