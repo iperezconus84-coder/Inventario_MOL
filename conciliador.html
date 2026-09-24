@@ -413,7 +413,6 @@
             return isNaN(num) ? 0 : num;
         }
 
-        // Función para asegurar piezas enteras aplicando Math.ceil (entero correlativo siguiente si hay decimales)
         function parsePcsCeil(val) {
             let num = parseNum(val);
             return Math.ceil(num);
@@ -489,7 +488,10 @@
                 complete: function(resultsSap) {
                     let parsedSap = resultsSap.data.map(row => {
                         let lote = findVal(row, ['Lote', 'Package', 'NºLote', 'Codigo', 'LoteSap']);
-                        let sku = findVal(row, ['Material', 'SKU', 'CodigoMat', 'Cod']);
+                        // SKU convertido estrictamente a texto para retener ceros a la izquierda
+                        let skuRaw = findVal(row, ['Material', 'SKU', 'CodigoMat', 'Cod']);
+                        let sku = (skuRaw !== undefined && skuRaw !== null) ? String(skuRaw).trim() : '';
+                        
                         let desc = findVal(row, ['Desc.Mat.', 'Descripcion', 'Desc', 'MaterialDesc']);
                         let creacion = findVal(row, ['Creacion', 'FechaCreacion', 'F.Creacion']) || '';
                         
@@ -506,7 +508,7 @@
 
                         return {
                             Lote: String(lote).trim(),
-                            SKU: String(sku).trim(),
+                            SKU: sku,
                             Descripcion: String(desc).trim(),
                             Bodega: bodega,
                             Subbodega: subbodega,
@@ -562,7 +564,9 @@
                     complete: function(resTer) {
                         let mappedTerreno = resTer.data.map(row => {
                             let lote = findVal(row, ['Lote', 'Package', 'NºLote', 'Codigo', 'CodLote']);
-                            let sku = findVal(row, ['SKU', 'Material', 'CodigoMat', 'Cod']);
+                            let skuRaw = findVal(row, ['SKU', 'Material', 'CodigoMat', 'Cod']);
+                            let sku = (skuRaw !== undefined && skuRaw !== null) ? String(skuRaw).trim() : '';
+                            
                             let desc = findVal(row, ['Descripcion', 'Desc.Mat.', 'Desc']);
                             
                             let rawBodega = findVal(row, ['Bodega', 'Almacen', 'Alm', 'Centro', 'Planta', 'Plant']);
@@ -573,14 +577,13 @@
 
                             let calle = findVal(row, ['Calle', 'Pasillo', 'Ubicacion', 'Ubic']);
                             let vol = getVolumenTerreno(row);
-                            // Aplicar redondeo a entero superior (Math.ceil) en piezas de terreno
                             let pcs = parsePcsCeil(findVal(row, ['Piezas', 'NºPiezas', 'NÂºPiezas', 'Pcs']));
                             let operario = findVal(row, ['Operario', 'Usuario', 'User']) || 'Operario Terreno';
                             let hora = findVal(row, ['Hora', 'Time', 'Timestamp']) || '--:--';
 
                             return {
                                 Lote: String(lote).trim(),
-                                SKU: String(sku).trim(),
+                                SKU: sku,
                                 Descripcion: String(desc).trim(),
                                 Bodega: bodega,
                                 Subbodega: subbodega,
@@ -1025,6 +1028,32 @@
             renderTableData();
         }
 
+        // Función auxiliar robusta para exportar a Excel forzando la columna SKU como Texto (t: 's')
+        function exportJsonToExcelSheet(data, sheetName) {
+            let ws = XLSX.utils.json_to_sheet(data);
+            
+            // Recorrer las celdas para asegurar que si hay una columna llamada SKU, mantenga el formato de texto plano
+            if(ws['!ref']) {
+                let range = XLSX.utils.decode_range(ws['!ref']);
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    let cellHeaderAddress = XLSX.utils.encode_cell({r: range.s.r, c: C});
+                    let headerCell = ws[cellHeaderAddress];
+                    if (headerCell && String(headerCell.v).toUpperCase() === 'SKU') {
+                        // Forzar cada celda de la columna SKU a ser texto (t = 's')
+                        for (let R = range.s.r + 1; R <= range.e.r; ++R) {
+                            let cellAddr = XLSX.utils.encode_cell({r: R, c: C});
+                            let cell = ws[cellAddr];
+                            if (cell) {
+                                cell.t = 's'; // Tipo texto
+                                cell.v = String(cell.v); // Valor como cadena
+                            }
+                        }
+                    }
+                }
+            }
+            return ws;
+        }
+
         function exportarTablaActivaExcel() {
             let tab = globalData.currentTab;
             let query = document.getElementById('search-input').value.toLowerCase();
@@ -1050,7 +1079,7 @@
             }
 
             let wb = XLSX.utils.book_new();
-            let ws = XLSX.utils.json_to_sheet(dataToExport);
+            let ws = exportJsonToExcelSheet(dataToExport, nombreHoja);
             XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
 
             let fechaStr = new Date().toISOString().slice(0,10);
@@ -1118,16 +1147,16 @@
                 Duplicados: globalData.duplicados.length
             }];
             
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(resumenGeneral), "Resumen Ejecutivo");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.stockFisico), "Stock Físico");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.stockSistemico), "Stock Sistémico");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.pareados), "Pareados OK");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.sobrantes), "Sobrantes");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.faltantes), "Faltantes");
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(globalData.duplicados), "Duplicados");
+            XLSX.utils.book_append_sheet(wb, exportJsonToExcelSheet(resumenGeneral, "Resumen Ejecutivo"), "Resumen Ejecutivo");
+            XLSX.utils.book_append_sheet(wb, exportJsonToExcelSheet(globalData.stockFisico, "Stock Físico"), "Stock Físico");
+            XLSX.utils.book_append_sheet(wb, exportJsonToExcelSheet(globalData.stockSistemico, "Stock Sistémico"), "Stock Sistémico");
+            XLSX.utils.book_append_sheet(wb, exportJsonToExcelSheet(globalData.pareados, "Pareados OK"), "Pareados OK");
+            XLSX.utils.book_append_sheet(wb, exportJsonToExcelSheet(globalData.sobrantes, "Sobrantes"), "Sobrantes");
+            XLSX.utils.book_append_sheet(wb, exportJsonToExcelSheet(globalData.faltantes, "Faltantes"), "Faltantes");
+            XLSX.utils.book_append_sheet(wb, exportJsonToExcelSheet(globalData.duplicados, "Duplicados"), "Duplicados");
 
             XLSX.writeFile(wb, `Cierre_Inventario_Completo_${centroNombre}_${fechaStr}.xlsx`);
-            alert(`¡Cierre completo generado con éxito! Las piezas se han normalizado a números enteros (redondeo al entero superior).`);
+            alert(`¡Cierre completo generado con éxito! Las piezas se han normalizado a números enteros y los SKU se conservan como texto.`);
         }
 
         function finalizarYLimpiar() {
@@ -1207,7 +1236,7 @@
                 `• Volumen Faltante Sistema: ${volFaltante}\n` +
                 `• Lotes Duplicados Cruzados: ${totalDuplicados}\n` +
                 detalleAlmacenes + `\n` +
-                `El archivo Excel exportado incluye solapas separadas para Stock Físico, Stock Sistémico, Pareados OK, Sobrantes, Faltantes y Duplicados (con piezas en números enteros).\n\n` +
+                `El archivo Excel exportado incluye solapas separadas para Stock Físico, Stock Sistémico, Pareados OK, Sobrantes, Faltantes y Duplicados (con los SKU protegidos como texto y piezas normalizadas a enteros).\n\n` +
                 `Atentamente,\n` +
                 `Ivan Pérez Conus\n` +
                 `Coordinador de Insumos y Control de Inventarios - Operaciones Molduras`;
