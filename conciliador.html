@@ -357,6 +357,14 @@
             }
         };
 
+        // Función para limpiar ceros a la izquierda del SKU globalmente
+        function limpiarSKU(val) {
+            if (val === undefined || val === null || String(val).trim() === '') return '-';
+            let str = String(val).trim();
+            let limpiado = str.replace(/^0+/, '');
+            return limpiado === '' ? '0' : limpiado;
+        }
+
         function switchView(view) {
             ['dashboard', 'audit', 'report'].forEach(v => {
                 document.getElementById('view-' + v).classList.add('hidden');
@@ -488,9 +496,9 @@
                 complete: function(resultsSap) {
                     let parsedSap = resultsSap.data.map(row => {
                         let lote = findVal(row, ['Lote', 'Package', 'NºLote', 'Codigo', 'LoteSap']);
-                        // SKU convertido estrictamente a texto para retener ceros a la izquierda
+                        // Aplicando limpieza automática de ceros a la izquierda en el SKU
                         let skuRaw = findVal(row, ['Material', 'SKU', 'CodigoMat', 'Cod']);
-                        let sku = (skuRaw !== undefined && skuRaw !== null) ? String(skuRaw).trim() : '';
+                        let sku = limpiarSKU(skuRaw);
                         
                         let desc = findVal(row, ['Desc.Mat.', 'Descripcion', 'Desc', 'MaterialDesc']);
                         let creacion = findVal(row, ['Creacion', 'FechaCreacion', 'F.Creacion']) || '';
@@ -565,7 +573,7 @@
                         let mappedTerreno = resTer.data.map(row => {
                             let lote = findVal(row, ['Lote', 'Package', 'NºLote', 'Codigo', 'CodLote']);
                             let skuRaw = findVal(row, ['SKU', 'Material', 'CodigoMat', 'Cod']);
-                            let sku = (skuRaw !== undefined && skuRaw !== null) ? String(skuRaw).trim() : '';
+                            let sku = limpiarSKU(skuRaw);
                             
                             let desc = findVal(row, ['Descripcion', 'Desc.Mat.', 'Desc']);
                             
@@ -1032,20 +1040,18 @@
         function exportJsonToExcelSheet(data, sheetName) {
             let ws = XLSX.utils.json_to_sheet(data);
             
-            // Recorrer las celdas para asegurar que si hay una columna llamada SKU, mantenga el formato de texto plano
             if(ws['!ref']) {
                 let range = XLSX.utils.decode_range(ws['!ref']);
                 for (let C = range.s.c; C <= range.e.c; ++C) {
                     let cellHeaderAddress = XLSX.utils.encode_cell({r: range.s.r, c: C});
                     let headerCell = ws[cellHeaderAddress];
                     if (headerCell && String(headerCell.v).toUpperCase() === 'SKU') {
-                        // Forzar cada celda de la columna SKU a ser texto (t = 's')
                         for (let R = range.s.r + 1; R <= range.e.r; ++R) {
                             let cellAddr = XLSX.utils.encode_cell({r: R, c: C});
                             let cell = ws[cellAddr];
                             if (cell) {
-                                cell.t = 's'; // Tipo texto
-                                cell.v = String(cell.v); // Valor como cadena
+                                cell.t = 's';
+                                cell.v = String(cell.v);
                             }
                         }
                     }
@@ -1156,7 +1162,7 @@
             XLSX.utils.book_append_sheet(wb, exportJsonToExcelSheet(globalData.duplicados, "Duplicados"), "Duplicados");
 
             XLSX.writeFile(wb, `Cierre_Inventario_Completo_${centroNombre}_${fechaStr}.xlsx`);
-            alert(`¡Cierre completo generado con éxito! Las piezas se han normalizado a números enteros y los SKU se conservan como texto.`);
+            alert(`¡Cierre completo generado con éxito! Las piezas se han normalizado a números enteros y los SKU se muestran sin ceros a la izquierda.`);
         }
 
         function finalizarYLimpiar() {
@@ -1236,7 +1242,7 @@
                 `• Volumen Faltante Sistema: ${volFaltante}\n` +
                 `• Lotes Duplicados Cruzados: ${totalDuplicados}\n` +
                 detalleAlmacenes + `\n` +
-                `El archivo Excel exportado incluye solapas separadas para Stock Físico, Stock Sistémico, Pareados OK, Sobrantes, Faltantes y Duplicados (con los SKU protegidos como texto y piezas normalizadas a enteros).\n\n` +
+                `El archivo Excel exportado incluye solapas separadas para Stock Físico, Stock Sistémico, Pareados OK, Sobrantes, Faltantes y Duplicados (con los SKU limpios sin ceros a la izquierda y piezas normalizadas a enteros).\n\n` +
                 `Atentamente,\n` +
                 `Ivan Pérez Conus\n` +
                 `Coordinador de Insumos y Control de Inventarios - Operaciones Molduras`;
