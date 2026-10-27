@@ -669,10 +669,10 @@
         </div>
     </div>
 
-    <!-- Librerías Externas -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.js"></script>
+    <!-- Librerías Externas Locales (100% Offline / Salta Firewalls) -->
+    <script src="./papaparse.min.js"></script>
+    <script src="./html5-qrcode.min.js"></script>
+    <script src="./dexie.js"></script>
     
     <script>
         // --- 1. BASE DE DATOS LOCAL PERSISTENTE (IndexedDB) ---
@@ -703,7 +703,7 @@
             skipEmptyLines: 'greedy', 
             dynamicTyping: false, 
             encoding: "ISO-8859-1",
-            delimiter: ";", // ACTUALIZADO PARA FORZAR LA LECTURA CORRECTA
+            delimiter: ";", 
             transformHeader: function(header) {
                 return header.replace(/^\ufeff/, '').trim();
             }
@@ -788,7 +788,7 @@
             if (!file) return;
 
             if (typeof Papa === 'undefined') {
-                alert("❌ ERROR: PapaParse no está cargado. Si estás sin internet, descarga las librerías localmente.");
+                alert("❌ ERROR: PapaParse no está cargado localmente. Asegúrate de incluir el archivo papaparse.min.js en la carpeta.");
                 return;
             }
 
@@ -809,7 +809,7 @@
                         actualizarStatusBadge('statusStockGlobal', `✓ STOCK MANUAL (${datosStockActivo.length})`, 'ok');
                         alert(`Archivo maestro de stock cargado: ${results.data.length} ítems listos para auditar.`);
                     } catch (error) {
-                        alert("❌ ERROR DE BASE DE DATOS:\n" + error.message + "\n\nEl navegador está bloqueando IndexedDB en modo local estricto.");
+                        alert("❌ ERROR DE BASE DE DATOS:\n" + error.message);
                     }
                 }
             });
@@ -820,7 +820,7 @@
             if (!file) return;
             
             if (typeof Papa === 'undefined') {
-                alert("❌ ERROR: PapaParse no está cargado.");
+                alert("❌ ERROR: PapaParse no está cargado localmente.");
                 return;
             }
 
@@ -846,7 +846,7 @@
             if (!file) return;
             
             if (typeof Papa === 'undefined') {
-                alert("❌ ERROR: PapaParse no está cargado.");
+                alert("❌ ERROR: PapaParse no está cargado localmente.");
                 return;
             }
 
@@ -974,7 +974,7 @@
                         obtenerValorCSV(row, 'calle', 'Calle') === calle
                     );
                     if (regPlano) {
-                        const cant = obtenerValorCSV(regPlano, 'cantidad_lotes', 'Cantidad_Lotes', 'meta', "Nº Pqt's"); // ACTUALIZADO PARA RECONOCER LA CABECERA
+                        const cant = obtenerValorCSV(regPlano, 'cantidad_lotes', 'Cantidad_Lotes', 'meta', "Nº Pqt's");
                         document.getElementById('metaLotes').value = cant ? parseInt(cant, 10) : 300;
                     }
                 }
@@ -1110,9 +1110,9 @@
             }
 
             const datosExtra = infoStock ? { 
-                sku: obtenerValorCSV(infoStock, 'sku', 'SKU', 'Material'), // ACTUALIZADO PARA RECONOCER LA CABECERA MATERIAL
-                descripcion: obtenerValorCSV(infoStock, 'descripción', 'descripcion', 'Descripción', 'Descripcion', 'DESCRIPCION', 'Desc.Mat.'), // ACTUALIZADO PARA RECONOCER DESC.MAT.
-                piezas: obtenerValorCSV(infoStock, 'piezas', 'Piezas', 'PIEZAS', 'NºPiezas'), // ACTUALIZADO PARA RECONOCER NºPIEZAS
+                sku: obtenerValorCSV(infoStock, 'sku', 'SKU', 'Material'), 
+                descripcion: obtenerValorCSV(infoStock, 'descripción', 'descripcion', 'Descripción', 'Descripcion', 'DESCRIPCION', 'Desc.Mat.'), 
+                piezas: obtenerValorCSV(infoStock, 'piezas', 'Piezas', 'PIEZAS', 'NºPiezas'), 
                 volumen: obtenerValorCSV(infoStock, 'volumen', 'Volumen', 'VOLUMEN') 
             } : {};
 
