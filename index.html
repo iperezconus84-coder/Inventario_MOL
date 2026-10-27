@@ -523,13 +523,13 @@
                 </label>
                 <div>
                     <label for="fileStockManual">Cargar Archivo Maestro de Stock (stock_tmt1.csv):</label>
-                    <input type="file" id="fileStockManual" accept=".csv">
+                    <input type="file" id="fileStockManual" accept=".csv, text/csv, text/plain, application/vnd.ms-excel, .txt, *">
 
                     <label for="filePlanoManual">Cargar Plano Manual (plano_general.csv):</label>
-                    <input type="file" id="filePlanoManual" accept=".csv">
+                    <input type="file" id="filePlanoManual" accept=".csv, text/csv, text/plain, application/vnd.ms-excel, .txt, *">
 
                     <label for="fileOperariosManual">Cargar Operarios Manual (operarios.csv):</label>
-                    <input type="file" id="fileOperariosManual" accept=".csv">
+                    <input type="file" id="fileOperariosManual" accept=".csv, text/csv, text/plain, application/vnd.ms-excel, .txt, *">
                 </div>
             </div>
 
@@ -786,18 +786,31 @@
         document.getElementById('fileStockManual').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
+
+            if (typeof Papa === 'undefined') {
+                alert("❌ ERROR: PapaParse no está cargado. Si estás sin internet, descarga las librerías localmente.");
+                return;
+            }
+
             Papa.parse(file, {
                 ...parseConfig,
+                error: function(err) { alert("Error leyendo CSV: " + err.message); },
                 complete: async (results) => {
-                    datosStockActivo = results.data;
-                    bodegaStockCargada = "GLOBAL_TMT1";
-                    stockTimestamp = new Date().toISOString();
-                    await db.stocks_bodega.put({ bodega: 'GLOBAL_TMT1', datos: results.data, timestamp: stockTimestamp });
-                    const chip = document.getElementById('infoStockActivo');
-                    chip.className = "hud-chip stock-info";
-                    chip.innerText = `STOCK: ${file.name} (✓ ${datosStockActivo.length})`;
-                    actualizarStatusBadge('statusStockGlobal', `✓ STOCK MANUAL (${datosStockActivo.length})`, 'ok');
-                    alert(`Archivo maestro de stock cargado: ${results.data.length} ítems listos para auditar.`);
+                    try {
+                        datosStockActivo = results.data;
+                        bodegaStockCargada = "GLOBAL_TMT1";
+                        stockTimestamp = new Date().toISOString();
+                        
+                        await db.stocks_bodega.put({ bodega: 'GLOBAL_TMT1', datos: results.data, timestamp: stockTimestamp });
+                        
+                        const chip = document.getElementById('infoStockActivo');
+                        chip.className = "hud-chip stock-info";
+                        chip.innerText = `STOCK: ${file.name} (✓ ${datosStockActivo.length})`;
+                        actualizarStatusBadge('statusStockGlobal', `✓ STOCK MANUAL (${datosStockActivo.length})`, 'ok');
+                        alert(`Archivo maestro de stock cargado: ${results.data.length} ítems listos para auditar.`);
+                    } catch (error) {
+                        alert("❌ ERROR DE BASE DE DATOS:\n" + error.message + "\n\nEl navegador está bloqueando IndexedDB en modo local estricto.");
+                    }
                 }
             });
         });
@@ -805,14 +818,25 @@
         document.getElementById('filePlanoManual').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
+            
+            if (typeof Papa === 'undefined') {
+                alert("❌ ERROR: PapaParse no está cargado.");
+                return;
+            }
+
             Papa.parse(file, {
                 ...parseConfig,
+                error: function(err) { alert("Error leyendo CSV: " + err.message); },
                 complete: async (results) => {
-                    datosPlano = results.data;
-                    await db.maestros.put({ clave: 'plano', datos: datosPlano, timestamp: new Date().toISOString() });
-                    poblarSelectorBodegas();
-                    actualizarStatusBadge('statusPlano', `✓ PLANO MANUAL (${datosPlano.length})`, 'ok');
-                    alert("Plano manual cargado con éxito.");
+                    try {
+                        datosPlano = results.data;
+                        await db.maestros.put({ clave: 'plano', datos: datosPlano, timestamp: new Date().toISOString() });
+                        poblarSelectorBodegas();
+                        actualizarStatusBadge('statusPlano', `✓ PLANO MANUAL (${datosPlano.length})`, 'ok');
+                        alert("Plano manual cargado con éxito.");
+                    } catch (error) {
+                        alert("❌ ERROR DE BASE DE DATOS:\n" + error.message);
+                    }
                 }
             });
         });
@@ -820,14 +844,25 @@
         document.getElementById('fileOperariosManual').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
+            
+            if (typeof Papa === 'undefined') {
+                alert("❌ ERROR: PapaParse no está cargado.");
+                return;
+            }
+
             Papa.parse(file, {
                 ...parseConfig,
+                error: function(err) { alert("Error leyendo CSV: " + err.message); },
                 complete: async (results) => {
-                    datosOperarios = results.data;
-                    await db.maestros.put({ clave: 'operarios', datos: datosOperarios, timestamp: new Date().toISOString() });
-                    cargarOperariosSelect();
-                    actualizarStatusBadge('statusOperarios', `✓ OPERARIOS MANUAL (${datosOperarios.length})`, 'ok');
-                    alert("Operarios manuales cargados.");
+                    try {
+                        datosOperarios = results.data;
+                        await db.maestros.put({ clave: 'operarios', datos: datosOperarios, timestamp: new Date().toISOString() });
+                        cargarOperariosSelect();
+                        actualizarStatusBadge('statusOperarios', `✓ OPERARIOS MANUAL (${datosOperarios.length})`, 'ok');
+                        alert("Operarios manuales cargados.");
+                    } catch (error) {
+                        alert("❌ ERROR DE BASE DE DATOS:\n" + error.message);
+                    }
                 }
             });
         });
