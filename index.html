@@ -597,21 +597,12 @@
                 </div>
             </div>
 
-            <div style="margin-bottom: 12px;">
-                <label for="metaLotes">Lotes Esperados (Referencia del Plano):</label>
-                <input type="number" id="metaLotes" value="300" min="1" oninput="actualizarProgresoVisual()" style="font-family: var(--font-mono); font-weight: 700;">
-            </div>
-
             <!-- Display de Progreso Industrial -->
             <div class="progress-box">
                 <div class="progress-meta-row">
-                    <span class="progress-label-tag">CONTEO DE LOTES</span>
-                    <span class="progress-percent-tag" id="displayPercent">0%</span>
+                    <span class="progress-label-tag">LOTES CAPTURADOS EN LA CALLE</span>
                 </div>
-                <div class="progress" id="displayProgress" aria-live="polite">0 / 300</div>
-                <div class="progress-track">
-                    <div class="progress-bar-fill" id="progressBarFill"></div>
-                </div>
+                <div class="progress" id="displayProgress" aria-live="polite">0</div>
             </div>
 
             <button type="button" class="btn-action camera-btn" onclick="abrirEscanearCamara()">📷 Escanear con Cámara</button>
@@ -1124,18 +1115,6 @@
                 
                 contadorActual = capturasCalleActual.length;
                 calleCerradaGuardada = contadorActual > 0;
-
-                if (bodega && calle) {
-                    const regPlano = datosPlano.find(row => 
-                        obtenerValorCSV(row, 'bodega', 'Bodega') === bodega && 
-                        (!subBodega || obtenerValorCSV(row, 'sub_bodega', 'subbodega', 'Sub_Bodega') === subBodega) &&
-                        obtenerValorCSV(row, 'calle', 'Calle') === calle
-                    );
-                    if (regPlano) {
-                        const cant = obtenerValorCSV(regPlano, 'cantidad_lotes', 'Cantidad_Lotes', 'meta', "Nº Pqt's");
-                        document.getElementById('metaLotes').value = cant ? parseInt(cant, 10) : 300;
-                    }
-                }
                 actualizarProgresoVisual();
                 actualizarBotonesAccion();
             } catch (err) {
@@ -1144,15 +1123,7 @@
         }
 
         function actualizarProgresoVisual() {
-            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
-            document.getElementById('displayProgress').innerText = `${contadorActual} / ${meta}`;
-            
-            const pct = meta > 0 ? Math.min(100, Math.round((contadorActual / meta) * 100)) : 0;
-            document.getElementById('displayPercent').innerText = `${pct}%`;
-            
-            const fillEl = document.getElementById('progressBarFill');
-            if (fillEl) fillEl.style.width = `${pct}%`;
-
+            document.getElementById('displayProgress').innerText = `${contadorActual}`;
             actualizarBotonesAccion();
         }
 
@@ -1160,7 +1131,6 @@
             const btnCerrar = document.getElementById('btnCerrarCalle');
             const btnReabrir = document.getElementById('btnReabrirCalle');
             const inputScanner = document.getElementById('scannerInput');
-            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
 
             if (calleCerradaGuardada) {
                 btnCerrar.style.display = 'none';
@@ -1446,11 +1416,10 @@
         function abrirModalCierreCalle() {
             const bodega = document.getElementById('bodegaSelect').value;
             const calle = document.getElementById('calleSelect').value;
-            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
 
             if (!bodega || !calle) { alert('Seleccione Bodega y Calle.'); return; }
 
-            document.getElementById('cierreInfoMeta').innerText = `CALLE: ${calle} // CAPTURADOS: ${contadorActual}` + (meta > 0 ? ` // PLANO: ${meta}` : '');
+            document.getElementById('cierreInfoMeta').innerText = `CALLE: ${calle} // CAPTURADOS: ${contadorActual}`;
             document.getElementById('comentarioCalleInput').value = '';
             document.getElementById('conteoManualInput').value = '';
             ocultarAvisoCierre();
