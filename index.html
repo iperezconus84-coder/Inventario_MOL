@@ -373,6 +373,8 @@
         .calle-qr-estado.error { color: var(--color-danger); }
 
         .btn-action.warning { background-color: var(--color-warning); border-color: #B45309; }
+
+        .cierre-aviso { margin: -6px 0 14px 0; padding: 10px 12px; border-radius: var(--radius-tech); border: 1px solid var(--color-danger); background: var(--color-danger-bg); color: var(--color-danger); font-size: 13px; font-weight: 700; text-align: left; }
         .btn-action.warning:hover { background-color: #B45309; }
 
         .btn-action.danger { background-color: var(--color-danger); border-color: #B91C1C; }
@@ -596,7 +598,7 @@
             </div>
 
             <div style="margin-bottom: 12px;">
-                <label for="metaLotes">Meta de Lotes (Automática por Plano):</label>
+                <label for="metaLotes">Lotes Esperados (Referencia del Plano):</label>
                 <input type="number" id="metaLotes" value="300" min="1" oninput="actualizarProgresoVisual()" style="font-family: var(--font-mono); font-weight: 700;">
             </div>
 
@@ -660,9 +662,13 @@
             <div class="modal-header-tag">CONFIRMACIÓN // CIERRE</div>
             <h3>Cierre de Calle</h3>
             <p id="cierreInfoMeta" style="margin: 8px 0 14px 0; font-family: var(--font-mono); font-size: 13px; color: var(--color-brand); font-weight: 600;"></p>
-            <label for="comentarioCalleInput" style="text-align: left;">Observación de Cierre (Opcional):</label>
+            <label for="conteoManualInput" style="text-align: left;">Conteo Manual de Lotes en la Calle:</label>
+            <input type="number" id="conteoManualInput" min="0" inputmode="numeric" placeholder="Cuente los paquetes e ingrese el total" style="font-family: var(--font-mono); font-weight: 700; font-size: 16px;">
+            <div id="cierreAviso" class="cierre-aviso" style="display:none;" aria-live="assertive"></div>
+            <label for="comentarioCalleInput" style="text-align: left;">Observación de Cierre <span id="comentarioObligatorio">(Opcional)</span>:</label>
             <textarea id="comentarioCalleInput" rows="3" placeholder="Ej: 2 paquetes sin código legible..." style="resize: none;"></textarea>
-            <button type="button" class="btn-action primary-action" onclick="confirmarCierreCalle()">Confirmar y Cerrar Calle</button>
+            <button type="button" class="btn-action primary-action" onclick="confirmarCierreCalle()">Validar Conteo y Cerrar Calle</button>
+            <button type="button" id="btnCerrarConDiferencia" class="btn-action warning" onclick="confirmarCierreCalle(true)" style="display:none;">Cerrar con Diferencia (requiere observación)</button>
             <button type="button" class="btn-action secondary" onclick="cerrarModalCierre()">Cancelar</button>
         </div>
     </div>
@@ -968,13 +974,14 @@
 
         // --- 5b. SELECCIÓN DE CALLE POR QR ---
         // Formatos de QR aceptados (todos se comparan sin mayúsculas, espacios, guiones ni guiones bajos):
-        //   "A01"                      -> solo el código de calle (debe ser único en el plano)
+        //   "A1" / "A01"               -> solo el código de calle (debe ser único en el plano; A1 = A01)
         //   "CALLE: A01"               -> con prefijo "CALLE"
         //   "TMT1;SP F1;A01"           -> bodega / sub-bodega / calle separados por ; | , / o tab
         //   "TMT1-SPF1-A01", "SPF1A01" -> concatenado
         //   "https://...?calle=A01&sub_bodega=SP%20F1&bodega=TMT1"
         function compactarQR(s) {
-            return String(s || '').toUpperCase().replace(/[\s_\-]+/g, '');
+            // Quita ceros a la izquierda del número para que "A1" (QR) coincida con "A01" (plano).
+            return String(s || '').toUpperCase().replace(/[\s_\-]+/g, '').replace(/([A-Z])0+(?=\d)/g, '$1');
         }
 
         function datosFilaPlano(r) {
@@ -1160,11 +1167,6 @@
                 btnReabrir.style.display = 'inline-flex';
                 inputScanner.disabled = true;
                 inputScanner.placeholder = "Calle cerrada. Pulse Reabrir.";
-            } else if (contadorActual >= meta && meta > 0) {
-                btnCerrar.style.display = 'inline-flex';
-                btnReabrir.style.display = 'none';
-                inputScanner.disabled = true;
-                inputScanner.placeholder = "Meta alcanzada. Amplíe meta para continuar.";
             } else {
                 btnCerrar.style.display = 'inline-flex';
                 btnReabrir.style.display = 'none';
@@ -1204,12 +1206,6 @@
                 return; 
             }
             if (lote === '') return;
-
-            const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
-            if (contadorActual >= meta) {
-                alert(`Se ha alcanzado la meta de ${meta} lotes para esta calle.`);
-                return;
-            }
 
             procesarLoteEscaneado(bodega, subBodega, calle, lote);
         }
@@ -1278,11 +1274,6 @@
 
         async function registrarCaptura(bodega, subBodega, calle, lote, estado, extra = {}) {
             try {
-                const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
-                if (contadorActual >= meta) {
-                    alert(`No se pueden registrar más lotes. Se alcanzó la meta de ${meta}.`);
-                    return;
-                }
 
                 emitirSonido('success');
                 contadorActual++;
@@ -1458,14 +1449,27 @@
             const meta = parseInt(document.getElementById('metaLotes').value, 10) || 0;
 
             if (!bodega || !calle) { alert('Seleccione Bodega y Calle.'); return; }
-            if (contadorActual !== meta) {
-                alert(`No coincide la cantidad de capturas (${contadorActual}) con la meta (${meta}).`);
-                return;
-            }
 
-            document.getElementById('cierreInfoMeta').innerText = `CALLE: ${calle} // LOTES: ${contadorActual} / META: ${meta}`;
+            document.getElementById('cierreInfoMeta').innerText = `CALLE: ${calle} // CAPTURADOS: ${contadorActual}` + (meta > 0 ? ` // PLANO: ${meta}` : '');
             document.getElementById('comentarioCalleInput').value = '';
+            document.getElementById('conteoManualInput').value = '';
+            ocultarAvisoCierre();
             document.getElementById('cierreModal').style.display = 'block';
+            setTimeout(() => document.getElementById('conteoManualInput').focus(), 100);
+        }
+
+        function ocultarAvisoCierre() {
+            document.getElementById('cierreAviso').style.display = 'none';
+            document.getElementById('btnCerrarConDiferencia').style.display = 'none';
+            document.getElementById('comentarioObligatorio').innerText = '(Opcional)';
+        }
+
+        function mostrarAvisoCierre(texto, permitirDiferencia) {
+            const aviso = document.getElementById('cierreAviso');
+            aviso.innerText = texto;
+            aviso.style.display = 'block';
+            document.getElementById('btnCerrarConDiferencia').style.display = permitirDiferencia ? 'inline-flex' : 'none';
+            document.getElementById('comentarioObligatorio').innerText = permitirDiferencia ? '(Obligatoria si cierra con diferencia)' : '(Opcional)';
         }
 
         function cerrarModalCierre() {
@@ -1473,16 +1477,43 @@
             enfocarScanner();
         }
 
-        async function confirmarCierreCalle() {
+        async function confirmarCierreCalle(forzarDiferencia = false) {
             try {
                 const comentario = document.getElementById('comentarioCalleInput').value.trim();
                 const bodega = document.getElementById('bodegaSelect').value;
                 const calle = document.getElementById('calleSelect').value;
+                const textoConteo = document.getElementById('conteoManualInput').value.trim();
+                const conteoManual = parseInt(textoConteo, 10);
+
+                if (textoConteo === '' || isNaN(conteoManual) || conteoManual < 0) {
+                    emitirSonido('error');
+                    mostrarAvisoCierre('Ingrese el conteo manual de lotes de la calle.', false);
+                    document.getElementById('conteoManualInput').focus();
+                    return;
+                }
+
+                if (conteoManual !== contadorActual) {
+                    if (!forzarDiferencia) {
+                        emitirSonido('error');
+                        const dif = conteoManual - contadorActual;
+                        const detalle = dif > 0
+                            ? `faltan ${dif} lote(s) por escanear`
+                            : `hay ${-dif} lote(s) escaneados de más`;
+                        mostrarAvisoCierre(`⚠ REVISAR RECUENTO: contó ${conteoManual} y hay ${contadorActual} capturados (${detalle}). Cuente de nuevo o escanee los lotes que faltan.`, true);
+                        return;
+                    }
+                    if (!comentario) {
+                        emitirSonido('error');
+                        mostrarAvisoCierre(`Para cerrar con diferencia (${conteoManual} contados vs ${contadorActual} capturados) escriba una observación.`, true);
+                        document.getElementById('comentarioCalleInput').focus();
+                        return;
+                    }
+                }
 
                 const ids = capturasCalleActual.map(c => c.id);
                 await db.transaction('rw', db.capturas, async () => {
                     for (const id of ids) {
-                        await db.capturas.update(id, { comentario_calle: comentario });
+                        await db.capturas.update(id, { comentario_calle: comentario, conteo_manual_calle: conteoManual });
                     }
                 });
 
@@ -1506,6 +1537,11 @@
                 console.error("Error al cerrar calle:", err);
             }
         }
+
+        document.getElementById('conteoManualInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); confirmarCierreCalle(); }
+        });
+        document.getElementById('conteoManualInput').addEventListener('input', ocultarAvisoCierre);
 
         function reabrirCalle() {
             calleCerradaGuardada = false;
