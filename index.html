@@ -363,6 +363,15 @@
         }
         .btn-action.camera-btn:hover { background-color: #0369A1; }
 
+        /* Selección de calle por QR */
+        .calle-qr-box { margin-bottom: 10px; }
+        .calle-qr-row { display: flex; gap: 8px; align-items: stretch; }
+        .calle-qr-row input { flex: 1; margin-bottom: 0; font-family: var(--font-mono); font-weight: 600; }
+        .calle-qr-row .btn-action { width: auto; margin: 0; white-space: nowrap; }
+        .calle-qr-estado { font-size: 12px; font-weight: 600; margin-top: 6px; min-height: 16px; color: var(--color-text-secondary); }
+        .calle-qr-estado.ok { color: var(--color-success); }
+        .calle-qr-estado.error { color: var(--color-danger); }
+
         .btn-action.warning { background-color: var(--color-warning); border-color: #B45309; }
         .btn-action.warning:hover { background-color: #B45309; }
 
@@ -554,6 +563,16 @@
                 <div id="infoStockActivo" class="hud-chip stock-loading">STOCK: Seleccione una Bodega o Cargue Archivos...</div>
             </div>
 
+            <!-- Selección de calle por QR (lector físico o cámara) -->
+            <div class="calle-qr-box">
+                <label for="calleQrInput">Calle por QR:</label>
+                <div class="calle-qr-row">
+                    <input type="text" id="calleQrInput" placeholder="Escanear QR de la calle..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                    <button type="button" class="btn-action camera-btn" onclick="abrirEscanearCalleCamara()">📷 QR Calle</button>
+                </div>
+                <div id="calleQrEstado" class="calle-qr-estado" aria-live="polite"></div>
+            </div>
+
             <!-- Cuadrícula en Cascada: Bodega -> Sub-Bodega -> Calle -->
             <div class="form-grid-3">
                 <div>
@@ -620,7 +639,7 @@
     <div id="camaraModal" class="modal" role="dialog" aria-modal="true">
         <div class="modal-content" style="max-width: 450px;">
             <div class="modal-header-tag">ÓPTICA // CÁMARA</div>
-            <h3>Escáner Activo</h3>
+            <h3 id="camaraTitulo">Escáner Activo</h3>
             <div id="reader" style="width: 100%; border-radius: 2px; overflow: hidden; margin: 12px 0; border: 1px solid var(--color-border);"></div>
             <button type="button" class="btn-action secondary" onclick="cerrarEscanearCamara()">Cerrar Cámara</button>
         </div>
@@ -947,6 +966,138 @@
             actualizarBotonesAccion();
         }
 
+        // --- 5b. SELECCIÓN DE CALLE POR QR ---
+        // Formatos de QR aceptados (todos se comparan sin mayúsculas, espacios, guiones ni guiones bajos):
+        //   "A01"                      -> solo el código de calle (debe ser único en el plano)
+        //   "CALLE: A01"               -> con prefijo "CALLE"
+        //   "TMT1;SP F1;A01"           -> bodega / sub-bodega / calle separados por ; | , / o tab
+        //   "TMT1-SPF1-A01", "SPF1A01" -> concatenado
+        //   "https://...?calle=A01&sub_bodega=SP%20F1&bodega=TMT1"
+        function compactarQR(s) {
+            return String(s || '').toUpperCase().replace(/[\s_\-]+/g, '');
+        }
+
+        function datosFilaPlano(r) {
+            return {
+                bodega: obtenerValorCSV(r, 'bodega', 'Bodega', 'BODEGA'),
+                subBodega: obtenerValorCSV(r, 'sub_bodega', 'subbodega', 'Sub_Bodega', 'zona'),
+                calle: obtenerValorCSV(r, 'calle', 'Calle', 'CALLE')
+            };
+        }
+
+        function buscarCallesPorQR(texto) {
+            let t = String(texto || '').trim();
+            if (!t || !datosPlano || datosPlano.length === 0) return [];
+
+            if (/^https?:\/\//i.test(t)) {
+                try {
+                    const u = new URL(t);
+                    const c = u.searchParams.get('calle');
+                    if (c) t = [u.searchParams.get('bodega'), u.searchParams.get('sub_bodega') || u.searchParams.get('subbodega'), c].filter(Boolean).join(';');
+                } catch (e) {}
+            }
+            t = t.replace(/^CALLE\s*[:=#]?\s*/i, '');
+
+            const partes = t.split(/[;|,\/\t]+/).map(compactarQR).filter(Boolean);
+            const total = compactarQR(t);
+            if (partes.length === 0) return [];
+            const calleQR = partes[partes.length - 1];
+            const resto = partes.slice(0, -1);
+
+            const vistos = new Set();
+            const encontrados = [];
+            datosPlano.forEach(r => {
+                const d = datosFilaPlano(r);
+                const c = compactarQR(d.calle);
+                if (!c) return;
+                const b = compactarQR(d.bodega);
+                const sb = compactarQR(d.subBodega);
+                const porPartes = c === calleQR && resto.every(p => p === b || p === sb);
+                const concatenado = [c, sb + c, b + sb + c, b + c].includes(total);
+                if (!porPartes && !concatenado) return;
+                const clave = `${d.bodega}|${d.subBodega}|${d.calle}`;
+                if (vistos.has(clave)) return;
+                vistos.add(clave);
+                encontrados.push(d);
+            });
+            return encontrados;
+        }
+
+        function mostrarEstadoCalleQR(texto, tipo) {
+            const el = document.getElementById('calleQrEstado');
+            if (!el) return;
+            el.innerText = texto;
+            el.className = 'calle-qr-estado' + (tipo ? ' ' + tipo : '');
+        }
+
+        async function seleccionarCalleDesdeQR(texto) {
+            const leido = String(texto || '').trim();
+            if (!leido) return false;
+
+            if (!datosPlano || datosPlano.length === 0) {
+                emitirSonido('error');
+                mostrarEstadoCalleQR('✗ Cargue primero el plano general (Configuración).', 'error');
+                return false;
+            }
+
+            let candidatas = buscarCallesPorQR(leido);
+            if (candidatas.length > 1) {
+                // Si el código de calle se repite, se prefiere la bodega / sub-bodega seleccionadas.
+                const bodegaActual = document.getElementById('bodegaSelect').value;
+                const subActual = document.getElementById('subBodegaSelect').value;
+                const enBodega = candidatas.filter(d => d.bodega === bodegaActual);
+                if (enBodega.length > 0) candidatas = enBodega;
+                const enSub = candidatas.filter(d => d.subBodega === subActual);
+                if (enSub.length > 0) candidatas = enSub;
+            }
+
+            if (candidatas.length === 0) {
+                emitirSonido('error');
+                mostrarEstadoCalleQR(`✗ El QR "${leido}" no corresponde a ninguna calle del plano.`, 'error');
+                return false;
+            }
+            if (candidatas.length > 1) {
+                emitirSonido('error');
+                mostrarEstadoCalleQR(`✗ La calle "${leido}" existe en varias sub-bodegas. Seleccione la sub-bodega a mano.`, 'error');
+                return false;
+            }
+
+            const d = candidatas[0];
+            const bodegaSelect = document.getElementById('bodegaSelect');
+            const subBodegaSelect = document.getElementById('subBodegaSelect');
+            const calleSelect = document.getElementById('calleSelect');
+
+            if (![...bodegaSelect.options].some(o => o.value === d.bodega)) poblarSelectorBodegas();
+            bodegaSelect.value = d.bodega;
+            await alCambiarBodega();
+            if (d.subBodega && [...subBodegaSelect.options].some(o => o.value === d.subBodega)) {
+                subBodegaSelect.value = d.subBodega;
+                alCambiarSubBodega();
+            }
+            calleSelect.value = d.calle;
+            if (calleSelect.value !== d.calle) {
+                emitirSonido('error');
+                mostrarEstadoCalleQR(`✗ No se pudo seleccionar la calle ${d.calle}.`, 'error');
+                return false;
+            }
+            await configurarCalle();
+
+            emitirSonido('success');
+            const ubicacion = [d.bodega, d.subBodega, d.calle].filter(Boolean).join(' / ');
+            mostrarEstadoCalleQR(`✓ Calle seleccionada por QR: ${ubicacion}` + (calleCerradaGuardada ? ' (ya cerrada)' : ''), 'ok');
+            enfocarScanner();
+            return true;
+        }
+
+        document.getElementById('calleQrInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const valor = this.value;
+                this.value = '';
+                seleccionarCalleDesdeQR(valor);
+            }
+        });
+
         // --- 6. CONFIGURACIÓN DE CALLE Y METAS ---
         async function configurarCalle() {
             try {
@@ -1026,8 +1177,14 @@
         document.getElementById('scannerInput').addEventListener('keypress', function (e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                procesarEntradaLote(this.value);
+                const valor = this.value;
                 this.value = '';
+                // Si lo escaneado es el QR de una calle del plano, se cambia de calle en vez de registrar un lote.
+                if (buscarCallesPorQR(valor).length > 0) {
+                    seleccionarCalleDesdeQR(valor);
+                    return;
+                }
+                procesarEntradaLote(valor);
             }
         });
 
@@ -1168,15 +1325,33 @@
                 return;
             }
 
+            iniciarCamara('Escáner Activo', { width: 250, height: 150 }, (decodedText) => {
+                // Si se lee el QR de una calle, se cambia de calle en vez de registrar un lote.
+                if (buscarCallesPorQR(decodedText).length > 0) seleccionarCalleDesdeQR(decodedText);
+                else procesarEntradaLote(decodedText);
+            });
+        }
+
+        function abrirEscanearCalleCamara() {
+            iniciarCamara('Escanear QR de Calle', { width: 220, height: 220 }, (decodedText) => {
+                seleccionarCalleDesdeQR(decodedText);
+            });
+        }
+
+        function iniciarCamara(titulo, qrbox, alLeer) {
+            document.getElementById('camaraTitulo').innerText = titulo;
             document.getElementById('camaraModal').style.display = 'block';
             if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
 
+            let leido = false;
             html5QrCode.start(
                 { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 250, height: 150 } },
+                { fps: 10, qrbox: qrbox },
                 (decodedText) => {
+                    if (leido) return;
+                    leido = true;
                     cerrarEscanearCamara();
-                    procesarEntradaLote(decodedText);
+                    alLeer(decodedText);
                 },
                 () => {}
             ).catch((err) => {
@@ -1342,9 +1517,11 @@
             setTimeout(() => {
                 const vistaCaptura = document.getElementById('viewCaptura');
                 const input = document.getElementById('scannerInput');
-                if (vistaCaptura && vistaCaptura.classList.contains('active') && input && !input.disabled) {
-                    input.focus();
-                }
+                const inputCalle = document.getElementById('calleQrInput');
+                const hayCalle = !!document.getElementById('calleSelect').value;
+                if (!vistaCaptura || !vistaCaptura.classList.contains('active')) return;
+                if (hayCalle && input && !input.disabled) input.focus();
+                else if (inputCalle) inputCalle.focus();
             }, 100);
         }
 
