@@ -1,17 +1,17 @@
-const CACHE_NAME = 'imol-terreno-v2';
+const CACHE_NAME = 'imol-terreno-v3';
 
 // Archivos locales y CDNs externos que necesitamos guardar en la memoria caché del teléfono
 const urlsToCache = [
     './',
     './consulta.html',
-    './manifest.json',
-    './icon-192x192.png',
-    './icon-512x512.png',
+    './manifest-consulta.json',
+    './icon-192.png',
+    './icon-512.png',
     // Librerías externas (esenciales para que funcione offline)
-    'https://cdn.tailwindcss.com',
+    'https://cdn.tailwindcss.com/3.4.17',
     'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
-    'https://unpkg.com/@zxing/library@latest'
+    'https://unpkg.com/@zxing/library@0.23.0'
 ];
 
 // 1. INSTALACIÓN: Descarga y guarda todos los archivos necesarios

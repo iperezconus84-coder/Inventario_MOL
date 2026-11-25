@@ -1,0 +1,6 @@
+# Logs locales (SAP RFC, etc.)
+*.log
+
+# Datos maestros de stock: se cargan manualmente en la app, no se versionan
+data/stock_*.csv
+data/operarios*.csv
