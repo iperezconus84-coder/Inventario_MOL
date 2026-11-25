@@ -1,10 +1,10 @@
-const CACHE_NAME = 'arauco-porden-cache-v2';
+const CACHE_NAME = 'arauco-porden-cache-v3';
 const APP_PAGE = './porden.html';
 
 const assetsToCache = [
   APP_PAGE,
   './manifest-porden.json',
-  'https://cdn.tailwindcss.com',
+  'https://cdn.tailwindcss.com/3.4.17',
   'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
